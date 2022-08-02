@@ -3,12 +3,18 @@ import Home from './components/public/Home.vue'
 import Login from './components/public/Login.vue'
 import Dashboard from './components/private/Dashboard.vue'
 import Divisions from './components/private/divisions/Divisions.vue'
+import Programs from './components/private/programs/Programs.vue'
+import Projects from './components/private/programs/Projects.vue'
+import Workshops from './components/private/bed/Workshops.vue'
 
 const routes = [
     { path: '/', name: 'Home', component: Home, meta: { requiresAuth: false} },
     { path: '/login', name: 'Login', component: Login, meta: { requiresAuth: false } },
     { path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/divisions-and-units', name: 'Divisions', component: Divisions, meta: { requiresAuth: true } },
+    { path: '/programs-and-projects', name: 'Programs', component: Programs, meta: { requiresAuth: true } },
+    { path: '/programs-and-projects/:selected', name: 'Projects', component: Projects, meta: { requiresAuth: true } },
+    { path: '/budget-executive-documents', name: 'Workshops', component: Workshops, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({

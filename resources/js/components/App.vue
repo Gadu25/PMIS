@@ -7,7 +7,7 @@
             <div class="sidebar-header">
                 <router-link :to="{ name: 'Dashboard' }" class="sidebar-link">
                     <div class="d-flex justify-content-between">
-                        <img src="/images/Logo.png" alt="logo" width="50">
+                        <img src="/images/Logo.png" alt="logo" width="60">
                         <span>Project Management Info System</span>
                     </div>
                 </router-link>
@@ -15,11 +15,18 @@
             <div class="sidebar-body">
                 <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
                 <router-link :to="{ name: 'Divisions' }">Divisions and Units</router-link>
+                <router-link :to="{ name: 'Programs' }">Programs and Projects</router-link>
+                <router-link :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
+                <a href="/login" @click="logout">Logout</a>
             </div>
         </div>
         <div class="body">
             <div class="topbar">
-                <button class="btn btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button>{{toggle}}
+                <div class=""><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
+                <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
+                <div class="text-white p-1">
+                    <span><i class="far fa-user-circle fa-2x"></i></span>
+                </div>
             </div>
             <div class="content">
                 <router-view></router-view>
@@ -28,6 +35,7 @@
     </div>
 </template>
 <script>
+import { mapActions, mapGetters } from 'vuex'
 export default {
     name: 'App',
     data(){
@@ -35,6 +43,32 @@ export default {
             token: localStorage.getItem('token') || 0,
             toggle: false
         }
+    },
+    methods: {
+        ...mapActions('user', ['logout', 'fetchAuthUser']),
+        getAuthenticatedUser(){
+            if(this.token != 0){
+                var authToken = JSON.parse(localStorage.getItem('token'))
+                var authExpiry = authToken.expiry
+                const now = new Date()
+                const currTime = now.getTime()
+                if(currTime > authExpiry){
+                    this.logout()
+                }
+                axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken.value
+                
+                this.fetchAuthUser()
+            }
+        },
+        testMethod(){
+            alert('test')
+        }
+    },
+    computed: {
+        ...mapGetters('user', ['getAuthUser'])
+    },
+    created(){
+        this.getAuthenticatedUser()
     }
 }
 </script>
@@ -73,6 +107,9 @@ export default {
     text-decoration: none;
     color: white;
 }
+.sidebar-link>div>span{
+    font-size: 20px;
+}
 .sidebar-body{
     height: 80vh;
     overflow: auto;
@@ -110,13 +147,14 @@ export default {
 }
 .topbar{
     padding: 5px;
-    height: 8vh;
+    height: 5vh;
     background: rgba(0, 0, 0, 0.8);
-    color: white;
+    display: flex;
+    justify-content: space-between;
 }
 .content{
     background: white;
-    height: 92vh;
+    height: 95vh;
     overflow: auto;
 }
 </style>

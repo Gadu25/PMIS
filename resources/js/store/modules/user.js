@@ -1,14 +1,26 @@
 import axios from "axios";
 
 const state = {
-    user: []
+    user: [],
+    authUser: []
 }
 
 const getters = {
-    getUser: (state) => state.user
+    getUser: (state) => state.user,
+    getAuthUser: (state) => state.authUser
 }
 
 const actions = {
+    // User functions
+
+    // Auth functions
+    async fetchAuthUser({commit}){
+        const response = await axios.get('/api/user/auth').then(res => {
+            commit('setAuthUser', res.data)
+            return res.data
+        })
+        return response
+    },
     async login({commit}, form){
         const response = await axios.post('/api/login', form).then(res => {
             if(res.data.success){
@@ -30,11 +42,12 @@ const actions = {
         localStorage.removeItem('token')
         commit('setUser', [])
         window.location.replace('/login')
-    }
+    },
 }
 
 const mutations = {
-    setUser: (state, data) => state.user = data
+    setUser: (state, data) => state.user = data,
+    setAuthUser: (state, data) => state.authUser = data,
 }
 
 export default {
