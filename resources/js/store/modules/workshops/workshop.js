@@ -2,16 +2,28 @@ import axios from "axios";
 
 const state = {
     workshops: [],
+    workshop: [],
+    // options: programs, divisions, projects
+    options: []
 }
 
 const getters = {
     getWorkshops: (state) => state.workshops,
+    getWorkshop: (state) => state.workshop,
+    getOptions: (state) => state.options
 }
 
 const actions = {
     async fetchWorkshops({commit}){
         const response = await axios.get('/api/workshop').then(res => {
             commit('setWorkshops', res.data)
+            return res.data
+        })
+        return response
+    },
+    async fetchWorkshop({commit}, id){
+        const response = await axios.get('/api/workshop/'+id).then(res =>{
+            commit('setWorkshop', res.data)
             return res.data
         })
         return response
@@ -31,11 +43,20 @@ const actions = {
             return res.data
         })
         return response
+    },
+    async fetchOptions({commit}){
+        const response = await axios.get('/api/workshop/options').then(res =>{
+            commit('setOptions', res.data)
+            return res.data
+        })
+        return response
     }
 }
 
 const mutations = {
     setWorkshops: (state, data) => state.workshops = data,
+    setWorkshop: (state, data) => state.workshop = data,
+    setOptions: (state, data) => state.options = data,
 }
 
 export default {

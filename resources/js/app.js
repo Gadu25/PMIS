@@ -15,6 +15,17 @@ const toast = swal.mixin({
 
 window.toast = toast;
 
+Array.prototype.remove = function() {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+};
+
 import App from './components/App.vue'
 
 createApp(App)

@@ -39,10 +39,10 @@
                             <div class="accordion-body">
                                 <div class="d-flex justify-content-between">
                                     <ul class="items">
-                                        <li>Annex E</li>
-                                        <li>Annex F</li>
-                                        <li>Annex One</li>
-                                        <li>Required Indicators</li>
+                                        <a href="#"><li>Annex E</li></a>
+                                        <a href="#"><li>Annex F</li></a>
+                                        <router-link :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
+                                        <a href="#"><li>Required Indicators</li></a>
                                     </ul>
                                     <div class="actions">
                                         <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
@@ -148,15 +148,19 @@ export default {
 ul.items{
     width: 70%;
 }
-ul.items>li{
+ul.items>a>li{
     list-style-type: none;
     cursor: pointer;
     font-size: 18px;
     padding: 4px 6px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.25);
 }
-ul.items>li:hover{
+ul.items>a>li:hover{
     background: rgba(0, 0, 0, 0.03);
     font-weight: bold;
+}
+a{
+    text-decoration: none;
+    color: black;
 }
 </style>
