@@ -30,7 +30,8 @@ export default {
         }
     },
     methods: {
-        ...mapActions('workshop', ['fetchWorkshop'])
+        ...mapActions('workshop', ['fetchWorkshop']),
+        ...mapActions('annexone', ['fetchAnnexOnes'])
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
@@ -38,7 +39,9 @@ export default {
     },
     created(){
         this.fetchWorkshop(this.$route.params.workshopId).then(res => {
-            this.loading = false
+            this.fetchAnnexOnes(this.$route.params.workshopId).then(res => {
+                this.loading = false
+            })
         })
     }
 }

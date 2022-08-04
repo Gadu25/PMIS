@@ -15,6 +15,7 @@ const toast = swal.mixin({
 
 window.toast = toast;
 
+
 Array.prototype.remove = function() {
     var what, a = arguments, L = a.length, ax;
     while (L && this.length) {
@@ -32,11 +33,3 @@ createApp(App)
     .use(router)
     .use(store)
     .mount("#app")
-    
-// app.mixin({
-//     methods: {
-//       globalHelper: function () {
-//         alert("Hello world")
-//       },
-//     },
-//   })

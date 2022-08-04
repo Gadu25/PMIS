@@ -19,7 +19,7 @@
             <div class="d-flex justify-content-center">
                 <div class="col-sm-12">
                     <!-- <form @submit.prevent="submitForm()" class="p-4" v-if="formshow"> -->
-                    <div class="p-4" v-if="formshow">
+                    <div class="px-2 py-4" v-if="formshow">
                         <div class="mb-2"><h4>Form</h4></div>
                         <div class="form-group row mb-3">
                             <div :class="'mb-2 col-sm-'+ ((subprograms.length > 0 && clusters.length > 0) ? 4 : (subprograms.length > 0) ? 6 : 12 )">
@@ -86,19 +86,32 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-end mb-2" v-if="form.id == ''">
-                            <button class="btn btn-sm btn-secondary" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
+                            <button tabindex="-1" class="btn btn-sm btn-secondary" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
                         </div>
-                        <div class="d-flex justify-content-between" v-for="title, key in form.titles" :key="key+'_title'">
-                            <div class="form-floating mb-3" style="width: 90%">
-                                <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="form.titles[key].title">
-                                <label for="floatingInput">Project Title <span v-if="form.id == ''">No. {{key+1}}</span></label>
-                            </div>
-                            <div class="d-flex justify-content-end align-items-start" style="margin-left: 10px; width: 10%">
-                                <button class="btn btn-danger btn-sm" v-if="form.id == ''" @click="removeProject(title)"><i class="far fa-trash-alt"></i></button>
+                        <div class="form-group row mb-3">
+                            <div class="col-sm-6 mb-3" v-for="project, key in form.projects" :key="key+'_title'">
+                                <div class="card shadow">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-end mb-2">
+                                            <button tabindex="-1" class="btn btn-sm btn-secondary" @click="addSubproject(key)"><i class="fas fa-plus"></i> Sub-Project</button>
+                                            <button tabindex="-1" class="btn btn-sm btn-danger ms-1" @click="removeProject(project)" v-if="form.id == ''"><i class="fas fa-trash-alt"></i> Remove</button>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="project.title">
+                                            <label for="floatingInput">Project Title <span v-if="form.id == ''">No. {{key+1}}</span></label>
+                                        </div>
+                                        <strong v-if="project.subprojects.length > 0">Sub-Projects</strong>
+                                        <div class="form-floating ms-4 my-3 position-relative" v-for="subp, skey in project.subprojects" :key="skey+'_subproject'">
+                                            <button tabindex="-1" class="btn btn-danger btn-sm position-absolute top-0 end-0" @click="removeSubproject(key, subp)"><i class="far fa-times"></i></button>
+                                            <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="subp.title">
+                                            <label for="floatingInput">Sub-Project Title <span v-if="form.id == ''">No. {{skey+1}}</span></label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="d-flex justify-content-end mt-3">
-                            <button style="min-width: 100px;" class="btn btn-outline-secondary rounded-pill me-2" @click="formshow = false">Cancel</button>
+                            <button tabindex="-1" style="min-width: 100px;" class="btn btn-outline-secondary rounded-pill me-2" @click="formshow = false">Cancel</button>
                             <button style="min-width: 100px;" class="btn rounded-pill" :class="form.id == '' ? 'btn-success' : 'btn-primary'" @click="submitForm()">{{(form.id == '') ? 'Submit' : 'Save Changes'}}</button>
                         </div>
                     </div>
@@ -142,13 +155,18 @@
                                                     <td><div class="ms-3"><strong>{{tkey}}</strong></div></td>
                                                     <td></td>
                                                 </tr>
-                                                <tr v-for="project in third" :key="project.id+'_project'">
-                                                    <td><div class="ms-4">{{project.title}}</div></td>
-                                                    <td class="text-center">
-                                                        <button @click="editForm(project)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                                        <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
-                                                    </td>
-                                                </tr>
+                                                <template v-for="project in third" :key="project.id+'_project'">
+                                                    <tr>
+                                                        <td><div class="ms-4">{{project.title}}</div></td>
+                                                        <td class="text-center">
+                                                            <button @click="editForm(project)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
+                                                            <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr v-for="subproject in project.subprojects" :key="subproject.id+'_subproj'">
+                                                        <td colspan="2"><div class="ms-5">{{subproject.title}}</div></td>
+                                                    </tr>
+                                                </template>
                                             </template>
                                         </template>
                                     </template>
@@ -196,10 +214,13 @@ export default {
                 division_id: '',
                 unit_id: '',
                 subunit_id: '',
-                titles: [
-                    { title: '', num: this.setUID(), status: 'New' }
-                ]
+                projects: [
+                    { title: '', num: this.setUID(), status: 'New', subprojects: [] }
+                ],
+                tempIds: []
             }
+            this.subprograms = []
+            this.clusters = []
         },
         editForm(project){
             this.resetForm()
@@ -217,9 +238,15 @@ export default {
             this.unitChange()
             this.form.subunit_id = (project.subunit_id) ? project.subunit_id : 0
 
-            this.form.titles[0].title = project.title
-            this.form.titles[0].num = project.num
-            this.form.titles[0].status = project.status
+            this.form.projects[0].title = project.title
+            this.form.projects[0].num = project.num
+            this.form.projects[0].status = project.status
+
+            for(let i = 0; i < project.subprojects.length; i++){
+                var subproject = project.subprojects[i]
+                this.form.projects[0].subprojects.push({id: subproject.id, title: subproject.title})
+                this.form.tempIds.push(subproject.id)
+            }
         },
         submitForm(){
             if(this.formValidated()){
@@ -238,24 +265,33 @@ export default {
             if(this.form.division_id === ''){ this.toastMsg('warning', 'Please select a Division'); return false }
             if(this.form.unit_id === ''){ this.toastMsg('warning', 'Please select a Unit'); return false }
             if(this.subunits.length > 0 && this.form.subunit_id === ''){ this.toastMsg('warning', 'Please select a Sub-Unit'); return false }
-            for(let i = 0; i < this.form.titles.length; i++){
-                if(this.form.titles[i].title == ''){ this.toastMsg('warning', 'Empty Project Title Detected. Project Title No. '+(i+1)); return false }
+            for(let i = 0; i < this.form.projects.length; i++){
+                if(this.form.projects[i].title == ''){ this.toastMsg('warning', 'Project Title No. '+(i+1)+' Empty'); return false }
+                for(let j = 0; j < this.form.projects[i].subprojects.length; j++){
+                    if(this.form.projects[i].subprojects[j].title == ''){ this.toastMsg('warning', 'Sub-Project Title No. '+(j+1)+' Empty'); return false }
+                }
             }
-
             return true
         },
         // Form Behavioral Functions
         addProject(){
-            this.form.titles.push({
+            this.form.projects.push({
                 title: '',
                 num: this.setUID(),
-                status: 'New'
+                status: 'New',
+                subprojects: []
             })
         },
         removeProject(title){
-            if(this.form.titles.length > 1){
-                this.form.titles.remove(title)
+            if(this.form.projects.length > 1){
+                this.form.projects.remove(title)
             }
+        },
+        addSubproject(key){
+            this.form.projects[key].subprojects.push({id: '', title: ''})
+        },
+        removeSubproject(key, title){
+            this.form.projects[key].subprojects.remove(title)
         },
         progChange(){
             this.form.subprogram_id = ''

@@ -8,6 +8,10 @@ use App\Models\Workshop;
 use App\Models\Program;
 use App\Models\Division;
 use App\Models\Project;
+use App\Models\AnnexOne;
+use App\Models\AnnexOneSub;
+use App\Models\AnnexOneFund;
+
 use DB;
 
 class WorkshopController extends Controller
@@ -93,6 +97,106 @@ class WorkshopController extends Controller
         
         $workshop->year = $startDate[0];
     }
+    
+    // Annex One
+    public function getAnnexOne($workshopId){
+        $workshopYear = $this->getWorkshopYear($workshopId);
+        $divisions = Division::select('id','code')->get();
+        $annexones = AnnexOne::where('workshop_id', $workshopId)->orderBy('id','asc')->get();
+
+        $temp = [];
+        foreach($annexones as $annexone){
+            $header = ($annexone->header_type == 'Subprogram') ? $annexone->project->subprogram->title_short : 
+                    (($annexone->header_type == 'Unit') ? ($annexone->project->subunit_id) ? $annexone->project->subunit->name : $annexone->project->unit->name : 'None');
+            $annexone->funds;
+            foreach($annexone->subs as $sub){
+                $sub->funds;
+            }
+            $divId = $annexone->project->division_id;
+            if(!array_key_exists($divId, $temp)){
+                $temp[$divId]['headers'] = [];
+                $temp[$divId]['funds'] = [];
+            }
+            if(empty($temp[$divId]['headers'])){
+                array_push($temp[$divId]['headers'], [ 'name' => $header, 'funds' => [], 'items' => [] ] );
+            }
+            if(!in_array($header, $temp[$divId]['headers'])){
+                array_push($temp[$divId]['headers'], [ 'name' => $header, 'funds' => [], 'items' => [] ] );
+                // $temp[$divId]['headers'][$header]['items'] = [];
+                // $temp[$divId]['headers'][$header]['funds'] = [];
+                // array_push($temp[$divId]['headers'][$header]['name'], );
+            }
+
+            // array_push($temp[$annexone->project->division_id]['headers']['items'], $annexone);
+
+        }
+        // $grouped = $annexones->groupBy(['project.division_id', 'header']);
+        // $array = $grouped->toArray();
+        // foreach($array as $value){
+        //     foreach($value as $header){
+                
+        //     }
+        // }
+
+        // foreach($divisions as $division){
+            // if(array_key_exists($division->id, $array)){
+            //     // $division->items = $grouped[$division->id];
+            // }
+            // else{
+            //     $division->items = [];
+            //     $division->funds = [];
+            // }
+        // }
+        return $temp;
+        // return ['div' => $divisions, 'grouped' => $grouped, 'array' => $array];
+    }
+
+    public function storeAnnexOne(Request $request){
+        DB::beginTransaction();
+        try {
+            foreach($request['projects'] as $project){
+                $annexone = new AnnexOne;
+                $annexone->source_of_funds = $request['source'];
+                $annexone->header_type     = $request['header'];
+                $annexone->workshop_id     = $request['workshop_id'];
+                $annexone->project_id      = $project['project_id'];
+                $annexone->save();
+
+                $this->saveFunds($annexone, $project, $request['workshop_year']);
+
+                foreach($project['subprojects'] as $subproject){
+                    if($subproject['state']){
+                        $annexonesub = new AnnexOneSub;
+                        $annexonesub->subproject_id = $subproject['subproject_id'];
+                        $annexonesub->save();
+
+                        $this->saveFunds($annexonesub, $subproject, $request['workshop_year']);
+                    }
+                }
+            }
+
+            DB::commit();
+            return ['message' => 'Successfully added!', 'annexones' => []];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    private function saveFunds($parent, $data, $year){
+        $cols = ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7'];
+        foreach($cols as $key => $col){
+            $amount = $this->formatAmount($data[$col]);
+            if($amount != 0){
+                $fund = new AnnexOneFund;
+                $fund->year   = $year + (int)$key;
+                $fund->amount = $amount;
+                $parent->funds()->save($fund);
+            }
+        }
+    }
+
 
     // Common
 
@@ -112,7 +216,21 @@ class WorkshopController extends Controller
         }
 
         $projects = Project::orderBy('id', 'asc')->get();
+        foreach($projects as $project){
+            $project->subprojects;
+        }
 
         return ['programs' => $programs, 'divisions' => $divisions, 'projects' => $projects];
+    }
+    
+    private function formatAmount($amount){
+        $newAmount = str_replace(',', '', $amount);
+        return (float)$newAmount;
+    }
+
+    private function getWorkshopYear($id){
+        $workshop = Workshop::findOrFail($id);
+        $str = explode('-', $workshop->start);
+        return (int)$str[0];
     }
 }

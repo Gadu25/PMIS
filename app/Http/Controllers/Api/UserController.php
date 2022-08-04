@@ -18,6 +18,7 @@ class UserController extends Controller
 
     public function authUser(){
         $user = Auth::user();
+        $user->activeProfile;
         return $user;
     }
 }

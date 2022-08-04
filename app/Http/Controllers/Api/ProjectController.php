@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Project;
+use App\Models\Subproject;
 use DB;
 
 class ProjectController extends Controller
@@ -24,16 +25,33 @@ class ProjectController extends Controller
     public function update(Request $request, $id){
         DB::beginTransaction();
         try {
+            $proj = $request['projects'][0];
             $project = Project::findOrFail($id);
-            $project->num = $request['titles'][0]['num'];
-            $project->status = $request['titles'][0]['status'];
-            $project->title = $request['titles'][0]['title'];
+            $project->num = $proj['num'];
+            $project->status = $proj['status'];
+            $project->title = $proj['title'];
             $this->saveIds($project, $request);
             $project->save();
 
+            $tempIds = [];
+            foreach($proj['subprojects'] as $subp){
+                $subproject = ($subp['id'] == '') ? new Subproject : Subproject::findOrFail($subp['id']);
+                $subproject->title = $subp['title'];
+                $subproject->project_id = $project->id;
+                $subproject->save();
+                if($subp['id'] != ''){
+                    array_push($tempIds, $subp['id']);
+                }
+            }
+
+            $forDelete = array_diff($request['tempIds'], $tempIds);
+            foreach($forDelete as $id){
+                $subproject = Subproject::findOrFail($id);
+                $subproject->delete();
+            }
+
             DB::commit();
             return ['message' => 'Successfully saved!', 'projects' => $this->getProjects()];
-            // $project->num = $request['titles'][]
         }
         catch (\Exception $e){
             DB::rollback();
@@ -48,13 +66,20 @@ class ProjectController extends Controller
     public function storeMultiple(Request $request){
         DB::beginTransaction();
         try {
-            foreach($request['titles'] as $proj){
+            foreach($request['projects'] as $proj){
                 $project = new Project;
                 $project->num = $proj['num'];
                 $project->status = $proj['status'];
                 $project->title = $proj['title'];
                 $this->saveIds($project, $request);
                 $project->save();
+
+                foreach($proj['subprojects'] as $subp){
+                    $subproject = new Subproject;
+                    $subproject->title = $subp['title'];
+                    $subproject->project_id = $project->id;
+                    $subproject->save();
+                }
             }
             DB::commit();
             return ['message' => 'Successfully added!', 'projects' => $this->getProjects()];
@@ -69,6 +94,8 @@ class ProjectController extends Controller
         $projects = Project::orderBy('id', 'asc')->get();
 
         foreach($projects as $project){
+            $project->subprojects;
+
             $project->program;
             if($project->subprogram_id){ $project->subprogram; }
             if($project->cluster_id){ $project->cluster; }

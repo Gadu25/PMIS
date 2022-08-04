@@ -36,4 +36,13 @@ class Project extends Model
     public function subunit(){
         return $this->belongsTo(Subunit::class, 'subunit_id');
     }
+
+    public function subprojects(){
+        return $this->hasMany(Subproject::class);
+    }
+
+    // Workshop
+    public function annexones(){
+        return $this->hasMany(AnnexOne::class);
+    }
 }

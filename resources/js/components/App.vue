@@ -2,36 +2,39 @@
     <div v-if="token == 0">
         <router-view></router-view>
     </div>
-    <div v-else class="app-container">
-        <div class="sidebar" :class="toggle ? 'hide' : ''">
-            <div class="sidebar-header">
-                <router-link :to="{ name: 'Dashboard' }" class="sidebar-link">
-                    <div class="d-flex justify-content-between">
-                        <img src="/images/Logo.png" alt="logo" width="60">
-                        <span>Project Management Info System</span>
-                    </div>
-                </router-link>
-            </div>
-            <div class="sidebar-body">
-                <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
-                <router-link :to="{ name: 'Divisions' }">Divisions and Units</router-link>
-                <router-link :to="{ name: 'Programs' }">Programs and Projects</router-link>
-                <router-link :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
-                <a href="/login" @click="logout">Logout</a>
-            </div>
-        </div>
-        <div class="body">
-            <div class="topbar">
-                <div class=""><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
-                <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
-                <div class="text-white p-1">
-                    <span><i class="far fa-user-circle fa-2x"></i></span>
+    <div v-else >
+        <div v-if="!loading" class="app-container">
+            <div class="sidebar" :class="toggle ? 'hide' : ''">
+                <div class="sidebar-header">
+                    <router-link :to="{ name: 'Dashboard' }" class="sidebar-link">
+                        <div class="d-flex justify-content-between">
+                            <img src="/images/Logo.png" alt="logo" width="60">
+                            <span>Project Management Info System</span>
+                        </div>
+                    </router-link>
+                </div>
+                <div class="sidebar-body">
+                    <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+                    <router-link :to="{ name: 'Divisions' }">Divisions and Units</router-link>
+                    <router-link :to="{ name: 'Programs' }">Programs and Projects</router-link>
+                    <router-link :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
+                    <a href="/login" @click="logout">Logout</a>
                 </div>
             </div>
-            <div class="content">
-                <router-view></router-view>
+            <div class="body">
+                <div class="topbar">
+                    <div class=""><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
+                    <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
+                    <div class="text-white p-1">
+                        <span><i class="far fa-user-circle fa-2x"></i></span>
+                    </div>
+                </div>
+                <div class="content">
+                    <router-view></router-view>
+                </div>
             </div>
         </div>
+        
     </div>
 </template>
 <script>
@@ -41,7 +44,8 @@ export default {
     data(){
         return {
             token: localStorage.getItem('token') || 0,
-            toggle: false
+            toggle: false,
+            loading: true
         }
     },
     methods: {
@@ -57,12 +61,11 @@ export default {
                 }
                 axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken.value
                 
-                this.fetchAuthUser()
+                this.fetchAuthUser().then(res => {
+                    this.loading = false
+                })
             }
         },
-        testMethod(){
-            alert('test')
-        }
     },
     computed: {
         ...mapGetters('user', ['getAuthUser'])
