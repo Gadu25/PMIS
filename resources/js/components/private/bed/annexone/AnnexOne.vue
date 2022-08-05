@@ -1,5 +1,5 @@
 <template>
-    <div class="px-5 py-4">
+    <div class="px-3 py-4">
         <router-link :to="{ name: 'Workshops' }" class="btn btn-sm btn-light float-start"><i class="fas fa-arrow-left"></i></router-link>
         <h2 class="text-center">Annex One</h2>
         <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small><hr>

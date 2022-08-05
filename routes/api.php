@@ -35,13 +35,13 @@ Route::prefix('/project')->group(function(){
 });
 
 Route::prefix('/workshop')->group(function(){
-    Route::middleware('auth:sanctum')->get('/options', [WorkshopController::class, 'getOptions']);
 
     Route::prefix('/annex-one')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexOne']);
         Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getAnnexOne']);
     });
 
+    Route::middleware('auth:sanctum')->get('/options/{workshopId}/{annex}', [WorkshopController::class, 'getOptions']);
     Route::middleware('auth:sanctum')->get('/', [WorkshopController::class, 'index']);
     Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'store']);
     Route::middleware('auth:sanctum')->get('/{id}', [WorkshopController::class, 'show']);

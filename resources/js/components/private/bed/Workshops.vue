@@ -36,21 +36,20 @@
                             </button>
                             </h2>
                             <div :id="'workshop'+workshop.id" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                            <div class="accordion-body">
-                                <div class="d-flex justify-content-between">
-                                    <ul class="items">
-                                        <a href="#"><li>Annex E</li></a>
-                                        <a href="#"><li>Annex F</li></a>
-                                        <router-link :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
-                                        <a href="#"><li>Required Indicators</li></a>
-                                    </ul>
-                                    <div class="actions">
-                                        <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
-                                        <button style="min-width: 140.7px;" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
+                                <div class="accordion-body">
+                                    <div class="d-flex justify-content-between">
+                                        <ul class="items">
+                                            <a href="#"><li>Annex E</li></a>
+                                            <a href="#"><li>Annex F</li></a>
+                                            <router-link :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
+                                            <a href="#"><li>Required Indicators</li></a>
+                                        </ul>
+                                        <div class="actions">
+                                            <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
+                                            <button style="min-width: 140.7px;" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                            </div>
                             </div>
                         </div>
                     </div>

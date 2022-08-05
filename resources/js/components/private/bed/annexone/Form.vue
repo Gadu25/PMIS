@@ -1,7 +1,6 @@
 <template>
     <div class="px-3 py-2">
         <div v-if="formshow">
-            
             <div class="mb-2"><h4>Form</h4></div>
             <div class="form-container">
                 <div class="form-grou row mb-2">
@@ -141,14 +140,61 @@
                 </div>
             </div>
             <div class="d-flex justify-content-end">
-                <button style="min-width: 100px;" class="btn rounded-pill btn-outline-secondary me-1" @click="formshow = false">Cancel</button>
+                <button style="min-width: 100px;" class="btn rounded-pill btn-outline-secondary me-1" @click="formshow = false" tabindex="-1">Cancel</button>
                 <button style="min-width: 100px;" class="btn rounded-pill btn-success" @click="submitForm()">Submit</button>
             </div>
         </div>
         <template v-else>
-            <div class="d-flex justify-content-end" v-if="!loading">
-                <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
-            </div>
+            <template v-if="!loading">
+                <div class="d-flex justify-content-end mb-2">
+                    <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="d-flex justify-content-center flex-wrap">
+                    <div class="col-sm-4 px-3 mb-4">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <h4><strong><i class="far fa-filter"></i> Filters</strong></h4><hr>
+                                <div class="form-floating my-3">
+                                    <input type="search" class="form-control" id="Search" placeholder="Search">
+                                    <label for="Search"><i class="far fa-search"></i> Search</label>
+                                </div><hr>
+                                <h5 class="text-center">Divisions</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8 overflow-auto px-2 py-4" style="max-height: 68vh">
+                        <div class="table-responsive-xl">
+                            <table class="table table-sm table-bordered align-middle shadow">
+                                <thead>
+                                    <tr>
+                                        <th>Programs/ Projects/ Activities</th>
+                                        <th style="min-width: 75px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template v-for="div, divKey in annexones" :key="divKey">
+                                        <template v-for="source, sourceKey in div" :key="sourceKey">
+                                            <template v-for="header, headerKey in source" :key="headerKey">
+                                                <tr style="background: lightblue"><td colspan="2"><div class="ms-2 fw-bold">{{divKey}}: {{sourceKey}} - {{headerKey}}</div></td></tr>
+                                                <template v-for="item in header" :key="item.id+'_item'">
+                                                    <tr>
+                                                        <td><div class="ms-3 fw-bold">{{item.project.title}}</div></td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
+                                                            <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr v-for="sub in item.subs" :key="sub.id+'_sub'"><td colspan="2"><div class="ms-5">{{sub.subproject.title}}</div></td></tr>
+                                                </template>
+                                            </template>
+                                        </template>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </template>
             <h1 class="text-center p-5" v-else><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
         </template>
     </div>
@@ -215,10 +261,12 @@ export default {
         submitForm(){
             if(this.formValidated()){
                 this.saveAnnexOne(this.form).then(res => {
-                    console.log(res)
                     var icon = res.errors ? 'error' : 'success'
                     this.toastMsg(icon, res.message)
-                    this.formshow = false
+                    this.formshow = (res.errors)
+                    if(!res.errors){
+                        this.setOptions()
+                    }
                 })
             }
         },
@@ -333,6 +381,11 @@ export default {
         },
 
         // Others
+        setOptions(){
+            this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'one'}).then(res => {
+                this.loading = false
+            })
+        },
         toastMsg(icon, msg){
             toast.fire({
                 icon: icon,
@@ -352,9 +405,7 @@ export default {
     created(){
         if(this.options.length == 0){
             this.loading = true
-            this.fetchOptions().then(res => {
-                this.loading = false
-            })
+            this.setOptions()
         }
     }
 }

@@ -44,8 +44,8 @@ const actions = {
         })
         return response
     },
-    async fetchOptions({commit}){
-        const response = await axios.get('/api/workshop/options').then(res =>{
+    async fetchOptions({commit}, query){
+        const response = await axios.get('/api/workshop/options/'+query.workshopId+'/'+query.annex).then(res =>{
             commit('setOptions', res.data)
             return res.data
         })

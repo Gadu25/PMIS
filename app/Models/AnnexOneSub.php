@@ -10,7 +10,7 @@ class AnnexOneSub extends Model
     use HasFactory;
 
     protected $fillables = [
-        'annex_one_id'
+        'annex_one_id', 'subproject_id'
     ];
 
     public function annexone(){
@@ -19,5 +19,9 @@ class AnnexOneSub extends Model
 
     public function funds(){
         return $this->morphMany(AnnexOneFund::class, 'fundable')->orderBy('year', 'asc');
+    }
+
+    public function subproject(){
+        return $this->belongsTo(Subproject::class, 'subproject_id');
     }
 }

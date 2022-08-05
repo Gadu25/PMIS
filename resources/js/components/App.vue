@@ -150,14 +150,14 @@ export default {
 }
 .topbar{
     padding: 5px;
-    height: 5vh;
+    height: 45px;
     background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: space-between;
 }
 .content{
     background: white;
-    height: 95vh;
+    height: calc(100vh - 45px);
     overflow: auto;
 }
 </style>
