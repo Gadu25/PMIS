@@ -42,7 +42,7 @@
                                             <a href="#"><li>Annex E</li></a>
                                             <a href="#"><li>Annex F</li></a>
                                             <router-link :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
-                                            <a href="#"><li>Required Indicators</li></a>
+                                            <router-link :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Indicators</li></router-link>
                                         </ul>
                                         <div class="actions">
                                             <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>

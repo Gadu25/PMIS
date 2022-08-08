@@ -11,6 +11,8 @@ use App\Models\Project;
 use App\Models\AnnexOne;
 use App\Models\AnnexOneSub;
 use App\Models\AnnexOneFund;
+use App\Models\CommonIndicator;
+use App\Models\CommonIndicatorSub;
 
 use DB;
 
@@ -125,6 +127,7 @@ class WorkshopController extends Controller
     public function storeAnnexOne(Request $request){
         DB::beginTransaction();
         try {
+            $year = $request['workshop_year'];
             foreach($request['projects'] as $project){
                 $annexone = new AnnexOne;
                 $annexone->source_of_funds = $request['source'];
@@ -132,7 +135,7 @@ class WorkshopController extends Controller
                 $annexone->workshop_id     = $request['workshop_id'];
                 $annexone->project_id      = $project['project_id'];
                 $annexone->save();
-                $this->saveFunds($annexone, $project, $request['workshop_year']);
+                $this->saveFunds($annexone, $project, $year);
 
                 foreach($project['subprojects'] as $subproject){
                     if($subproject['state']){
@@ -140,7 +143,7 @@ class WorkshopController extends Controller
                         $annexonesub->annex_one_id = $annexone->id;
                         $annexonesub->subproject_id = $subproject['subproject_id'];
                         $annexonesub->save();
-                        $this->saveFunds($annexonesub, $subproject, $request['workshop_year']);
+                        $this->saveFunds($annexonesub, $subproject, $year);
                     }
                 }
             }
@@ -154,21 +157,151 @@ class WorkshopController extends Controller
         }
     }
 
-    private function saveFunds($parent, $data, $year){
+    public function updateAnnexOne(Request $request, $id){
+        DB::beginTransaction();
+        try {
+            $year = $request['workshop_year'];
+            $project = $request['projects'][0];
+            $annexone = AnnexOne::findOrFail($id);
+            $annexone->source_of_funds = $request['source'];
+            $annexone->header_type     = $request['header'];
+            $this->saveFunds($annexone, $project, $year, true, false);
+            
+            foreach($project['subprojects'] as $subproject){
+                $subId = $subproject['id'];
+                if($subproject['state']){
+                    $annexonesub = ($subId) ? AnnexOneSub::findOrFail($subId) : new AnnexOneSub;
+                    $annexonesub->annex_one_id = $annexone->id;
+                    $annexonesub->subproject_id = $subproject['subproject_id'];
+                    $annexonesub->save();
+                    $this->saveFunds($annexonesub, $subproject, $year, true, true);
+                }
+                else{
+                    if($subId){
+                        $annexonesub = AnnexOneSub::findOrFail($subId);
+                        $annexonesub->funds()->delete();
+                        $annexonesub->delete();
+                    }
+                }
+            }
+
+            DB::commit();
+            return ['message' => 'Successfully updated!', 'annexones' => $this->getAnnexOne($request['workshop_id'])];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function destroyAnnexOne($id){
+        DB::beginTransaction();
+        try {
+            $annexone = AnnexOne::findOrFail($id);
+            foreach($annexone->subs as $annexonesub){
+                $annexonesub->funds()->delete();
+            }
+            $annexone->funds()->delete();
+            $annexone->delete();
+
+            DB::commit();
+            return ['message' => 'Successfully deleted!', 'annexones' => $this->getAnnexOne($annexone->workshop_id)];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    private function saveFunds($parent, $data, $year, $update = false, $isSub = false){
         $cols = ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7'];
+        $amounts = [];
+        $funds = [];
         foreach($cols as $key => $col){
+            $col_year = $year + (int)$key;
             $amount = $this->formatAmount($data[$col]);
-            if($amount != 0){
-                $fund = new AnnexOneFund;
-                $fund->year   = $year + (int)$key;
-                $fund->amount = $amount;
-                $parent->funds()->save($fund);
+            if(!$update){
+                if($amount != 0){
+                    $this->basicSave($parent, $col_year, $amount);
+                }
+            }
+            else{
+                $model = ($isSub) ? 'App\Models\AnnexOneSub' : 'App\Models\AnnexOne';
+                $fund = AnnexOneFund::where('year', $col_year)->where('fundable_type', $model)->where('fundable_id', $parent->id)->first();
+                if($amount != 0){
+                    if($fund){
+                        $fund->amount = $amount;
+                        $fund->save();
+                    }
+                    else{
+                        $this->basicSave($parent, $col_year, $amount);
+                    }
+                }
+                else{
+                    if($fund){
+                        $fund->delete();
+                    }
+                }
             }
         }
     }
 
+    private function basicSave($parent, $year, $amount){
+        $fund = new AnnexOneFund;
+        $fund->year = $year;
+        $fund->amount = $amount;
+        $parent->funds()->save($fund);
+    }
 
-    // Common
+    // Common Indicators
+    public function getCommonIndicator($workshopId){
+        $commonindicators = CommonIndicator::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+        foreach($commonindicators as $indicator){
+            $indicator->tags;
+            foreach($indicator->subindicators as $subindicator){
+                $subindicator->tags;
+            }
+        }
+        $grouped = $commonindicators->groupBy(['program_id']);
+        return $grouped;
+    }
+
+    public function storeCommonIndicator(Request $request){
+        DB::beginTransaction();
+        try {
+            foreach($request['indicators'] as $indicator){
+                $commonindicator = new CommonIndicator;
+                $commonindicator->type = $request['type'];
+                $commonindicator->description = $indicator['description'];
+                $commonindicator->program_id = $request['program_id'];
+                $commonindicator->subprogram_id = $request['subprogram_id'];
+                $commonindicator->cluster_id = $request['cluster_id'];
+                $commonindicator->workshop_id = $request['workshop_id'];
+                $commonindicator->save();
+                
+                $tags = ($request['type'] == 'Performance') ? [$indicator['tag']] : $indicator['tags'];
+                $commonindicator->tags()->sync($tags);
+                foreach($indicator['subs'] as $sub){
+                    $commonindicatorsub = new CommonIndicatorSub;
+                    $commonindicatorsub->description = $sub['description'];
+                    $commonindicatorsub->common_indicator_id = $commonindicator->id;
+                    $commonindicatorsub->save();
+
+                    $tags = ($request['type'] == 'Performance') ? [$sub['tag']] : $sub['tags'];
+                    $commonindicatorsub->tags()->sync($tags);
+                }
+            }
+
+            DB::commit();
+            return ['message' => 'Successfully added!', 'commonindicators' => []];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
+        }
+    }
+
+    // Common Functions
 
     public function getOptions($workshopId, $annex){
         $programs = Program::orderBy('id', 'asc')->get();

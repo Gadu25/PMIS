@@ -22,6 +22,15 @@ const actions = {
             commit('setAnnexOnes', response.data.annexones)
         }
         return response.data
+    },
+    async deleteAnnexOne({commit}, id){
+        const response = await axios.delete('/api/workshop/annex-one/'+id).then(res => {
+            if(!res.data.errors){
+                commit('setAnnexOnes', res.data.annexones)
+            }
+            return res.data
+        })
+        return response
     }
 }
 

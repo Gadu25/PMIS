@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DivisionController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\WorkshopController;
+use App\Http\Controllers\Api\TagController;
 
 Route::controller(AuthController::class)->group(function(){
     Route::post('login', 'login');
@@ -35,10 +36,16 @@ Route::prefix('/project')->group(function(){
 });
 
 Route::prefix('/workshop')->group(function(){
-
     Route::prefix('/annex-one')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexOne']);
+        Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexOne']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyAnnexOne']);
         Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getAnnexOne']);
+    });
+
+    Route::prefix('/common-indicator')->group(function(){
+        Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeCommonIndicator']);
+        Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getCommonIndicator']);
     });
 
     Route::middleware('auth:sanctum')->get('/options/{workshopId}/{annex}', [WorkshopController::class, 'getOptions']);
@@ -47,4 +54,12 @@ Route::prefix('/workshop')->group(function(){
     Route::middleware('auth:sanctum')->get('/{id}', [WorkshopController::class, 'show']);
     Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'update']);
     Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroy']);
+});
+
+Route::prefix('/tag')->group(function(){
+    Route::middleware('auth:sanctum')->get('/', [TagController::class, 'index']);
+    Route::middleware('auth:sanctum')->post('/', [TagController::class, 'store']);
+    Route::middleware('auth:sanctum')->get('/{type}', [TagController::class, 'getTagsByType']);
+    Route::middleware('auth:sanctum')->put('/{id}', [TagController::class, 'update']);
+    Route::middleware('auth:sanctum')->delete('/{id}', [TagController::class, 'destroy']);
 });

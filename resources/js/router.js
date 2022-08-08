@@ -7,6 +7,7 @@ import Programs from './components/private/programs/Programs.vue'
 import Projects from './components/private/programs/Projects.vue'
 import Workshops from './components/private/bed/Workshops.vue'
 import AnnexOne from './components/private/bed/annexone/AnnexOne.vue'
+import CommonIndicators from './components/private/bed/common/CommonIndicators.vue'
 
 const routes = [
     { path: '/', name: 'Home', component: Home, meta: { requiresAuth: false} },
@@ -17,6 +18,7 @@ const routes = [
     { path: '/programs-and-projects/:selected', name: 'Projects', component: Projects, meta: { requiresAuth: true } },
     { path: '/budget-executive-documents', name: 'Workshops', component: Workshops, meta: { requiresAuth: true } },
     { path: '/budget-executive-documents/annex-one/:workshopId', name: 'AnnexOne', component: AnnexOne, meta: { requiresAuth: true } },
+    { path: '/budget-executive-documents/common-indicators/:workshopId', name: 'CommonIndicators', component: CommonIndicators, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({

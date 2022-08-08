@@ -5,12 +5,15 @@ import program from './modules/programs/program'
 import project from './modules/programs/project'
 import workshop from './modules/workshops/workshop'
 import annexone from './modules/workshops/annexone'
+import common from './modules/workshops/common'
+import tag from './modules/tags/tag'
 const store = createStore({
     modules: {
         user,
         division,
         program, project,
-        workshop, annexone
+        workshop, annexone, common,
+        tag
     }
 })
 
