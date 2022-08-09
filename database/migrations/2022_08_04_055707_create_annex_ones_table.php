@@ -17,8 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string('source_of_funds');
             $table->string('header_type');
-            $table->foreignId('workshop_id')->constrained('workshops')->onCascadeDelete();
-            $table->foreignId('project_id')->constrained('projects')->onCascadeDelete();
+            $table->foreignId('workshop_id')->constrained('workshops')->cascadeOnDelete();
+            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
             $table->timestamps();
         });
     }

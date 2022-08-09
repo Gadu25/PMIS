@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('common_indicator_subs', function (Blueprint $table) {
             $table->id();
             $table->mediumText('description');
-            $table->foreignId('common_indicator_id')->constrained('common_indicators')->onCascadeDelete();
+            $table->foreignId('common_indicator_id')->constrained('common_indicators')->cascadeOnDelete();
             $table->timestamps();
         });
     }

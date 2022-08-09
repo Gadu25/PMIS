@@ -45,6 +45,8 @@ Route::prefix('/workshop')->group(function(){
 
     Route::prefix('/common-indicator')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeCommonIndicator']);
+        Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateCommonIndicator']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyCommonIndicator']);
         Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getCommonIndicator']);
     });
 

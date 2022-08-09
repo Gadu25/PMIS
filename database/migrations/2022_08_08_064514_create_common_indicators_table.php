@@ -17,10 +17,10 @@ return new class extends Migration
             $table->id();
             $table->string('type');
             $table->mediumText('description');
-            $table->foreignId('workshop_id')->constrained('workshops')->onCascadeDelete();
-            $table->foreignId('program_id')->constrained('programs')->onCascadeDelete();
-            $table->foreignId('subprogram_id')->nullable()->constrained('subprograms')->onCascadeDelete();
-            $table->foreignId('cluster_id')->nullable()->constrained('clusters')->onCascadeDelete();
+            $table->foreignId('workshop_id')->constrained('workshops')->cascadeOnDelete();
+            $table->foreignId('program_id')->constrained('programs')->cascadeOnDelete();
+            $table->foreignId('subprogram_id')->nullable()->constrained('subprograms')->cascadeOnDelete();
+            $table->foreignId('cluster_id')->nullable()->constrained('clusters')->cascadeOnDelete();
             $table->timestamps();
         });
     }

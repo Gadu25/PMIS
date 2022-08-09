@@ -19,9 +19,18 @@ const actions = {
     async saveCommonIndicator({commit}, form){
         const response = form.id ? await axios.put('/api/workshop/common-indicator/'+form.id, form) : await axios.post('/api/workshop/common-indicator', form)
         if(!response.data.errors){
-            commit('setCommonIndicators', response.data)
+            commit('setCommonIndicators', response.data.commonindicators)
         }
         return response.data
+    },
+    async deleteCommonIndicator({commit}, id){
+        const response = await axios.delete('/api/workshop/common-indicator/'+id).then(res => {
+            if(!res.data.errors){
+                commit('setCommonIndicators', res.data.commonindicators)
+            }
+            return res.data
+        })
+        return response
     }
 }
 

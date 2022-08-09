@@ -258,11 +258,16 @@ class WorkshopController extends Controller
         $commonindicators = CommonIndicator::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
         foreach($commonindicators as $indicator){
             $indicator->tags;
+            $indicator->header = (($indicator->cluster_id) ? $indicator->cluster->title : (($indicator->subprogram_id) ? $indicator->subprogram->title : ''));
+            $indicator->display_type = ($indicator->type == 'Performance') ? $indicator->type : 'Other';
+            if($indicator->program_id == 1){
+                $indicator->header = ($indicator->subprogram_id) ? $indicator->subprogram->title_short : '';
+            }
             foreach($indicator->subindicators as $subindicator){
                 $subindicator->tags;
             }
         }
-        $grouped = $commonindicators->groupBy(['program_id']);
+        $grouped = $commonindicators->groupBy(['program_id', 'display_type', 'header']);
         return $grouped;
     }
 
@@ -274,8 +279,8 @@ class WorkshopController extends Controller
                 $commonindicator->type = $request['type'];
                 $commonindicator->description = $indicator['description'];
                 $commonindicator->program_id = $request['program_id'];
-                $commonindicator->subprogram_id = $request['subprogram_id'];
-                $commonindicator->cluster_id = $request['cluster_id'];
+                $commonindicator->subprogram_id = ($request['subprogram_id'] == 0) ? null : $request['subprogram_id'];
+                $commonindicator->cluster_id = ($request['cluster_id'] == 0) ? null : $request['cluster_id'];
                 $commonindicator->workshop_id = $request['workshop_id'];
                 $commonindicator->save();
                 
@@ -293,11 +298,75 @@ class WorkshopController extends Controller
             }
 
             DB::commit();
-            return ['message' => 'Successfully added!', 'commonindicators' => []];
+            return ['message' => 'Successfully added!', 'commonindicators' => $this->getCommonIndicator($request['workshop_id'])];
         }
         catch (\Exception $e){
             DB::rollback();
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function updateCommonIndicator(Request $request, $id){
+        DB::beginTransaction();
+        try {
+            foreach($request['indicators'] as $indicator){
+                $commonindicator = CommonIndicator::findOrFail($id);
+                $commonindicator->type = $request['type'];
+                $commonindicator->description = $indicator['description'];
+                $commonindicator->subprogram_id = ($request['subprogram_id'] == 0) ? null : $request['subprogram_id'];
+                $commonindicator->cluster_id = ($request['cluster_id'] == 0) ? null : $request['cluster_id'];
+                $commonindicator->save();
+
+                $tags = ($request['type'] == 'Performance') ? [$indicator['tag']] : $indicator['tags'];
+                $commonindicator->tags()->sync($tags);
+
+                $tempIds = [];
+                foreach($indicator['subs'] as $sub){
+                    $commonindicatorsub = ($sub['id']) ? CommonIndicatorSub::findOrFail($sub['id']) : new CommonIndicatorSub;
+                    $commonindicatorsub->description = $sub['description'];
+                    $commonindicatorsub->common_indicator_id = $commonindicator->id;
+                    $commonindicatorsub->save();
+
+                    $tags = ($request['type'] == 'Performance') ? [$sub['tag']] : $sub['tags'];
+                    $commonindicatorsub->tags()->sync($tags);
+
+                    if($sub['id']){
+                        array_push($tempIds, $sub['id']);
+                    }
+                }
+
+                $forDelete = array_diff($request['subIds'], $tempIds);
+                foreach($forDelete as $id){
+                    $commonindicatorsub = CommonIndicatorSub::findOrFail($id);
+                    $commonindicatorsub->tags()->detach();
+                    $commonindicatorsub->delete();
+                }
+            }
+            DB::commit();
+            return ['message' => 'Successfully saved!', 'commonindicators' => $this->getCommonIndicator($request['workshop_id'])];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function destroyCommonIndicator($id){
+        DB::beginTransaction();
+        try{
+            $commonindicator = CommonIndicator::findOrFail($id);
+            $commonindicator->tags()->detach();
+            foreach($commonindicator->subindicators as $sub){
+                $sub->tags()->detach();
+            }
+            $commonindicator->delete();
+
+            DB::commit();
+            return ['message' => 'Successfully deleted!', 'commonindicators' => $this->getCommonIndicator($commonindicator->workshop_id)];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
     }
 

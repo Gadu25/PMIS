@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onCascadeDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->string('access_level')->default('User');
             $table->boolean('isOIC')->default(false);

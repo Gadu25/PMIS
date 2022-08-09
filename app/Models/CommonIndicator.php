@@ -20,4 +20,16 @@ class CommonIndicator extends Model
     public function subindicators(){
         return $this->hasMany(CommonIndicatorSub::class);
     }
+
+    public function program(){
+        return $this->belongsTo(Program::class, 'program_id');
+    }
+
+    public function subprogram(){
+        return $this->belongsTo(Subprogram::class, 'subprogram_id');
+    }
+
+    public function cluster(){
+        return $this->belongsTo(Cluster::class, 'cluster_id');
+    }
 }

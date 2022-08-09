@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('annex_one_subs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('annex_one_id')->constrained('annex_ones')->onCascadeDelete();
-            $table->foreignId('subproject_id')->constrained('subprojects')->onCascadeDelete();
+            $table->foreignId('annex_one_id')->constrained('annex_ones')->cascadeOnDelete();
+            $table->foreignId('subproject_id')->constrained('subprojects')->cascadeOnDelete();
             $table->timestamps();
         });
     }

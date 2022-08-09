@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('subprojects', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained('projects')->onCascadeDelete();
+            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
             $table->mediumText('title');
             $table->timestamps();
         });
