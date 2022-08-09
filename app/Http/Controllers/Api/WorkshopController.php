@@ -8,6 +8,8 @@ use App\Models\Workshop;
 use App\Models\Program;
 use App\Models\Division;
 use App\Models\Project;
+use App\Models\AnnexF;
+use App\Models\AnnexFSub;
 use App\Models\AnnexOne;
 use App\Models\AnnexOneSub;
 use App\Models\AnnexOneFund;
@@ -98,6 +100,56 @@ class WorkshopController extends Controller
         $workshop->date = ($startMonth == $endMonth) ? $date = $startMonth.' '.$startDay.'-'.$endDay.', '.$startDate[0] : $date = $startMonth.' '.$startDay.' - '.$endMonth.' '.$endDay.', '.$startDate[0];
         
         $workshop->year = $startDate[0];
+    }
+
+    // Annex F 
+    public function storeAnnexF(Request $request){
+        DB::beginTransaction();
+        try {
+            foreach($request['projects'] as $project){
+                $annexf = new AnnexF;
+                $annexf->workshop_id = $request['workshop_id'];
+                $annexf->save();
+
+                $projects = ($project['multiple']) ? $project['project_ids'] : [$project['project_id']];
+                $annexf->projects()->sync($projects);
+
+                foreach($project['subprojects'] as $subproject){
+                    if($subproject['state']){
+                        $annexfsub = new AnnexFSub;
+                        $annexfsub->annex_f_id = $annexf->id;
+                        $annexfsub->subproject_id = $subproject['subproject_id'];
+                        $annexfsub->save();
+                    }
+                }
+            }
+
+            DB::commit();
+            return ['message' => 'Successfully added!', 'annexfs' => $this->getAnnexF($request['workshop_id'])];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+    
+    public function updateAnnexF(Request $request, $id){
+        
+    }
+    
+    public function destroyAnnexF($id){
+        
+    }
+    
+    public function getAnnexF($workshopId){
+        $annexfs = AnnexF::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+        foreach($annexfs as $annexf){
+            $annexf->projects;
+            foreach($annexf->subs as $sub){
+                $sub->subproject;
+            }
+        }
+        return $annexfs;
     }
     
     // Annex One
@@ -392,6 +444,14 @@ class WorkshopController extends Controller
             $annexones = AnnexOne::select('project_id')->where('workshop_id', $workshopId)->get();
             foreach($annexones as $annexone){
                 array_push($ids, $annexone->project_id);
+            }
+        }
+        if($annex == 'f'){
+            $annexfs = AnnexF::where('workshop_id', $workshopId)->get();
+            foreach($annexfs as $annexf){
+                foreach($annexf->projects as $project){
+                    array_push($ids, $project->id);
+                }
             }
         }
 

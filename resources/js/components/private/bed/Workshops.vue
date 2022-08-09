@@ -38,13 +38,13 @@
                             <div :id="'workshop'+workshop.id" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
                                     <div class="d-flex justify-content-between">
-                                        <ul class="items">
+                                        <ul class="items me-2">
                                             <a href="#"><li>Annex E</li></a>
-                                            <a href="#"><li>Annex F</li></a>
+                                            <router-link :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
                                             <router-link :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
                                             <router-link :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Indicators</li></router-link>
                                         </ul>
-                                        <div class="actions">
+                                        <div class="actions ms-2">
                                             <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
                                             <button style="min-width: 140.7px;" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
                                         </div>
@@ -161,5 +161,9 @@ ul.items>a>li:hover{
 a{
     text-decoration: none;
     color: black;
+}
+.actions{
+    align-self: flex-end;
+    margin-bottom: 16px;
 }
 </style>

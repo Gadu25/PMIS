@@ -217,7 +217,7 @@ export default {
     components: { Highlighter },
     data(){
         return {
-            loading: false,
+            loading: true,
             formshow: false,
             form: {},
             subprograms: [],
@@ -535,11 +535,6 @@ export default {
                 this.filters.push(this.divisions[i].code)
             }
         },
-        setOptions(){
-            this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'one'}).then(res => {
-                this.loading = false
-            })
-        },
         toastMsg(icon, msg){
             toast.fire({
                 icon: icon,
@@ -553,19 +548,18 @@ export default {
         ...mapGetters('workshop', ['getOptions', 'getWorkshop']),
         options(){ return this.getOptions },
         workshop(){ return this.getWorkshop },
+        ...mapGetters('division', ['getDivisions']),
+        divisions(){ return this.getDivisions },
         ...mapGetters('annexone', ['getAnnexOnes']),
         annexones(){ 
             var keyword = this.keyword.toLowerCase()
             return this.displaySearch(keyword)
         },
-        ...mapGetters('division', ['getDivisions']),
-        divisions(){ return this.getDivisions }
     },
     created(){
-        if(this.options.length == 0){
-            this.loading = true
-            this.setOptions()
-        }
+        this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'one'}).then(res => {
+            this.loading = false
+        })
         this.fillFilters()
     }
 }

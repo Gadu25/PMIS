@@ -36,6 +36,13 @@ Route::prefix('/project')->group(function(){
 });
 
 Route::prefix('/workshop')->group(function(){
+    Route::prefix('/annex-f')->group(function(){
+        Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexF']);
+        Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexF']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyAnnexF']);
+        Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getAnnexF']);
+    });
+
     Route::prefix('/annex-one')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexOne']);
         Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexOne']);

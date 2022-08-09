@@ -143,7 +143,7 @@
                                         <textarea class="form-control shadow-none" v-model="indicator.description" placeholder="description" id="IndicatorDescription" style="min-height: 100px"></textarea>
                                         <label for="IndicatorDescription">Indicator Description</label>
                                     </div>
-                                    <button tabindex="-1" @click="addSub(key)" class="btn btn-sm btn-success float-end shadow-none" style="height: 23px !important; padding: 0px 7px;"><i class="far fa-plus"></i> Sub-Indicator</button>
+                                    <button tabindex="-1" @click="addSub(key)" class="btn btn-xs btn-success float-end shadow-none"><i class="far fa-plus"></i> Sub-Indicator</button>
                                     <strong v-if="indicator.subs.length > 0">Sub-Indicators</strong>
                                     <div class="form-group row pb-2 mb-2 border-bottom" v-for="sub, skey in indicator.subs" :key="skey+'_sub_'+key">
                                         <div class="col-sm-8">
@@ -159,12 +159,12 @@
                                                 <input tabindex="-1" v-else class="shadow-none form-check-input" type="radio" :value="tag.id" :id="key+'_'+tag.id+'_subtag_'+skey" v-model="sub.tag">
                                                 <label class="form-check-label" :for="key+'_'+tag.id+'_subtag_'+skey">{{tag.name}} </label>
                                             </div>
-                                            <button tabindex="-1" @click="removeSub(key, sub)" class="btn btn-sm btn-danger float-end shadow-none mt-1" style="height: 23px !important; padding: 0px 7px;"><i class="far fa-trash-alt"></i> Remove</button>
+                                            <button tabindex="-1" @click="removeSub(key, sub)" class="btn btn-xs btn-danger float-end shadow-none mt-1" ><i class="far fa-trash-alt"></i> Remove</button>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button tabindex="-1" v-if="!form.id" @click="removeIndicator(indicator)" class="btn btn-sm btn-danger float-end shadow-none mb-1" style="height: 23px !important; padding: 0px 7px;"><i class="far fa-trash-alt"></i> Remove</button>
+                                    <button tabindex="-1" v-if="!form.id" @click="removeIndicator(indicator)" class="btn btn-xs btn-danger float-end shadow-none mb-1" ><i class="far fa-trash-alt"></i> Remove</button>
                                     <strong>Tag/s: </strong>
                                     <div class="form-check" v-for="tag in tags[form.program_id]" :key="tag.id+'_tagCheck'">
                                         <input tabindex="-1" v-if="selectedTab != 'Performance'"  class="form-check-input shadow-none" type="checkbox" :value="tag.id" :id="tag.id+'_tag_'+key" v-model="indicator.tags">

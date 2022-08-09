@@ -162,6 +162,13 @@ export default {
 }
 </style>
 <style>
+.btn-xs{
+    height: 23px !important;
+    padding: 0px 7px;
+    font-size: .875rem;
+    border-radius: 0.2rem;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
     background: transparent;
     bottom: 0;

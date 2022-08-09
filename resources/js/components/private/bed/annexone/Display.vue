@@ -5,7 +5,7 @@
             <button class="btn btn-sm btn-outline-secondary" v-if="!loading" @click="filtershow = 'show'"><i class="far fa-filter"></i></button>
             <button class="btn btn-sm btn-outline-secondary" v-else><i class="far fa-spinner fa-spin"></i></button>
         </div>
-        <div class="overflow-auto" style="max-height: 65vh;">
+        <div class="overflow-auto" style="max-height: 65vh;" v-if="!loading">
             <table class="table table-sm table-bordered">
                 <thead class="position-sticky top-0 bg-secondary text-white">
                     <tr>
@@ -59,6 +59,7 @@
                 </tbody>
             </table>
         </div>
+        <h1 class="text-center p-5" v-else><i class="fas fa-spinner fa-spin"></i></h1>
         <div class="filter-container shadow-lg rounded overflow-auto" :class="filtershow">
             <button class="btn btn-danger btn-sm float-end" @click="filtershow = ''"><i class="fas fa-times"></i></button>
             <h4><strong>Filters</strong></h4><hr>
@@ -244,6 +245,7 @@ export default {
             }
         },
         fillFilters(){
+            this.filters = []
             for(let i = 0; i < this.divisions.length; i++){
                 this.filters.push(this.divisions[i].code)
             }
@@ -263,9 +265,14 @@ export default {
     },
     created(){
         if(this.divisions.length == 0){
-            this.fetchDivisions()
+            this.loading = true
+            this.fetchDivisions().then(res => {
+                this.fillFilters()
+            })
         }
-        this.fillFilters()
+        else{
+            this.fillFilters()
+        }
     }
 }
 </script>

@@ -45,4 +45,8 @@ class Project extends Model
     public function annexones(){
         return $this->hasMany(AnnexOne::class);
     }
+    
+    public function annexfs(){
+        return $this->belongsToMany(AnnexF::class, 'annex_f_project', 'project_id', 'annex_f_id');
+    }
 }
