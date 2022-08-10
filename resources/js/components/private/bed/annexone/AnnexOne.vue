@@ -1,6 +1,6 @@
 <template>
     <div class="px-3 py-4">
-        <router-link :to="{ name: 'Workshops' }" class="btn btn-sm btn-light float-start"><i class="fas fa-arrow-left"></i></router-link>
+        <button class="btn btn-sm btn-light float-start" @click="moveBack()"><i class="fas fa-arrow-left"></i> Back</button>
         <h2 class="text-center">Annex One</h2>
         <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small><hr>
         <template v-if="!loading">
@@ -31,7 +31,11 @@ export default {
     },
     methods: {
         ...mapActions('workshop', ['fetchWorkshop']),
-        ...mapActions('annexone', ['fetchAnnexOnes'])
+        ...mapActions('annexone', ['fetchAnnexOnes']),
+        moveBack(){
+            this.$emit('clicked', true)
+            this.$router.back()
+        }
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),

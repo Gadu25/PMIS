@@ -12,16 +12,17 @@
                             <span>Project Management Info System</span>
                         </div>
                     </router-link>
+                    <button id="toggleBtn" @click="toggle = !toggle" class="btn btn-sm btn-primary"><i class="fas fa-bars"></i></button>
                 </div>
                 <div class="sidebar-body">
-                    <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
-                    <router-link :to="{ name: 'Divisions' }">Divisions and Units</router-link>
-                    <router-link :to="{ name: 'Programs' }">Programs and Projects</router-link>
-                    <router-link :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
+                    <router-link active-class="active" :to="{ name: 'Dashboard' }">Dashboard</router-link>
+                    <router-link active-class="active" :to="{ name: 'Divisions' }">Divisions and Units</router-link>
+                    <router-link active-class="active" :to="{ name: 'Programs' }">Programs and Projects</router-link>
+                    <router-link active-class="active" :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
                     <a href="/login" @click="logout">Logout</a>
                 </div>
             </div>
-            <div class="body">
+            <div class="body" :style="!toggle ? 'width: calc(100vw - 280px)' : 'width: 100vw'">
                 <div class="topbar">
                     <div class=""><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
                     <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
@@ -80,16 +81,11 @@ export default {
     background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);
     display: flex;
 }
-.body{
-    width: 100%;
-    transition: all 0.5s;
-}
 .sidebar{
     height: 100vh;
-    width: 350px;
+    width: 280px;
     background: rgba(0, 0, 0, 0.6);
     color: white;
-    transition: all 0.5s;
     position: relative;
     left: 0;
 }
@@ -105,6 +101,10 @@ export default {
     padding: 14px;
     text-align: center;
     cursor: pointer;
+}
+.sidebar-header>#toggleBtn{
+    position: fixed;
+    top: -200px;
 }
 .sidebar-link{
     text-decoration: none;
@@ -129,14 +129,15 @@ export default {
     background-size: 0% 100%;
     transition: background-size .3s, color .3s;
 }
-.sidebar-body>a.active {
+/* .sidebar-body>a.active {
     background: linear-gradient(to left, #3399ff -19%, #66ffcc 114%);
     color: black;
-}
+} */
 .sidebar-body>a:hover:not(.active, .header) {
     background-size: 100% 100%;
     color: #fff;
 }
+.sidebar-body>a.active,
 .sidebar-body>a.router-link-exact-active{
     background-color: rgba(0, 0, 0, 0.3);
     color: #fff;
@@ -159,6 +160,36 @@ export default {
     background: white;
     height: calc(100vh - 45px);
     overflow: auto;
+}
+@media only screen and (max-width: 600px) {
+    .body{
+        width: 100vw !important;
+    }
+    .sidebar{
+        position: fixed;
+        background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);
+        z-index: 999;
+        width: 300px;
+    }
+    .sidebar-header{
+        position: relative;
+    }
+    .sidebar-header>#toggleBtn{
+        position: absolute;
+        top: 10px;
+        right: -35px;
+    }
+    .sidebar-header>a>div{
+        display: flex;
+    }
+    .sidebar-body{
+        background-color: rgba(0, 0, 0, 0.6);
+        height: 100%;
+    }
+    .sidebar-body>a.router-link-exact-active{
+        background-color: rgba(0, 0, 0, 0.8);
+        color: #fff;
+    }
 }
 </style>
 <style>

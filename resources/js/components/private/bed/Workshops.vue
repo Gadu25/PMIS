@@ -1,5 +1,5 @@
 <template>
-    <div class="px-5 py-4">
+    <div class="px-5 py-4" v-if="!childSelected">
         <h2 class="text-center">Budget Executive Documents</h2><hr>
         <div class="container" v-if="!loading">
             <form @submit.prevent="submitForm()" class="d-flex justify-content-center border-bottom mb-4" v-if="formshow">
@@ -40,9 +40,9 @@
                                     <div class="d-flex justify-content-between">
                                         <ul class="items me-2">
                                             <a href="#"><li>Annex E</li></a>
-                                            <router-link :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
-                                            <router-link :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
-                                            <router-link :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Indicators</li></router-link>
+                                            <router-link @click="childSelected = true" :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
+                                            <router-link @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
+                                            <router-link @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Indicators</li></router-link>
                                         </ul>
                                         <div class="actions ms-2">
                                             <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
@@ -58,6 +58,9 @@
         </div>
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
     </div>
+    <div v-else>
+        <router-view @clicked="childSelected = false"></router-view>
+    </div>
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex'
@@ -71,7 +74,8 @@ export default {
                 end: ''
             },
             formshow: false,
-            loading: true
+            loading: true,
+            childSelected: false
         }
     },
     methods: {
@@ -130,6 +134,9 @@ export default {
                 icon: icon,
                 title: msg
             })
+        },
+        checkCurrRoute(){
+            this.childSelected = (this.$route.name != 'Workshops')
         }
     },
     computed: {
@@ -140,6 +147,7 @@ export default {
         this.fetchWorkshops().then(res => {
             this.loading = false
         })
+        this.checkCurrRoute()
     }
 }
 </script>

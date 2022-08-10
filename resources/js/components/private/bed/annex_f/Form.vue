@@ -2,7 +2,7 @@
     <div class="px-2 my-2">
         <template v-if="formshow">
             <h4>Form</h4>
-            <strong>Program</strong>
+            <strong v-if="!form.id">Program</strong>
             <div class="form-group row mb-2" v-if="!form.id">
                 <div :class="'mb-2 col-sm-'+ ((subprograms.length > 0 && clusters.length > 0) ? 4 : (subprograms.length > 0) ? 6 : 12 )">
                     <div class="form-floating">
@@ -34,7 +34,7 @@
                     </div>
                 </div>
             </div>
-            <strong>Division</strong>
+            <strong v-if="!form.id">Division</strong>
             <div class="form-group row mb-2" v-if="user.active_profile.title == 'Superadmin Profile' && !form.id">
                 <div :class="'mb-2 col-sm-'+ ((units.length > 0 && subunits.length > 0) ? 4 : (units.length > 0) ? 6 : 12 )">
                     <div class="form-floating">
@@ -66,13 +66,13 @@
                     </div>
                 </div>
             </div>
-            <button class="btn btn-sm btn-success float-end" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
-            <strong>Projects</strong>
+            <button class="btn btn-sm btn-success float-end" v-if="!form.id" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
+            <strong>{{!form.id ? 'Projects' : 'Project'}}</strong>
             <div class="d-flex flex-wrap mt-3">
                 <div class="col-sm-6 px-2 my-2" v-for="proj, key in form.projects" :key="'project_'+key">
                     <div class="card shadow">
                         <div class="card-body">
-                            <button class="btn btn-xs btn-danger float-end" @click="removeProject(proj)"><i class="far fa-trash-alt"></i> Remove</button>
+                            <button class="btn btn-xs btn-danger float-end" v-if="!form.id" @click="removeProject(proj)"><i class="far fa-trash-alt"></i> Remove</button>
                             <div class="form-check form-switch">
                                 <input style="cursor: pointer" class="form-check-input" type="checkbox" :id="'multiple'+key" v-model="proj.multiple">
                                 <label style="cursor: pointer" class="form-check-label" :for="'multiple'+key">Multiple</label>
@@ -83,6 +83,9 @@
                                         <option value="" selected hidden disabled>Select Project</option>
                                         <template v-for="project in options.projects" :key="project.id+'_projOption'">
                                             <option :value="project.id" v-if="(showProject(project) && !this.form.selectedProjects.includes(project.id)) || project.id == proj.project_id">{{project.title}}</option>
+                                        </template>
+                                        <template v-for="project in options.used_projects" :key="project.id+'_projOptionUsed'">
+                                            <option :value="project.id" v-if="(showProject(project) && project.id == proj.project_id) || proj.project_ids.includes(project.id)">{{project.title}}</option>
                                         </template>
                                     </select>
                                     <label for="Project">Project</label>
@@ -104,6 +107,14 @@
                                         </label>
                                     </div>
                                 </template>
+                                <template v-for="project in options.used_projects" :key="project.id+'_projOption'">
+                                    <div class="form-check my-2" v-if="showProject(project) && (proj.project_ids.includes(project.id) || proj.project_id == project.id)">
+                                        <input class="form-check-input" type="checkbox" :value="project.id" :id="'projCheck_'+project.id" v-model="proj.project_ids" @click="checkboxProject($event, key, project.id)">
+                                        <label class="form-check-label" :for="'projCheck_'+project.id">
+                                            {{project.title}}
+                                        </label>
+                                    </div>
+                                </template>
                             </template>
                         </div>
                     </div>
@@ -114,21 +125,117 @@
                 <button style="min-width: 100px;" class="btn rounded-pill" :class="form.id ? 'btn-primary' : 'btn-success'" @click="submitForm()">{{form.id ? 'Save Changes' :'Submit'}}</button>
             </div>
         </template>
-        <template v-else>   
-            <div class="d-flex justify-content-end">
+        <template v-if="detailshow">
+            <div class="d-flex justify-content-between mb-2">
+                <button @click="detailshow = false" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Cancel</button>
+                <button class="btn btn-sm btn-primary"><i class="far fa-save"></i> Save Changes</button>
+            </div>
+            <div class="overflow-auto" v-dragscroll>
+                <table class="table table-sm table-bordered" style="width: 3500px;">
+                    <thead class="align-middle">
+                        <tr>
+                            <th style="width: 8%" rowspan="3">Program Name/Activity</th>
+                            <th style="width: 1%" rowspan="3">Total <br>Target <br>(P'000)</th>
+                            <th colspan="3">{{workshop.year}}</th>
+                            <th colspan="12">{{parseInt(workshop.year) + 1}}</th>
+                            <th style="width: 4%" rowspan="3">Total</th>
+                            <th style="width: 4%" rowspan="3">Remarks</th>
+                        </tr>
+                        <tr>
+                            <th colspan="3">4th Qtr</th>
+                            <th colspan="3">1st Qtr</th>
+                            <th colspan="3">2nd Qtr</th>
+                            <th colspan="3">3rd Qtr</th>
+                            <th colspan="3">4th Qtr</th>
+                        </tr>
+                        <tr>
+                            <th style="width: 5.53%" v-for="col, key in columns" :key="col+key">{{col}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{form.title}}</td><td></td>
+                            <td class="p-0" v-for="activity, key in form.activities" :key="'activity_'+key">
+                                <div class="position-relative" v-for="act, akey in activity" :key="'act_'+akey">
+                                    <button @click="removeActivity(key, act)" class="btn btn-xs btn-danger position-absolute rounded-0 end-0"><i class="fas fa-times"></i></button>
+                                    <textarea class="form-control rounded-0 shadow-none h-100" rows="6" v-model="act.description"></textarea>
+                                </div>
+                                <button @click="addActivity(key)" class="btn btn-sm btn-outline-secondary shadow-none rounded-0 w-100 border-0"><i class="fas fa-plus"></i></button>
+                            </td><td></td>
+                            <td class="p-0" style="height: 1px"><textarea class="form-control rounded-0 shadow-none h-100" v-model="form.remarks"></textarea></td>
+                        </tr>
+                        <tr style="background: rgba(255, 166, 0, 0.15)">
+                            <td class="text-center fw-bold"><small>Fundings</small></td><td></td>
+                            <td class="p-0" style="height: 1px" v-for="fund, fkey in form.funds" :key="'fund_'+fkey">
+                                <input type="text" class="form-control rounded-0 h-100 shadow-none text-end" style="background: transparent" v-model.lazy="fund.amount" v-money="money">
+                            </td>
+                            <td class="text-end" style="padding: 6px 12px">{{formatAmount(getTotalAmount())}}</td><td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
+        <template v-if="!formshow && !detailshow">   
+            <div class="d-flex justify-content-end mb-2">
                 <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="row">
+                <div class="col-sm-3 mb-3">
+                    <div class="card shadow mx-3">
+                        <div class="card-body">
+                            <h4>Filters</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-9">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                <th>Project Name/Activity</th>
+                                <th style="width: 87px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-for="items, header in annexfs" :key="header">
+                                    <tr><td class="fw-bold">{{header}}</td><th></th></tr>
+                                    <template v-for="annexf in items" :key="'annexf_'+annexf.id">
+                                        <tr>
+                                            <td>{{annexf.title}}</td>
+                                            <td>
+                                                <button style="width: 37px" class="btn btn-sm btn-primary mb-1 me-1" @click="editForm(annexf, 'form')"><i class="far fa-pencil-alt"></i></button>
+                                                <button style="width: 37px" class="btn btn-sm btn-danger mb-1"><i class="far fa-trash-alt"></i></button><br>
+                                                <button class="btn btn-sm btn-outline-secondary" @click="editForm(annexf, 'detail')"><i class="far fa-pencil-alt"></i> Details</button>
+                                            </td>
+                                        </tr>
+                                        <tr v-for="sub in annexf.subs" :key="'annexfsub_'+sub.id">
+                                            <td colspan="2"><div class="ms-3">{{sub.subproject.title}}</div></td>
+                                        </tr>
+                                    </template>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </template>
     </div>
 </template>
 <script>
+import { dragscroll } from 'vue-dragscroll'
+import { VMoney } from 'v-money'
 import { mapActions, mapGetters } from 'vuex'
 export default {
     name: 'Form',
+    directives: {
+        dragscroll: dragscroll,
+        money: VMoney
+    },
     data(){
         return {
             loading: true,
             formshow: false,
+            detailshow: false,
             form: {
                 id: '',
                 program_id: '',
@@ -142,14 +249,36 @@ export default {
                     multiple: false,
                     project_id: '',
                     project_ids: [],
-                    subprojects: []
+                    subprojects: [],
                 }],
-                selectedProjects: []
+                selectedProjects: [],
+                remarks: '',
+                title: '',
+                activities: [],
+                funds: [],
+                total: 0
             },
             subprograms: [],
             clusters: [],
             units: [],
-            subunits: []
+            subunits: [],
+            columns: [
+                'Oct', 'Nov', 'Dec',
+                'Jan', 'Feb', 'Mar',
+                'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep',
+                'Oct', 'Nov', 'Dec',
+            ],
+            tempAmounts: [],
+            tempSubitemAmounts: [],
+            money: {
+                decimal: '.',
+                thousands: ',',
+                prefix: '',
+                suffix: '',
+                precision: 2,
+                masked: false /* doesn't work with directive */
+            },
         }
     },
     methods: {
@@ -157,6 +286,75 @@ export default {
         ...mapActions('annexf', ['fetchAnnexFs', 'saveAnnexF', 'deleteAnnexF']),
         resetForm(){
             this.formshow = true
+            this.form.id = ''
+            this.form.program_id = ''
+            this.form.subprogram_id = ''
+            this.form.cluster_id = ''
+            this.form.division_id = ''
+            this.form.unit_id = ''
+            this.form.subunit_id = ''
+            this.form.projects = [{
+                    multiple: false,
+                    project_id: '',
+                    project_ids: [],
+                    subprojects: []
+                }]
+            this.form.selectedProjects = []
+            this.subprograms = []
+            this.clusters = []
+            this.units = []
+            this.subunits = []
+        },
+        editForm(annexf, type){
+            this.form.selectedProjects = []
+            this.form.id = annexf.id
+            var project = annexf.projects[0]
+            this.form.program_id = project.program_id
+            this.progChange()
+            this.form.subprogram_id = (project.subprogram_id) ? project.subprogram_id : 0
+            this.subpChange()
+            this.form.cluster_id = (project.cluster_id) ? project.cluster_id : 0
+            this.form.division_id = project.division_id
+            this.divChange()
+            this.form.unit_id = (project.unit_id) ? project.unit_id : 0
+            this.unitChange()
+            this.form.subunit_id = (project.subunit_id) ? project.subunit_id : 0
+    
+            this.form.projects = []
+            var length = annexf.projects.length
+            this.form.projects.push({
+                multiple: (length > 1),
+                project_id: '',
+                project_ids: [],
+                subprojects: [],
+            })
+
+            this.form.remarks = annexf.remarks
+            this.form.title = annexf.title
+            this.form.activities = []
+            this.form.funds = []
+
+            for(let i = 0; i < this.columns.length; i++){
+                this.form.activities.push([{id: '', description: ''}])
+                this.form.funds.push({id: '', amount: 0})
+            }
+
+            for(let i = 0; i < length; i++){
+                project = annexf.projects[i]
+                if(length > 1){ this.form.projects[0].project_ids.push(project.id) }
+                else{ this.form.projects[0].project_id = project.id }
+            }
+            if(length == 1){
+                this.projectChange(project.id)
+                for(let i = 0; i < annexf.subs.length; i++){
+                    var subproject = this.form.projects[0].subprojects.find(elem => elem.subproject_id == annexf.subs[i].subproject_id)
+                    subproject.state = true
+                    subproject.id = annexf.subs[i].id
+                }
+            }
+            
+            this.formshow = (type == 'form')
+            this.detailshow = (type == 'detail')
         },
         submitForm(){
             if(this.formValidated()){
@@ -194,7 +392,9 @@ export default {
                     id: '',
                     subproject_id: subproject.id,
                     title: subproject.title,
-                    state: false
+                    state: false,
+                    activities: [],
+                    funds: []
                 })
             }
 
@@ -321,6 +521,32 @@ export default {
                     subs: []
                 }]
         },
+        // Form Details Behavior
+        addActivity(key){
+            this.form.activities[key].push({id: '', description: ''})
+        },
+        removeActivity(key, act){
+            if(this.form.activities[key].length > 1){
+                this.form.activities[key].remove(act)
+            }
+        },
+        formatAmount(amount){
+            return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        },
+        getTotalAmount(){
+            var total = 0
+            for(let i = 0; i < this.form.funds.length; i++){
+                if(i > 2){
+                    var amount = this.strToFloat(this.form.funds[i].amount)
+                    total = total + Math.abs(amount)
+                }
+            }
+            return total
+        },
+        strToFloat(num){
+            let strNum = num.toString().replace(/\,/g,'')
+            return parseFloat(strNum)
+        },
         // Toast
         toastMsg(icon, msg){
             toast.fire({
@@ -335,8 +561,8 @@ export default {
         ...mapGetters('workshop', ['getOptions', 'getWorkshop']),
         options(){ return this.getOptions },
         workshop(){ return this.getWorkshop },
-        // ...mapGetters('division', ['getDivisions']),
-        // divisions(){ return this.getDivisions },
+        ...mapGetters('annexf', ['getAnnexFs']),
+        annexfs(){ return this.getAnnexFs }
     },
     created(){
         this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'f'}).then(res => {
@@ -345,3 +571,8 @@ export default {
     }
 }
 </script>
+<style scoped>
+th{
+    text-align: center;
+}
+</style>

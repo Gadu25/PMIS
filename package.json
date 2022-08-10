@@ -16,6 +16,7 @@
         "sweetalert2": "^11.4.24",
         "v-money": "^0.8.1",
         "vue": "^3.2.37",
+        "vue-dragscroll": "^4.0.3",
         "vue-highlight-words": "^3.0.1",
         "vue-loader": "^17.0.0",
         "vue-router": "^4.1.3",

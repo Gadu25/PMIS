@@ -134,7 +134,33 @@ class WorkshopController extends Controller
     }
     
     public function updateAnnexF(Request $request, $id){
-        
+        DB::beginTransaction();
+        try {
+            $project = $request['projects'][0];
+            $annexf = AnnexF::findOrFail($id);
+            // $annexf->
+            $projects = ($project['multiple']) ? $project['project_ids'] : [$project['project_id']];
+            $annexf->projects()->sync($projects);
+            
+            foreach($project['subprojects'] as $subproject){
+                $annexfsub = $subproject['id'] ? AnnexFSub::findOrFail($subproject['id']) : new AnnexFSub;
+                if($subproject['state']){
+                    $annexfsub->annex_f_id = $annexf->id;
+                    $annexfsub->subproject_id = $subproject['subproject_id'];
+                    $annexfsub->save();
+                }
+                else{
+                    $annexfsub->delete();
+                }
+            }
+
+            DB::commit();
+            return ['message' => 'Successfully saved!', 'annexfs' => $this->getAnnexF($request['workshop_id'])];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
     }
     
     public function destroyAnnexF($id){
@@ -144,12 +170,17 @@ class WorkshopController extends Controller
     public function getAnnexF($workshopId){
         $annexfs = AnnexF::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
         foreach($annexfs as $annexf){
-            $annexf->projects;
+            $project = $annexf->projects[0];
+            $annexf->title = (sizeof($annexf->projects) > 1) ? $project->subprogram->title : $project->title;
+            $subpTitleType = $project->program->title == 'S&T Scholarship Program' ? 'title_short' : 'title';
+            $headerAppend = (($project->cluster_id) ? ' - '.$project->cluster->title : (($project->subprogram_id) ? ' - '.$project->subprogram[$subpTitleType] : ''));
+            $annexf->header = $project->program->title.$headerAppend;
             foreach($annexf->subs as $sub){
                 $sub->subproject;
             }
         }
-        return $annexfs;
+        $grouped = $annexfs->groupBy(['header']);
+        return $grouped;
     }
     
     // Annex One

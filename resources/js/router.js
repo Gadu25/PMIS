@@ -15,12 +15,20 @@ const routes = [
     { path: '/login', name: 'Login', component: Login, meta: { requiresAuth: false } },
     { path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/divisions-and-units', name: 'Divisions', component: Divisions, meta: { requiresAuth: true } },
-    { path: '/programs-and-projects', name: 'Programs', component: Programs, meta: { requiresAuth: true } },
-    { path: '/programs-and-projects/:selected', name: 'Projects', component: Projects, meta: { requiresAuth: true } },
-    { path: '/budget-executive-documents', name: 'Workshops', component: Workshops, meta: { requiresAuth: true } },
-    { path: '/budget-executive-documents/annex-f/:workshopId', name: 'AnnexF', component: AnnexF, meta: { requiresAuth: true } },
-    { path: '/budget-executive-documents/annex-one/:workshopId', name: 'AnnexOne', component: AnnexOne, meta: { requiresAuth: true } },
-    { path: '/budget-executive-documents/common-indicators/:workshopId', name: 'CommonIndicators', component: CommonIndicators, meta: { requiresAuth: true } },
+    { 
+        path: '/programs-and-projects', name: 'Programs', component: Programs, meta: { requiresAuth: true },
+        children: [
+            { path: '/programs-and-projects/:selected', name: 'Projects', component: Projects, meta: { requiresAuth: true } },
+        ]
+    },
+    { 
+        path: '/budget-executive-documents', name: 'Workshops', component: Workshops, meta: { requiresAuth: true },
+        children: [
+            { path: '/budget-executive-documents/annex-f/:workshopId', name: 'AnnexF', component: AnnexF, meta: { requiresAuth: true } },
+            { path: '/budget-executive-documents/annex-one/:workshopId', name: 'AnnexOne', component: AnnexOne, meta: { requiresAuth: true } },
+            { path: '/budget-executive-documents/common-indicators/:workshopId', name: 'CommonIndicators', component: CommonIndicators, meta: { requiresAuth: true } },
+        ]
+    },
 ]
 
 const router = createRouter({
