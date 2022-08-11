@@ -128,7 +128,7 @@
         <template v-if="detailshow">
             <div class="d-flex justify-content-between mb-2">
                 <button @click="detailshow = false" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Cancel</button>
-                <button class="btn btn-sm btn-primary"><i class="far fa-save"></i> Save Changes</button>
+                <button @click="submitForm()" class="btn btn-sm btn-primary"><i class="far fa-save"></i> Save Changes</button>
             </div>
             <div class="overflow-auto" v-dragscroll>
                 <table class="table table-sm table-bordered" style="width: 3500px;">
@@ -167,10 +167,32 @@
                         <tr style="background: rgba(255, 166, 0, 0.15)">
                             <td class="text-center fw-bold"><small>Fundings</small></td><td></td>
                             <td class="p-0" style="height: 1px" v-for="fund, fkey in form.funds" :key="'fund_'+fkey">
-                                <input type="text" class="form-control rounded-0 h-100 shadow-none text-end" style="background: transparent" v-model.lazy="fund.amount" v-money="money">
+                                <input type="text" class="form-control rounded-0 h-100 shadow-none text-end" style="background: transparent" @change="amountChange(fund.amount, fkey)" v-model="fund.amount" v-money="money">
                             </td>
-                            <td class="text-end" style="padding: 6px 12px">{{formatAmount(getTotalAmount())}}</td><td></td>
+                            <td class="text-end" style="padding: 6px 12px">{{formatAmount(getTotalAmount())}} <input type="text" v-money="money" @change="amountChange(0, 15)" class="d-none"></td><td></td>
                         </tr>
+                        <template v-for="subproject, skey in form.projects[0].subprojects" :key="'sub_'+subproject.id">
+                            <template v-if="subproject.state">
+                                <tr>
+                                    <td><div class="ms-2">{{subproject.title}}</div></td><td></td>
+                                    <td class="p-0" v-for="activity, key in subproject.activities" :key="'subactivity_'+key">
+                                        <div class="position-relative" v-for="act, akey in activity" :key="'subact_'+akey">
+                                            <button @click="removeActivity(key, act, true, skey)" class="btn btn-xs btn-danger position-absolute rounded-0 end-0"><i class="fas fa-times"></i></button>
+                                            <textarea class="form-control rounded-0 shadow-none h-100" rows="6" v-model="act.description"></textarea>
+                                        </div>
+                                        <button @click="addActivity(key, true, skey)" class="btn btn-sm btn-outline-secondary shadow-none rounded-0 w-100 border-0"><i class="fas fa-plus"></i></button>
+                                    </td><td></td>
+                                    <td class="p-0" style="height: 1px"><textarea class="form-control rounded-0 shadow-none h-100" v-model="subproject.remarks"></textarea></td>
+                                </tr>
+                                <tr style="background: rgba(255, 166, 0, 0.15)">
+                                    <td class="text-center fw-bold"><small>Fundings</small></td><td></td>
+                                    <td class="p-0" style="height: 1px" v-for="fund, fkey in subproject.funds" :key="'subfund_'+fkey">
+                                        <input type="text" class="form-control rounded-0 h-100 shadow-none text-end" style="background: transparent" @change="amountChange(fund.amount, fkey)" v-model="fund.amount" v-money="money">
+                                    </td>
+                                    <td class="text-end" style="padding: 6px 12px">{{formatAmount(getTotalAmount(subproject.funds))}} <input type="text" v-money="money" @change="amountChange(0, 15)" class="d-none"></td><td></td>
+                                </tr>
+                            </template>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -184,11 +206,31 @@
                     <div class="card shadow mx-3">
                         <div class="card-body">
                             <h4>Filters</h4>
+                            <div class="programs">
+                                <template v-for="program in programs" :key="program.id+'_program'">
+                                    <div class="form-check form-switch my-2 pb-1 border-bottom" style="background: lightgreen;">
+                                        <input style="cursor: pointer" class="form-check-input shadow-none" type="checkbox" :id="program.title" :value="program.title" v-model="filter.programs" @click="filterChange($event, program.id)">
+                                        <label style="cursor: pointer" class="form-check-label fw-bold w-100" :for="program.title">{{program.title}}</label>
+                                    </div>
+                                    <template v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
+                                        <div class="form-check form-switch mb-1 pb-1 ms-3 border-bottom">
+                                            <input style="cursor: pointer" class="form-check-input shadow-none" type="checkbox" :id="subprogram.title" :value="subprogram.title_short" v-model="filter.subprograms" @click="filterChange($event, program.id, subprogram.id)">
+                                            <label style="cursor: pointer" class="form-check-label fw-bold w-100" :for="subprogram.title">{{program.id != 2 || subprogram.id != 3 ? subprogram.title_short : subprogram.title}}</label>
+                                        </div>
+                                        <template v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
+                                            <div class="form-check form-switch mb-1 pb-1 ms-5 border-bottom">
+                                                <input style="cursor: pointer" class="form-check-input shadow-none" type="checkbox" :id="cluster.title" :value="cluster.title" v-model="filter.clusters" @click="filterChange($event, program.id, subprogram.id, cluster.id)">
+                                                <label style="cursor: pointer" class="form-check-label w-100" :for="cluster.title">{{cluster.title}}</label>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-9">
-                    <div class="table-responsive">
+                    <div class="overflow-auto" style="height: 70vh;">
                         <table class="table table-sm table-bordered table-hover">
                             <thead>
                                 <tr>
@@ -197,20 +239,31 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template v-for="items, header in annexfs" :key="header">
-                                    <tr><td class="fw-bold">{{header}}</td><th></th></tr>
-                                    <template v-for="annexf in items" :key="'annexf_'+annexf.id">
-                                        <tr>
-                                            <td>{{annexf.title}}</td>
-                                            <td>
-                                                <button style="width: 37px" class="btn btn-sm btn-primary mb-1 me-1" @click="editForm(annexf, 'form')"><i class="far fa-pencil-alt"></i></button>
-                                                <button style="width: 37px" class="btn btn-sm btn-danger mb-1"><i class="far fa-trash-alt"></i></button><br>
-                                                <button class="btn btn-sm btn-outline-secondary" @click="editForm(annexf, 'detail')"><i class="far fa-pencil-alt"></i> Details</button>
-                                            </td>
-                                        </tr>
-                                        <tr v-for="sub in annexf.subs" :key="'annexfsub_'+sub.id">
-                                            <td colspan="2"><div class="ms-3">{{sub.subproject.title}}</div></td>
-                                        </tr>
+                                <template v-for="subprograms, program in annexfs" :key="program">
+                                    <template v-if="filter.programs.includes(program)">
+                                        <tr><td colspan="2" class="fw-bold">{{program}}</td></tr>
+                                        <template v-for="clusters, subprogram in subprograms" :key="subprogram">
+                                            <template v-if="filter.subprograms.includes(subprogram)">
+                                                <template v-for="items, clus in clusters" :key="program+'_cluster_'+clus">
+                                                    <template v-if="filter.clusters.includes(clus) || clus == ''">
+                                                        <tr v-if="clus != ''"><td colspan="2"><div class="ms-2 fw-bold">{{clus}}</div></td></tr>
+                                                        <template v-for="annexf in items" :key="'annexf_'+annexf.id">
+                                                            <tr>
+                                                                <td>{{annexf.title}}</td>
+                                                                <td>
+                                                                    <button style="width: 37px" class="btn btn-sm btn-primary mb-1 me-1" @click="editForm(annexf, 'form')"><i class="far fa-pencil-alt"></i></button>
+                                                                    <button style="width: 37px" class="btn btn-sm btn-danger mb-1" @click="deleteForm(annexf.id)"><i class="far fa-trash-alt"></i></button><br>
+                                                                    <button class="btn btn-sm btn-outline-secondary" @click="editForm(annexf, 'detail')"><i class="far fa-pencil-alt"></i> Details</button>
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-for="sub in annexf.subs" :key="'annexfsub_'+sub.id">
+                                                                <td colspan="2"><div class="ms-3">{{sub.subproject.title}}</div></td>
+                                                            </tr>
+                                                        </template>
+                                                    </template>
+                                                </template>
+                                            </template>
+                                        </template>
                                     </template>
                                 </template>
                             </tbody>
@@ -256,7 +309,8 @@ export default {
                 title: '',
                 activities: [],
                 funds: [],
-                total: 0
+                total: 0,
+                activityIds: []
             },
             subprograms: [],
             clusters: [],
@@ -279,6 +333,11 @@ export default {
                 precision: 2,
                 masked: false /* doesn't work with directive */
             },
+            filter: {
+                programs: [],
+                subprograms: [],
+                clusters: []
+            }
         }
     },
     methods: {
@@ -329,6 +388,7 @@ export default {
                 subprojects: [],
             })
 
+            this.form.activityIds = []
             this.form.remarks = annexf.remarks
             this.form.title = annexf.title
             this.form.activities = []
@@ -339,17 +399,59 @@ export default {
                 this.form.funds.push({id: '', amount: 0})
             }
 
+            for(let i = 0; i < annexf.activities.length; i++){
+                var activity = annexf.activities[i]
+                var formactivity = this.form.activities[activity.table_key]
+                if(this.form.activities[activity.table_key][0].description == ''){
+                    formactivity[0].id = activity.id
+                    formactivity[0].description = activity.description
+                }
+                else{
+                    formactivity.push({id: activity.id, description: activity.description})
+                }
+            }
+
+            for(let i = 0; i < annexf.funds.length; i++){
+                var fund = annexf.funds[i]
+                var formfund = this.form.funds[fund.table_key]
+                formfund.id = fund.id
+                formfund.amount = this.formatAmount(fund.amount)
+            }
+
             for(let i = 0; i < length; i++){
                 project = annexf.projects[i]
                 if(length > 1){ this.form.projects[0].project_ids.push(project.id) }
                 else{ this.form.projects[0].project_id = project.id }
             }
+
             if(length == 1){
                 this.projectChange(project.id)
                 for(let i = 0; i < annexf.subs.length; i++){
-                    var subproject = this.form.projects[0].subprojects.find(elem => elem.subproject_id == annexf.subs[i].subproject_id)
+                    var sub = annexf.subs[i]
+                    var subproject = this.form.projects[0].subprojects.find(elem => elem.subproject_id == sub.subproject_id)
                     subproject.state = true
-                    subproject.id = annexf.subs[i].id
+                    subproject.id = sub.id
+                    for(let j = 0; j < this.columns.length; j++){
+                        var tempActivities = []
+                        for(let k = 0; k < sub.activities.length; k++){
+                            var activity = sub.activities[k]
+                            if(activity.table_key == j){
+                                tempActivities.push({id: activity.id, description: activity.description})
+                            }
+                        }
+                        tempActivities = tempActivities.length != 0 ? tempActivities : [{id: '', description: ''}]
+                        subproject.activities.push(tempActivities)
+
+                        var tempFunds = {id: '', amount: 0}
+                        for(let k = 0; k < sub.funds.length; k++){
+                            var fund = sub.funds[k]
+                            console.log(fund.table_key == j)
+                            if(fund.table_key == j){
+                                tempFunds = { id: fund.id, amount: this.formatAmount(fund.amount) }
+                            }
+                        }
+                        subproject.funds.push(tempFunds)
+                    }
                 }
             }
             
@@ -363,6 +465,7 @@ export default {
                     this.toastMsg(icon, res.message)
                     if(!res.errors){
                         this.formshow = false
+                        this.detailshow = false
                     }
                 })
             }
@@ -381,6 +484,28 @@ export default {
             }
             return true
         },
+        deleteForm(id){
+            swal.fire({
+                title: 'This is irreversible!',
+                text: 'Are you sure?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Continue!',
+                reverseButtons: true
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.deleteAnnexF(id).then(res => {
+                        var icon = res.errors ? 'error' : 'success'
+                        this.toastMsg(icon, res.message)
+                        if(!res.errors){
+                            this.setOptions()
+                        }
+                    })
+                }
+            })
+        },
          // Form Behavior
         projectChange(id){
             var project = (this.form.id) ? this.options.used_projects.find(elem => elem.id == id) : this.options.projects.find(elem => elem.id == id)
@@ -394,7 +519,8 @@ export default {
                     title: subproject.title,
                     state: false,
                     activities: [],
-                    funds: []
+                    funds: [],
+                    remarks: ''
                 })
             }
 
@@ -452,7 +578,7 @@ export default {
                     multiple: false,
                     project_id: '',
                     project_ids: [],
-                    subs: []
+                    subprojects: []
                 })
         },
         removeProject(project){
@@ -518,26 +644,40 @@ export default {
                     multiple: false,
                     project_id: '',
                     project_ids: [],
-                    subs: []
+                    subprojects: []
                 }]
         },
         // Form Details Behavior
-        addActivity(key){
-            this.form.activities[key].push({id: '', description: ''})
+        addActivity(key, isSub = false, skey = 0){
+            if(!isSub){ this.form.activities[key].push({id: '', description: ''}) }
+            else{ this.form.projects[0].subprojects[skey].activities[key].push({id: '', description: ''}) }
         },
-        removeActivity(key, act){
-            if(this.form.activities[key].length > 1){
-                this.form.activities[key].remove(act)
+        removeActivity(key, act, isSub = false, skey = 0){
+            var activityform = (!isSub) ? this.form.activities[key] : this.form.projects[0].subprojects[skey].activities[key]
+            if(activityform.length > 1){
+                activityform.remove(act)
+                if(act.id){
+                    this.form.activityIds.push(act.id)
+                }
             }
         },
+        amountChange: _.debounce(function(e, key){
+            if(key != 15){
+                if(e.includes('-')){
+                    this.toastMsg('warning', 'Please avoid using Negative Number')
+                    this.form.funds[key].amount = this.form.funds[key].amount.replace(/\-/g,'')
+                }
+            }
+        }),
         formatAmount(amount){
             return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2 })
         },
-        getTotalAmount(){
+        getTotalAmount(funds = []){
             var total = 0
-            for(let i = 0; i < this.form.funds.length; i++){
+            var fundArray = funds.length > 0 ? funds : this.form.funds
+            for(let i = 0; i < fundArray.length; i++){
                 if(i > 2){
-                    var amount = this.strToFloat(this.form.funds[i].amount)
+                    var amount = this.strToFloat(fundArray[i].amount)
                     total = total + Math.abs(amount)
                 }
             }
@@ -553,6 +693,104 @@ export default {
                 icon: icon,
                 title: msg
             })
+        },
+        // Others
+        setOptions(){
+            this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'f'}).then(res => {
+                this.loading = false
+            })
+        },
+        // Filters
+        filterChange(e, progId, subpId = 0, clusId = 0){
+            var checked = e.target.checked
+            var program = this.programs.find(elem => elem.id == progId)
+            if(clusId != 0){
+                var subprogram = program.subprograms.find(elem => elem.id == subpId)
+                var cluster = subprogram.clusters.find(elem => elem.id == clusId)
+                if(checked){
+                    this.filter.clusters.push(cluster.title)
+                    this.filter.subprograms.push(subprogram.title_short)
+                    this.filter.programs.push(program.title)
+                }
+                else{
+                    this.filter.clusters.remove(cluster.title)
+                    var state = false
+                    for(let i = 0; i < subprogram.clusters.length; i++){
+                        if(!state){
+                            var cluster = subprogram.clusters[i]
+                            state = this.filter.clusters.includes(cluster.title)
+                        }
+                    }
+                    if(!state){
+                        this.filter.subprograms.remove(subprogram.title_short)
+                        for(let i = 0; i < program.subprograms.length; i++){
+                            if(!state){
+                                var subprogram = program.subprograms[i]
+                                state = this.filter.subprograms.includes(subprogram.title_short)
+                            }
+                        }
+                        if(!state){
+                            this.filter.programs.remove(program.title)
+                        }
+                    }
+                }
+            }
+            else if(subpId != 0){
+                var subprogram = program.subprograms.find(elem => elem.id == subpId)
+                if(checked){
+                    if(!this.filter.programs.includes(program.title)){
+                        this.filter.programs.push(program.title)
+                    }
+                    this.filter.subprograms.push(subprogram.title_short)
+                    for(let i = 0; i < subprogram.clusters.length; i++){
+                        var cluster = subprogram.clusters[i]
+                        this.filter.clusters.push(cluster.title)
+                    }
+                }
+                else{
+                    this.filter.subprograms.remove(subprogram.title_short)
+                    for(let i = 0; i < subprogram.clusters.length; i++){
+                        var cluster = subprogram.clusters[i]
+                        this.filter.clusters.remove(cluster.title)
+                    }
+
+                    var state = false
+                    for(let i = 0; i < program.subprograms.length; i++){
+                        if(!state){
+                            var subprogram = program.subprograms[i]
+                            state = this.filter.subprograms.includes(subprogram.title_short)
+                        }
+                    }
+                    if(!state){
+                        this.filter.programs.remove(program.title)
+                    }
+                }
+            }
+            else{
+                if(checked){
+                    this.filter.programs.push(program.title)
+                    for(let i = 0; i < program.subprograms.length; i++){
+                        var subprogram = program.subprograms[i]
+                        this.filter.subprograms.push(subprogram.title_short)
+                        for(let j = 0; j < subprogram.clusters.length; j++){
+                            var cluster = subprogram.clusters[j]
+                            this.filter.clusters.push(cluster.title)
+                        }
+                    }
+                }
+                else{
+                    this.filter.programs.remove(program.title)
+                    for(let i = 0; i < program.subprograms.length; i++){
+                        var subprogram = program.subprograms[i]
+                        this.filter.subprograms.remove(subprogram.title_short)
+                        for(let j = 0; j < subprogram.clusters.length; j++){
+                            var cluster = subprogram.clusters[j]
+                            this.filter.clusters.remove(cluster.title)
+                        }
+                    }
+
+                }
+            }
         }
     },
     computed: {
@@ -562,17 +800,33 @@ export default {
         options(){ return this.getOptions },
         workshop(){ return this.getWorkshop },
         ...mapGetters('annexf', ['getAnnexFs']),
-        annexfs(){ return this.getAnnexFs }
+        annexfs(){ return this.getAnnexFs },
+        ...mapGetters('program', ['getPrograms']),
+        programs(){ return this.getPrograms },
     },
     created(){
-        this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'f'}).then(res => {
-            this.loading = false
-        })
+        this.setOptions()
+        
+        for(let i = 0; i < this.programs.length; i++){
+            var program = this.programs[i]
+            this.filter.programs.push(program.title)
+            for(let j = 0; j < program.subprograms.length; j++){
+                var subprogram = program.subprograms[j]
+                this.filter.subprograms.push(subprogram.title_short)
+                for(let k = 0; k < subprogram.clusters.length; k++){
+                    this.filter.clusters.push(subprogram.clusters[k].title)
+                }
+            }
+        }
     }
 }
 </script>
 <style scoped>
 th{
     text-align: center;
+}
+.programs{
+    height: 400px;
+    overflow: auto;
 }
 </style>

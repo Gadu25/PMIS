@@ -4,15 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+
 use App\Models\Workshop;
 use App\Models\Program;
 use App\Models\Division;
 use App\Models\Project;
+
 use App\Models\AnnexF;
 use App\Models\AnnexFSub;
+use App\Models\AnnexFActivity;
+use App\Models\AnnexFFund;
+
 use App\Models\AnnexOne;
 use App\Models\AnnexOneSub;
 use App\Models\AnnexOneFund;
+
 use App\Models\CommonIndicator;
 use App\Models\CommonIndicatorSub;
 
@@ -138,48 +144,137 @@ class WorkshopController extends Controller
         try {
             $project = $request['projects'][0];
             $annexf = AnnexF::findOrFail($id);
-            // $annexf->
+            $annexf->remarks = $request['remarks'];
+            $annexf->save();
+
             $projects = ($project['multiple']) ? $project['project_ids'] : [$project['project_id']];
             $annexf->projects()->sync($projects);
+
+            foreach($request['activities'] as $key => $activityArray){
+                foreach($activityArray as $act){
+                    if($act['description'] != ''){
+                        $activity = $act['id'] ? AnnexFActivity::findOrFail($act['id']) : new AnnexFActivity;
+                        $activity->description = $act['description'];
+                        $activity->table_key = $key;
+                        $annexf->activities()->save($activity);
+                    }
+                    if($act['description'] == '' && $act['id']){
+                        $activity = AnnexFActivity::findOrFail($act['id']);
+                        $activity->delete();
+                    }
+                }
+            }
+
+            foreach($request['funds'] as $key => $value){
+                $amount = $this->formatAmount($value['amount']);
+                if($amount > 0){
+                    $fund = $value['id'] ? AnnexFFund::findOrFail($value['id']) : new AnnexFFund;
+                    $fund->amount = $amount;
+                    $fund->table_key = $key;
+                    $annexf->funds()->save($fund);
+                }
+                else if($value['id']){
+                    $fund = AnnexFFund::findOrFail($value['id']);
+                    $fund->delete();
+                }
+            }
             
             foreach($project['subprojects'] as $subproject){
                 $annexfsub = $subproject['id'] ? AnnexFSub::findOrFail($subproject['id']) : new AnnexFSub;
                 if($subproject['state']){
                     $annexfsub->annex_f_id = $annexf->id;
                     $annexfsub->subproject_id = $subproject['subproject_id'];
+                    $annexfsub->remarks = $subproject['remarks'];
                     $annexfsub->save();
+
+                    foreach($subproject['activities'] as $key => $activityArray){
+                        foreach($activityArray as $act){
+                            if($act['description'] != ''){
+                                $activity = $act['id'] ? AnnexFActivity::findOrFail($act['id']) : new AnnexFActivity;
+                                $activity->description = $act['description'];
+                                $activity->table_key = $key;
+                                $annexfsub->activities()->save($activity);
+                            }
+                            else if($act['id']){
+                                $activity = AnnexFActivity::findOrFail($act['id']);
+                                $activity->delete();
+                            }
+                        }
+                    }
+
+                    foreach($subproject['funds'] as $key => $value){
+                        $amount = $this->formatAmount($value['amount']);
+                        if($amount > 0){
+                            $fund = $value['id'] ? AnnexFFund::findOrFail($value['id']) : new AnnexFFund;
+                            $fund->amount = $amount;
+                            $fund->table_key = $key;
+                            $annexfsub->funds()->save($fund);
+                        }
+                        else if($value['id']){
+                            $fund = AnnexFFund::findOrFail($value['id']);
+                            $fund->delete();
+                        }
+                    }
                 }
                 else{
+                    $annexfsub->activities()->delete();
+                    $annexfsub->funds()->delete();
                     $annexfsub->delete();
                 }
             }
+
+            AnnexFActivity::whereIn('id', $request['activityIds'])->delete();
 
             DB::commit();
             return ['message' => 'Successfully saved!', 'annexfs' => $this->getAnnexF($request['workshop_id'])];
         }
         catch(\Exception $e){
             DB::rollback();
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'test' => $request['activityIds']];
         }
     }
     
     public function destroyAnnexF($id){
-        
+        DB::beginTransaction();
+        try {
+            $annexf = AnnexF::findOrFail($id);
+            foreach($annexf->subs as $sub){
+                $sub->activities()->delete();
+                $sub->funds()->delete();
+                $sub->delete();
+            }
+            $annexf->activities()->delete();
+            $annexf->funds()->delete();
+            $annexf->delete();
+
+            DB::commit();
+            return ['message' => 'Successfully removed!', 'annexfs' => $this->getAnnexF($annexf->workshop_id)];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'test' => $request['activityIds']];
+        }
     }
     
     public function getAnnexF($workshopId){
         $annexfs = AnnexF::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
         foreach($annexfs as $annexf){
+            $annexf->activities;
+            $annexf->funds;
             $project = $annexf->projects[0];
             $annexf->title = (sizeof($annexf->projects) > 1) ? $project->subprogram->title : $project->title;
-            $subpTitleType = $project->program->title == 'S&T Scholarship Program' ? 'title_short' : 'title';
-            $headerAppend = (($project->cluster_id) ? ' - '.$project->cluster->title : (($project->subprogram_id) ? ' - '.$project->subprogram[$subpTitleType] : ''));
-            $annexf->header = $project->program->title.$headerAppend;
+            // $subpTitleType = $project->program->title == 'S&T Scholarship Program' ? 'title_short' : 'title';
+            // $headerAppend = (($project->cluster_id) ? ' - '.$project->cluster->title : (($project->subprogram_id) ? ' - '.$project->subprogram[$subpTitleType] : ''));
+            $annexf->program = $project->program->title;
+            $annexf->subprogram = ($project->subprogram_id) ? $project->subprogram->title_short : '';
+            $annexf->cluster = ($project->cluster_id) ? $project->cluster->title : '';
             foreach($annexf->subs as $sub){
                 $sub->subproject;
+                $sub->activities;
+                $sub->funds;
             }
         }
-        $grouped = $annexfs->groupBy(['header']);
+        $grouped = $annexfs->groupBy(['program', 'subprogram', 'cluster']);
         return $grouped;
     }
     

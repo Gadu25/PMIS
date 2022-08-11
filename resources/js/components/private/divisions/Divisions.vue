@@ -4,7 +4,7 @@
         <div class="accordion shadow-lg" id="accordionExample">
             <div class="accordion-item" v-for="division in divisions" :key="division.id+'_div'">
                 <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+division.code" expanded="false" aria-controls="collapseOne">
+                <button class="accordion-button shadow-none collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+division.code" expanded="false" aria-controls="collapseOne">
                     <strong>{{division.name}}</strong>
                 </button>
                 </h2>

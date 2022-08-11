@@ -20,4 +20,12 @@ class AnnexF extends Model
     public function subs(){
         return $this->hasMany(AnnexFSub::class);
     }
+
+    public function activities(){
+        return $this->morphMany(AnnexFActivity::class, 'activitable');
+    }
+
+    public function funds(){
+        return $this->morphMany(AnnexFFund::class, 'fundable');
+    }
 }

@@ -1,9 +1,9 @@
 <template>
     <div class="login-container">
-        <div class="col-sm-8">
+        <div class="col-sm-8" style="height: 100%; background: rgba(0,0,0,0.5); padding: 70px">
             <router-link class="btn btn-sm btn-light" :to="{name: 'Home'}"><i class="far fa-home"></i> Home</router-link>
             <div class="text-center"><img src="/images/Logo.png" alt="Logo" width="150"></div>
-            <h2 class="text-center"><strong>DOST-SEI Project Management Information System</strong></h2>
+            <h2 class="text-center text-white"><strong>DOST-SEI Project Management Information System</strong></h2>
             <div class="d-flex justify-content-center">
                 <div class="col-sm-8">
                     <div class="card">
@@ -65,7 +65,7 @@ export default {
 <style scoped>
 .login-container{
     height: 100vh;
-    padding: 20px;
+    /* padding: 20px; */
     background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);
     display: flex;
     align-items: center;

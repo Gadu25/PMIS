@@ -13,11 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('annex_f_subs', function (Blueprint $table) {
+        Schema::create('annex_f_funds', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('annex_f_id')->constrained('annex_f_s')->cascadeOnDelete();
-            $table->foreignId('subproject_id')->constrained('subprojects')->cascadeOnDelete();
-            $table->mediumText('remarks')->nullable();
+            $table->bigInteger('fundable_id');
+            $table->string('fundable_type');
+            $table->integer('table_key');
+            $table->float('amount', 12, 2);
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('annex_f_subs');
+        Schema::dropIfExists('annex_f_funds');
     }
 };

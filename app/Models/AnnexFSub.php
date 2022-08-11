@@ -20,4 +20,12 @@ class AnnexFSub extends Model
     public function subproject(){
         return $this->belongsTo(Subproject::class, 'subproject_id');
     }
+
+    public function activities(){
+        return $this->morphMany(AnnexFActivity::class, 'activitable');
+    }
+
+    public function funds(){
+        return $this->morphMany(AnnexFFund::class, 'fundable');
+    }
 }

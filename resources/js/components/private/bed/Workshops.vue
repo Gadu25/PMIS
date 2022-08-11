@@ -31,7 +31,7 @@
                     <div class="accordion shadow-lg" id="accordionExample">
                         <div class="accordion-item" v-for="workshop in workshops" :key="workshop.id+'_workshop'">
                             <h2 class="accordion-header" id="headingOne">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#workshop'+workshop.id" expanded="false" aria-controls="collapseOne">
+                            <button class="accordion-button shadow-none collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#workshop'+workshop.id" expanded="false" aria-controls="collapseOne">
                                 <strong>{{workshop.date}}</strong>
                             </button>
                             </h2>

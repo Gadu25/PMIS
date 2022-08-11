@@ -33,6 +33,7 @@ export default {
     methods: {
         ...mapActions('workshop', ['fetchWorkshop']),
         ...mapActions('annexf', ['fetchAnnexFs']),
+        ...mapActions('program', ['fetchPrograms']),
         moveBack(){
             this.$emit('clicked', true)
             this.$router.back()
@@ -41,6 +42,8 @@ export default {
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
+        ...mapGetters('program', ['getPrograms']),
+        programs(){ return this.getPrograms },
     },
     created(){
         this.fetchWorkshop(this.$route.params.workshopId).then(res => {
@@ -48,6 +51,9 @@ export default {
                 this.loading = false
             })
         })
+        if(this.programs.length == 0){
+            this.fetchPrograms()
+        }
     }
 }
 </script>

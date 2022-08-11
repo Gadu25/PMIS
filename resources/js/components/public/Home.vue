@@ -1,6 +1,6 @@
 <template>
     <div class="home-container">
-        <div class="col-sm-8">
+        <div class="col-sm-4">
             <div class="card shadow">
                 <div class="card-body">
                     <div class="text-center"><img src="/images/Logo.png" alt="Logo" width="150"></div>
