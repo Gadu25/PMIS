@@ -157,10 +157,10 @@
                             <td>{{form.title}}</td><td></td>
                             <td class="p-0" v-for="activity, key in form.activities" :key="'activity_'+key">
                                 <div class="position-relative" v-for="act, akey in activity" :key="'act_'+akey">
-                                    <button @click="removeActivity(key, act)" class="btn btn-xs btn-danger position-absolute rounded-0 end-0"><i class="fas fa-times"></i></button>
+                                    <button tabindex="-1" @click="removeActivity(key, act)" class="btn btn-xs btn-danger position-absolute rounded-0 end-0"><i class="fas fa-times"></i></button>
                                     <textarea class="form-control rounded-0 shadow-none h-100" rows="6" v-model="act.description"></textarea>
                                 </div>
-                                <button @click="addActivity(key)" class="btn btn-sm btn-outline-secondary shadow-none rounded-0 w-100 border-0"><i class="fas fa-plus"></i></button>
+                                <button tabindex="-1" @click="addActivity(key)" class="btn btn-sm btn-outline-secondary shadow-none rounded-0 w-100 border-0"><i class="fas fa-plus"></i></button>
                             </td><td></td>
                             <td class="p-0" style="height: 1px"><textarea class="form-control rounded-0 shadow-none h-100" v-model="form.remarks"></textarea></td>
                         </tr>
@@ -177,10 +177,10 @@
                                     <td><div class="ms-2">{{subproject.title}}</div></td><td></td>
                                     <td class="p-0" v-for="activity, key in subproject.activities" :key="'subactivity_'+key">
                                         <div class="position-relative" v-for="act, akey in activity" :key="'subact_'+akey">
-                                            <button @click="removeActivity(key, act, true, skey)" class="btn btn-xs btn-danger position-absolute rounded-0 end-0"><i class="fas fa-times"></i></button>
+                                            <button tabindex="-1" @click="removeActivity(key, act, true, skey)" class="btn btn-xs btn-danger position-absolute rounded-0 end-0"><i class="fas fa-times"></i></button>
                                             <textarea class="form-control rounded-0 shadow-none h-100" rows="6" v-model="act.description"></textarea>
                                         </div>
-                                        <button @click="addActivity(key, true, skey)" class="btn btn-sm btn-outline-secondary shadow-none rounded-0 w-100 border-0"><i class="fas fa-plus"></i></button>
+                                        <button tabindex="-1" @click="addActivity(key, true, skey)" class="btn btn-sm btn-outline-secondary shadow-none rounded-0 w-100 border-0"><i class="fas fa-plus"></i></button>
                                     </td><td></td>
                                     <td class="p-0" style="height: 1px"><textarea class="form-control rounded-0 shadow-none h-100" v-model="subproject.remarks"></textarea></td>
                                 </tr>

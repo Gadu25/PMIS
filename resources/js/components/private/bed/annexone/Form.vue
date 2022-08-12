@@ -12,8 +12,10 @@
                                 <option value="2A1">2A1</option>
                                 <option value="2A1-AC">2A1-AC</option>
                                 <option value="2A2">2A2</option>
+                                <option value="Capital Outlay">Capital Outlay</option>
+                                <option value="Other Source of Funds">Other Source of Funds</option>
                             </select>
-                            <label for="Source">Source of Funds</label>
+                            <label for="Source">Charging</label>
                         </div>
                     </div>
                     <div class="col-sm-9">
@@ -22,7 +24,7 @@
                                 <option value="" selected hidden disabled>Select Header Type</option>
                                 <option value="None">None</option>
                                 <option value="Subprogram">Subprogram</option>
-                                <option value="Unit">Unit</option>
+                                <option value="Unit" :disabled="(form.unit_id === '' || form.unit_id === 0)">Unit {{(form.unit_id == '' || form.unit_id == 0) ? '(No Unit Selected)' : ''}} </option>
                             </select>
                             <label for="Source">Header Type</label>
                         </div>
@@ -331,6 +333,7 @@ export default {
             for(let i = 0; i < this.form.projects.length; i++){
                 if(this.form.projects[i].project_id == ''){ this.toastMsg('warning', 'Empty Project detected!'); return false }
             }
+            if(this.form.header == 'Unit' && (this.form.unit_id == '' || this.form.unit_id == 0)){ this.toastMsg('warning', 'Header Type not allowed'); return false }
             return true
         },
         removeForm(id){
@@ -442,6 +445,7 @@ export default {
         divChange(){
             this.form.unit_id = ''
             this.form.subunit_id = ''
+            this.form.header = ''
             var division = this.options.divisions.find(elem => elem.id == this.form.division_id)
             this.units = division.units
             this.subunits = []
@@ -452,6 +456,9 @@ export default {
             if(this.form.unit_id != 0){
                 var unit = this.units.find(elem => elem.id == this.form.unit_id)
                 subunits = unit.subunits
+            }
+            if(this.form.unit_id == 0){
+                this.form.header = ''
             }
             this.subunits = subunits
         },
@@ -540,6 +547,11 @@ export default {
                 icon: icon,
                 title: msg
             })
+        },
+        setOptions(){
+            this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'one'}).then(res => {
+                this.loading = false
+            })
         }
     },
     computed: {
@@ -557,9 +569,7 @@ export default {
         },
     },
     created(){
-        this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'one'}).then(res => {
-            this.loading = false
-        })
+        this.setOptions()
         this.fillFilters()
     }
 }

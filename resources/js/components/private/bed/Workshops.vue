@@ -39,7 +39,7 @@
                                 <div class="accordion-body">
                                     <div class="d-flex justify-content-between">
                                         <ul class="items me-2">
-                                            <a href="#"><li>Annex E</li></a>
+                                            <router-link @click="childSelected = true" :to="{ name: 'AnnexE', params: { workshopId: workshop.id } }"><li>Annex E</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Indicators</li></router-link>
@@ -59,7 +59,7 @@
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
     </div>
     <div v-else>
-        <router-view @clicked="childSelected = false"></router-view>
+        <router-view></router-view>
     </div>
 </template>
 <script>
@@ -134,9 +134,6 @@ export default {
                 icon: icon,
                 title: msg
             })
-        },
-        checkCurrRoute(){
-            this.childSelected = (this.$route.name != 'Workshops')
         }
     },
     computed: {
@@ -147,8 +144,15 @@ export default {
         this.fetchWorkshops().then(res => {
             this.loading = false
         })
-        this.checkCurrRoute()
-    }
+    },
+    watch: {
+        $route: {
+            immediate: true,
+            handler(to, from) {
+                this.childSelected = (this.$route.name != 'Workshops')
+            }
+        },
+    },
 }
 </script>
 <style scoped>

@@ -5,11 +5,25 @@
             <button class="btn btn-sm btn-outline-secondary" v-if="!loading" @click="filtershow = 'show'"><i class="far fa-filter"></i></button>
             <button class="btn btn-sm btn-outline-secondary" v-else><i class="far fa-spinner fa-spin"></i></button>
         </div>
-        <div class="overflow-auto" style="max-height: 65vh;" v-if="!loading">
-            <table class="table table-sm table-bordered">
-                <thead class="position-sticky top-0 bg-secondary text-white">
+        <div class="d-flex align-items-center mb-3">
+            <div class="form-check form-switch">
+                <input style="cursor: pointer" class="form-check-input" type="checkbox" id="print" v-model="printmode">
+                <label style="cursor: pointer" class="form-check-label" for="print">Print Mode</label>
+            </div>
+            <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
+        </div>
+        <div :class="printmode? '' : 'overflow-auto'" :style="'max-height: '+ (printmode ? '100vh' : '64vh')" v-if="!loading" id="printMe">
+            <template v-if="printmode">
+                <h6 class="text-end">Annex 1</h6>
+                <h6 class="text-center">SEI Annual Planning Workshop <br> {{workshop.date}} <br> Data as of {{dateToday()}}</h6>
+            </template>
+            <table class="table table-sm table-bordered" :style="'font-size: '+(printmode ? '12px' : '15px')">
+                <thead class="align-middle" :class="!printmode ? 'position-sticky top-0 bg-secondary text-white' : ''">
                     <tr>
-                        <th style="width: 30%">Programs/ Projects/ Activities</th>
+                        <th rowspan="2" style="width: 30%">Programs/ Projects/ Activities</th>
+                        <th colspan="7">Budgetary Requirements</th>
+                    </tr>
+                    <tr>
                         <th v-for="col, key in columns" :key="col+'_th'">{{setYear(this.workshop.year, key)}}</th>
                     </tr>
                 </thead>
@@ -51,7 +65,11 @@
                                 </tr>
                                 <tr class="fw-bold" v-if="divKey == 'STSD'" style="background: lightgreen">
                                     <td class="py-3 text-center">Less AC</td>
-                                    <td class="py-3 text-end" v-for="col, key in columns" :key="sourceKey+col">{{setACFunds(setYear(workshop.year, key))}}</td>
+                                    <td class="py-3 text-end" v-for="col, key in columns" :key="sourceKey+col">{{setChargingFunds(setYear(workshop.year, key), 'AC')}}</td>
+                                </tr>
+                                <tr class="fw-bold" v-if="divKey == 'STSD'" style="background: lightblue">
+                                    <td class="py-3 text-center">Total for 2A2</td>
+                                    <td class="py-3 text-end" v-for="col, key in columns" :key="sourceKey+col">{{setChargingFunds(setYear(workshop.year, key), '2A2')}}</td>
                                 </tr>
                             </template>
                         </template>
@@ -82,7 +100,8 @@ export default {
             filters: [],
             loading: true,
             filtershow: '',
-            keyword: ''
+            keyword: '',
+            printmode: false
         }
     },
     methods: {
@@ -120,7 +139,7 @@ export default {
             }
             return this.formatAmount(result)
         },
-        setACFunds(year){
+        setChargingFunds(year, charging){
             var result = 0
             var keys = Object.keys(this.annexones)
             for(let i = 0; i < keys.length; i++){
@@ -128,7 +147,7 @@ export default {
                 var divkeys = Object.keys(divs)
                 for(let j = 0; j < divkeys.length; j++){
                     var sourcekey = divkeys[j]
-                    if(sourcekey.includes('AC')){
+                    if(sourcekey.includes(charging)){
                         var headers = divs[sourcekey]
                         var headerkey = Object.keys(headers)
                         for(let k = 0; k < headerkey.length; k++){
@@ -162,7 +181,7 @@ export default {
                 }
             }
             if(division == 'STSD'){
-                var acamount = this.setACFunds(year)
+                var acamount = this.setChargingFunds(year, 'AC')
                 result = result - parseFloat(acamount.replace(/,/g, ''))
             }
 
@@ -250,6 +269,12 @@ export default {
                 this.filters.push(this.divisions[i].code)
             }
             this.loading = false
+        },
+        dateToday(){
+            var today = new Date().toDateString();
+            var splited = today.split(' ')
+            today = splited[1]+' '+splited[2]+', '+splited[3]
+            return today
         }
     },
     computed: {

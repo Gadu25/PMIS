@@ -9,71 +9,77 @@
                 <input style="cursor: pointer" class="form-check-input" type="checkbox" id="print" v-model="printmode">
                 <label style="cursor: pointer" class="form-check-label" for="print">Print Mode</label>
             </div>
-            <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-download"></i></button>
+            <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
         </div>
-        <div class="table-container" v-dragscroll>
-            <table class="table table-sm table-bordered table-hover" id="printMe" :style="'font-size: '+(printmode ? '12px' : '16px')+'; width: '+(!printmode ? '2400px' : '')">
+        <div :class="printmode ? '' : 'table-container'" v-dragscroll  id="printMe">
+            <template v-if="printmode">
+                <small class="fw-bold float-end">Annex F</small>
+                <small>Department of Science and Technology</small><br>
+                <small class="fw-bold">SCIENCE EDUCATION INSTITUTE</small><br><br>
+                <h6 style="background: yellow;"><small class="fw-bold">Schedule of FY {{parseInt(workshop.year) + 1}} Project Implementation</small></h6>
+            </template>
+            <table class="table table-sm table-bordered table-hover" :style="'font-size: '+(printmode ? '11.3px' : '16px')+'; width: '+(!printmode ? '2400px' : '')">
                 <thead class="align-middle text-center" :class="!printmode ? 'viewmode' : ''">
                     <tr>
-                        <th style="width: 8%" rowspan="3">Program Name/Activity</th>
-                        <th style="width: 1%" rowspan="3">Total <br>Target <br>(P'000)</th>
-                        <th colspan="3">{{workshop.year}}</th>
-                        <th colspan="12">{{parseInt(workshop.year) + 1}}</th>
-                        <th style="width: 4%" rowspan="3">Total</th>
-                        <th style="width: 4%" rowspan="3">Remarks</th>
+                        <th class="py-0" style="width: 8%" rowspan="3">Program Name/Activity</th>
+                        <th class="py-0" style="width: 1%" rowspan="3">Total <br>Target <br>(P'000)</th>
+                        <th class="py-0" colspan="3">{{workshop.year}}</th>
+                        <th class="py-0" colspan="12">{{parseInt(workshop.year) + 1}}</th>
+                        <th class="py-0" style="width: 4%" rowspan="3">Total</th>
+                        <th class="py-0" style="width: 4%" rowspan="3">Remarks</th>
                     </tr>
                     <tr>
-                        <th colspan="3">4th Qtr</th>
-                        <th colspan="3">1st Qtr</th>
-                        <th colspan="3">2nd Qtr</th>
-                        <th colspan="3">3rd Qtr</th>
-                        <th colspan="3">4th Qtr</th>
+                        <th class="py-0" colspan="3">4th Qtr</th>
+                        <th class="py-0" colspan="3">1st Qtr</th>
+                        <th class="py-0" colspan="3">2nd Qtr</th>
+                        <th class="py-0" colspan="3">3rd Qtr</th>
+                        <th class="py-0" colspan="3">4th Qtr</th>
                     </tr>
                     <tr>
-                        <th style="width: 5.53%" v-for="col, key in columns" :key="col+key">{{col}}</th>
+                        <th class="py-0" style="width: 5.53%" v-for="col, key in columns" :key="col+key">{{col}}</th>
                     </tr>
                     <tr style="font-size: 10px !important;">
-                        <td v-for="num in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]" :key="num">{{(num == 18) ? '' : (num == 19) ? '(18)' : '('+num+')'}}</td>
+                        <td class="py-0" v-for="num in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]" :key="num">{{(num == 18) ? '' : (num == 19) ? '(18)' : '('+num+')'}}</td>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="align-top">
                     <template v-for="subprograms, program in annexfs" :key="program">
                         <template v-if="filter.programs.includes(program)">
-                            <tr style="background: lightgreen"><td class="fw-bold" colspan="19">{{program}}</td></tr>
+                            <tr style="background: lightgreen"><td class="fw-bold py-0" colspan="19">{{program}}</td></tr>
                             <template v-for="clus, subprogram in subprograms" :key="subprogram">
                                 <template v-if="filter.subprograms.includes(subprogram)">
                                     <template v-for="annexfs, cluster in clus" :key="program+'_cluster_'+cluster">
                                         <template v-if="filter.clusters.includes(cluster) || cluster == ''">
-                                            <tr style="background: lightblue" v-if="cluster != ''"><td colspan="19"><div class="ms-1 fw-bold">{{cluster}}</div></td></tr>
+                                            <tr style="background: lightblue" v-if="cluster != ''"><td colspan="19" class="fw-bold py-0"><div class="ms-1">{{cluster}}</div></td></tr>
                                             <template v-for="annexf in annexfs" :key="'annexf_'+annexf.id">
                                                 <tr>
                                                     <td>{{annexf.title}}</td><td></td>
                                                     <td v-for="col, key in columns" :key="col+'_'+key"><template v-for="activity in annexf.activities" :key="'activity_'+activity.id">
-                                                        <div class="mb-3" v-if="activity.table_key == key"><span>{{activity.description}}</span> <br></div>
+                                                        <div class="border-bottom" :class="printmode ? 'mb-1' : 'mb-3'" v-if="activity.table_key == key">{{activity.description}}</div>
                                                     </template></td>
                                                     <td></td><td>{{annexf.remarks}}</td>
                                                 </tr>
                                                 <tr class="fw-bold" style="background: rgba(255, 166, 0, 0.15)">
-                                                    <td class="text-center"><small>Fundings</small></td><td></td>
-                                                    <td class="text-end" v-for="col, key in columns" :key="col+'_'+key"><template v-for="fund in annexf.funds" :key="'fund_'+fund.id">
+                                                    <td class="py-0 text-center"><small>Fundings</small></td><td></td>
+                                                    <td class="py-0 text-end" v-for="col, key in columns" :key="col+'_'+key"><template v-for="fund in annexf.funds" :key="'fund_'+fund.id">
                                                         <span v-if="fund.table_key == key">{{formatAmount(fund.amount)}}</span>
                                                     </template></td>
-                                                    <td class="text-end">{{formatAmount(getTotalAmount(annexf.funds))}}</td><td></td>
+                                                    <td class="py-0 text-end">{{formatAmount(getTotalAmount(annexf.funds))}}</td><td></td>
                                                 </tr>
                                                 <template v-for="sub in annexf.subs" :key="'sub_'+sub.id">
                                                     <tr>
                                                         <td><div class="ms-3">{{sub.subproject.title}}</div></td><td></td>
                                                         <td v-for="col, key in columns" :key="'sub_'+col+'_'+key"><template v-for="activity in sub.activities" :key="'subactivity_'+activity.id">
-                                                            <div class="mb-3" v-if="activity.table_key == key"><span>{{activity.description}}</span> <br></div>
+                                                            <div :class="printmode ? 'mb-1' : 'mb-3'" v-if="activity.table_key == key"><span>{{activity.description}}</span> <br></div>
                                                         </template></td>
                                                         <td></td><td>{{sub.remarks}}</td>
                                                     </tr>
                                                     <tr class="fw-bold" style="background: rgba(255, 166, 0, 0.15)">
-                                                        <td class="text-center"><small>Fundings</small></td><td></td>
-                                                        <td class="text-end" v-for="col, key in columns" :key="'sub_'+col+'_'+key"><template v-for="fund in sub.funds" :key="'subfund_'+fund.id">
+                                                        <td class="py-0 text-center"><small>Fundings</small></td><td></td>
+                                                        <td class="py-0 text-end" v-for="col, key in columns" :key="'sub_'+col+'_'+key"><template v-for="fund in sub.funds" :key="'subfund_'+fund.id">
                                                             <span v-if="fund.table_key == key">{{formatAmount(fund.amount)}}</span>
                                                         </template></td>
-                                                        <td class="text-end">{{formatAmount(getTotalAmount(sub.funds))}}</td><td></td>
+                                                        <td class="py-0 text-end">{{formatAmount(getTotalAmount(sub.funds))}}</td><td></td>
                                                     </tr>
                                                 </template>
                                             </template>
@@ -247,7 +253,28 @@ export default {
 
                 }
             }
-        }
+        },
+        // testExcel(){
+        //     var uri = 'data:application/vnd.ms-excel;base64,',
+        //     template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+        //     base64 = function(s) {
+        //         return window.btoa(unescape(encodeURIComponent(s)))
+        //     },
+        //     format = function(s, c) {
+        //         return s.replace(/{(\w+)}/g, function(m, p) {
+        //         return c[p];
+        //         })
+        //     }
+        //     var toExcel = document.getElementById("printMe").innerHTML;
+        //     var ctx = {
+        //     worksheet: name || '',
+        //     table: toExcel
+        //     };
+        //     var link = document.createElement("a");
+        //     link.download = "export.xlsx";
+        //     link.href = uri + base64(format(template, ctx))
+        //     link.click();
+        // }
     },
     computed: {
         ...mapGetters('annexf', ['getAnnexFs']),

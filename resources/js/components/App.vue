@@ -73,7 +73,15 @@ export default {
     },
     created(){
         this.getAuthenticatedUser()
-    }
+    },
+    watch: {
+        $route: {
+            immediate: true,
+            handler(to, from) {
+                document.title = 'PMIS | ' + this.$route.meta.title;
+            }
+        },
+    },
 }
 </script>
 <style scoped>

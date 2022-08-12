@@ -1,7 +1,7 @@
 <template>
     <div class="px-3 py-4">
         <button class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
-        <h2 class="text-center">Annex One</h2>
+        <h2 class="text-center">Annex E</h2>
         <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small><hr>
         <template v-if="!loading">
             <div class="d-flex justify-content-end">
@@ -19,30 +19,36 @@
 <script>
 import Display from './Display.vue'
 import Form from './Form.vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 export default {
-    name: 'AnnexOne',
+    name: 'AnnexE',
     components: { Display, Form },
     data(){
         return {
             editmode: false,
-            loading: true
+            loading: true,
         }
     },
     methods: {
         ...mapActions('workshop', ['fetchWorkshop']),
-        ...mapActions('annexone', ['fetchAnnexOnes']),
+        ...mapActions('annexf', ['fetchAnnexFs']),
+        ...mapActions('program', ['fetchPrograms']),
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
-        workshop(){ return this.getWorkshop }
+        workshop(){ return this.getWorkshop },
+        ...mapGetters('program', ['getPrograms']),
+        programs(){ return this.getPrograms },
     },
     created(){
-        this.fetchAnnexOnes(this.$route.params.workshopId).then(res => {
-            this.fetchWorkshop(this.$route.params.workshopId).then(res => {
+        this.fetchWorkshop(this.$route.params.workshopId).then(res => {
+            this.fetchAnnexFs(this.$route.params.workshopId).then(res => {
                 this.loading = false
             })
         })
+        if(this.programs.length == 0){
+            this.fetchPrograms()
+        }
     }
 }
 </script>
