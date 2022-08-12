@@ -3,6 +3,7 @@ import './bootstrap'
 import { createApp } from '@vue/runtime-dom'
 import router from './router'
 import store from './store/index.js'
+import print from 'vue3-print-nb'
 
 import swal from 'sweetalert2'
 window.swal = swal;
@@ -31,4 +32,5 @@ import App from './components/App.vue'
 createApp(App)
     .use(router)
     .use(store)
+    .use(print)
     .mount("#app")

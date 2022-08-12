@@ -4,9 +4,16 @@
             <input type="search" class="form-control form-control-sm w-50" placeholder="Search" v-model="keyword">
             <button class="btn btn-sm btn-outline-secondary shadow-none" @click="filtershow = 'active'"><i class="far fa-filter"></i></button>
         </div>
+        <div class="d-flex align-items-center mb-3">
+            <div class="form-check form-switch">
+                <input style="cursor: pointer" class="form-check-input" type="checkbox" id="print" v-model="printmode">
+                <label style="cursor: pointer" class="form-check-label" for="print">Print Mode</label>
+            </div>
+            <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-download"></i></button>
+        </div>
         <div class="table-container" v-dragscroll>
-            <table class="table table-sm table-bordered table-hover">
-                <thead class="align-middle text-center">
+            <table class="table table-sm table-bordered table-hover" id="printMe" :style="'font-size: '+(printmode ? '12px' : '16px')+'; width: '+(!printmode ? '2400px' : '')">
+                <thead class="align-middle text-center" :class="!printmode ? 'viewmode' : ''">
                     <tr>
                         <th style="width: 8%" rowspan="3">Program Name/Activity</th>
                         <th style="width: 1%" rowspan="3">Total <br>Target <br>(P'000)</th>
@@ -115,6 +122,7 @@ export default {
     },
     data(){
         return {
+            printmode: false,
             filtershow: '',
             keyword: '',
             columns: [
@@ -267,15 +275,12 @@ export default {
 }
 </script>
 <style scoped>
-table{
-    font-size: 12px;
-}
 .table-container{
     overflow: auto;
-    height: 70vh;
+    height: 68vh;
     padding: 10px;
 }
-thead{
+.viewmode{
     position: sticky;
     top: -11px;
     background: lightgray;
