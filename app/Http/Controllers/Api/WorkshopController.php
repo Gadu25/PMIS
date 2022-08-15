@@ -10,6 +10,9 @@ use App\Models\Program;
 use App\Models\Division;
 use App\Models\Project;
 
+use App\Models\AnnexE;
+use App\Models\AnnexESub;
+
 use App\Models\AnnexF;
 use App\Models\AnnexFSub;
 use App\Models\AnnexFActivity;
@@ -26,6 +29,7 @@ use DB;
 
 class WorkshopController extends Controller
 {
+    // Workshop
     public function index(){
         return $this->getWorkshops();
     }
@@ -106,9 +110,92 @@ class WorkshopController extends Controller
         $workshop->date = ($startMonth == $endMonth) ? $date = $startMonth.' '.$startDay.'-'.$endDay.', '.$startDate[0] : $date = $startMonth.' '.$startDay.' - '.$endMonth.' '.$endDay.', '.$startDate[0];
         
         $workshop->year = $startDate[0];
+    
+        $tester = AnnexF::where('workshop_id', $workshop->id)->first();
+        $workshop->published = ($tester !== null);
+    }
+
+    // Annex E
+    public function getAnnexE(Request $request){
+        DB::beginTransaction();
+        try{
+            // if()
+            $annexes = AnnexE::with(['project', 'subs'])
+                ->whereHas('project', function($q) use($request){
+                    if($request['type'] == 'Program'){
+                        $q->where('program_id', $request['program_id']);
+                        if($request['subprogram_id'] != 0){$q->where('subprogram_id', $request['subprogram_id']);}
+                        if($request['cluster_id'] != 0){$q->where('cluster_id', $request['cluster_id']);}
+                    }
+                    else{
+                        $q->where('division_id', $request['division_id']);
+                        if($request['unit_id'] != 0){$q->where('unit_id', $request['unit_id']);}
+                        if($request['subunit_id'] != 0){$q->where('subunit_id', $request['subunit_id']);}
+                    }
+                })
+                ->where('status', 'Submitted')->get();
+
+            foreach($annexes as $annexe){
+                foreach($annexe->subs as $sub){
+                    $sub->subproject;
+                }
+            }
+            return $annexes;
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
+        }
+        // $annexes = AnnexE::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+        // foreach($annexes as $annexe){
+        //     $project = $annexe->project;
+        //     $annexe->program_header = ($project->cluster_id !== null) ? $project->cluster->title : (($project->subprogram_id !== null) ? $project->subprogram->title_short : '');
+        //     $annexe->division_header = ($project->subunit_id !== null) ? $project->subunit->name : (($project->unit_id !== null) ? $project->unit->name : '');
+        //     foreach($annexe->subs as $annexesub){
+        //         $annexesub->subproject;
+        //     }
+        // }
+        // $result = [];
+        // $result['divisions'] = $annexes->groupBy(['project.division_id', 'division_header']);
+        // $result['programs'] = $annexes->groupBy(['project.program_id', 'program_header']);
+        // return $result;
+    }
+
+    public function storeAnnexE(Request $request){
+        
+    }
+    
+    public function updateAnnexE(Request $request, $id){
+        
+    }
+    
+    public function destroyAnnexE($id){
+
     }
 
     // Annex F 
+    public function getAnnexF($workshopId){
+        $annexfs = AnnexF::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+        foreach($annexfs as $annexf){
+            $annexf->activities;
+            $annexf->funds;
+            $project = $annexf->projects[0];
+            $annexf->title = (sizeof($annexf->projects) > 1) ? $project->subprogram->title : $project->title;
+            // $subpTitleType = $project->program->title == 'S&T Scholarship Program' ? 'title_short' : 'title';
+            // $headerAppend = (($project->cluster_id) ? ' - '.$project->cluster->title : (($project->subprogram_id) ? ' - '.$project->subprogram[$subpTitleType] : ''));
+            $annexf->program = $project->program->title;
+            $annexf->subprogram = ($project->subprogram_id) ? $project->subprogram->title_short : '';
+            $annexf->cluster = ($project->cluster_id) ? $project->cluster->title : '';
+            foreach($annexf->subs as $sub){
+                $sub->subproject;
+                $sub->activities;
+                $sub->funds;
+            }
+        }
+        $grouped = $annexfs->groupBy(['program', 'subprogram', 'cluster']);
+        return $grouped;
+    }
+
     public function storeAnnexF(Request $request){
         DB::beginTransaction();
         try {
@@ -256,28 +343,6 @@ class WorkshopController extends Controller
         }
     }
     
-    public function getAnnexF($workshopId){
-        $annexfs = AnnexF::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
-        foreach($annexfs as $annexf){
-            $annexf->activities;
-            $annexf->funds;
-            $project = $annexf->projects[0];
-            $annexf->title = (sizeof($annexf->projects) > 1) ? $project->subprogram->title : $project->title;
-            // $subpTitleType = $project->program->title == 'S&T Scholarship Program' ? 'title_short' : 'title';
-            // $headerAppend = (($project->cluster_id) ? ' - '.$project->cluster->title : (($project->subprogram_id) ? ' - '.$project->subprogram[$subpTitleType] : ''));
-            $annexf->program = $project->program->title;
-            $annexf->subprogram = ($project->subprogram_id) ? $project->subprogram->title_short : '';
-            $annexf->cluster = ($project->cluster_id) ? $project->cluster->title : '';
-            foreach($annexf->subs as $sub){
-                $sub->subproject;
-                $sub->activities;
-                $sub->funds;
-            }
-        }
-        $grouped = $annexfs->groupBy(['program', 'subprogram', 'cluster']);
-        return $grouped;
-    }
-    
     // Annex One
     public function getAnnexOne($workshopId){
         $workshopYear = $this->getWorkshopYear($workshopId);
@@ -287,13 +352,16 @@ class WorkshopController extends Controller
         $headers = [];
         foreach($annexones as $annexone){
             $annexone->funds;
-            $annexone->project;
+            $project = $annexone->project;
             $annexone->header = ($annexone->header_type == 'Subprogram') ? $annexone->project->subprogram->title_short : 
                                 (($annexone->header_type == 'Unit') ? ($annexone->project->subunit_id) ? $annexone->project->subunit->name : $annexone->project->unit->name : 'None');
             foreach($annexone->subs as $sub){
                 $sub->funds;
                 $sub->subproject;
             }
+
+            $annexone->division = $project->division->code.(($project->subunit_id !== null) ? ' - '.$project->subunit->name : (($project->unit_id !== null) ? ' - '.$project->unit->name : ''));
+            $annexone->program = $project->program->title.(($project->cluster_id !== null) ? ' - '.$project->cluster->title : (($project->subprogram_id !== null) ? ' - '.$project->subprogram->title_short : ''));
         }
 
         $grouped = $annexones->groupBy(['project.division.code','source_of_funds','header']);
@@ -388,6 +456,45 @@ class WorkshopController extends Controller
         catch (\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function publishAnnexOneProjects($workshopId){
+        DB::beginTransaction();
+        try {
+            $annexones = AnnexOne::where('workshop_id', $workshopId)->get();
+            foreach($annexones as $annexone){
+                $annexe = new AnnexE;
+                $annexe->workshop_id = $workshopId;
+                $annexe->project_id = $annexone->project_id;
+                $annexe->status = 'New';
+                $annexe->save();
+
+                $annexf = new AnnexF;
+                $annexf->workshop_id = $workshopId;
+                $annexf->status = 'New';
+                $annexf->save();
+                $annexf->projects()->sync([$annexone->project_id]);
+
+                foreach($annexone->subs as $annexonesub){
+                    $annexesub = new AnnexESub;
+                    $annexesub->annex_e_id = $annexe->id;
+                    $annexesub->subproject_id = $annexonesub->subproject_id;
+                    $annexesub->save();
+
+                    $annexfsub = new AnnexFSub;
+                    $annexfsub->annex_f_id = $annexf->id;
+                    $annexfsub->subproject_id = $annexonesub->subproject_id;
+                    $annexfsub->save();
+                }
+            }
+
+            DB::commit();
+            return ['message' => 'Projects Published!'];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
         }
     }
 
@@ -551,6 +658,8 @@ class WorkshopController extends Controller
     // Common Functions
 
     public function getOptions($workshopId, $annex){
+        // Fetch Programs and Divisions for select options
+        // Projects of Annex E and F depends on Annex One
         $programs = Program::orderBy('id', 'asc')->get();
         foreach($programs as $program){
             foreach($program->subprograms as $subprogram){
@@ -564,28 +673,43 @@ class WorkshopController extends Controller
                 $unit->subunits;
             }
         }
+        
+        $projects = [];
+        $ids = []; $projectsIds = [];
 
-        $ids = [];
+        $annexones = AnnexOne::select('project_id')->where('workshop_id', $workshopId)->get();
+        foreach($annexones as $annexone){
+            array_push($ids, $annexone->project_id);
+            array_push($projectsIds, $annexone->project_id);
+        }
         if($annex == 'one'){
-            $annexones = AnnexOne::select('project_id')->where('workshop_id', $workshopId)->get();
-            foreach($annexones as $annexone){
-                array_push($ids, $annexone->project_id);
+            $projects = Project::orderBy('id', 'asc')->whereNotIn('id', $ids)->get();
+            foreach($projects as $project){
+                $project->subprojects;
             }
         }
-        if($annex == 'f'){
-            $annexfs = AnnexF::where('workshop_id', $workshopId)->get();
-            foreach($annexfs as $annexf){
-                foreach($annexf->projects as $project){
-                    array_push($ids, $project->id);
+        else{
+            if($annex == 'f'){
+                $annexfs = AnnexF::where('workshop_id', $workshopId)->get();
+                foreach($annexfs as $annexf){
+                    foreach($annexf->projects as $project){
+                        array_push($ids, $project->id);
+                    }
                 }
             }
+            if($annex == 'e'){
+                $annexfs = AnnexE::where('workshop_id', $workshopId)->get();
+                foreach($annexfs as $annexf){
+                    array_push($ids, $annexf->project_id);
+                }
+            }
+    
+            $projects = Project::orderBy('id', 'asc')->whereNotIn('id', $ids)->whereIn('id', $projectsIds)->get();
+            foreach($projects as $project){
+                $project->subprojects;
+            }
         }
-
-        $projects = Project::orderBy('id', 'asc')->whereNotIn('id', $ids)->get();
-        foreach($projects as $project){
-            $project->subprojects;
-        }
-
+    
         $usedProjects = Project::orderBy('id', 'asc')->whereIn('id', $ids)->get();
         foreach($usedProjects as $project){
             $project->subprojects;

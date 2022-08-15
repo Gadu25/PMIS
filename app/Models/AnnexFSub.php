@@ -10,7 +10,7 @@ class AnnexFSub extends Model
     use HasFactory;
 
     protected $fillables = [
-        'annex_f_id', 'subproject_id'
+        'annex_f_id', 'subproject_id', 'remarks'
     ];
 
     public function annexf(){

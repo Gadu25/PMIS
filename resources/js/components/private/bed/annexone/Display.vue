@@ -5,12 +5,16 @@
             <button class="btn btn-sm btn-outline-secondary" v-if="!loading" @click="filtershow = 'show'"><i class="far fa-filter"></i></button>
             <button class="btn btn-sm btn-outline-secondary" v-else><i class="far fa-spinner fa-spin"></i></button>
         </div>
-        <div class="d-flex align-items-center mb-3">
-            <div class="form-check form-switch">
-                <input style="cursor: pointer" class="form-check-input" type="checkbox" id="print" v-model="printmode">
-                <label style="cursor: pointer" class="form-check-label" for="print">Print Mode</label>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+                <div class="form-check form-switch">
+                    <input style="cursor: pointer" class="form-check-input" type="checkbox" id="print" v-model="printmode">
+                    <label style="cursor: pointer" class="form-check-label" for="print">Print Mode</label>
+                </div>
+                <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
             </div>
-            <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
+            <button class="btn btn-sm btn-success shadow-none" v-if="loading || workshop.published" disabled><i v-if="loading" class="fas fa-spinner fa-spin"></i> {{workshop.published ? 'Projects Published' : 'Publish Projects'}} </button>
+            <button class="btn btn-sm btn-success shadow-none" v-if="!loading && !workshop.published" data-bs-target="#publishable" data-bs-toggle="modal">Publish Projects</button>
         </div>
         <div :class="printmode? '' : 'overflow-auto'" :style="'max-height: '+ (printmode ? '100vh' : '64vh')" v-if="!loading" id="printMe">
             <template v-if="printmode">
@@ -86,6 +90,40 @@
                 <label style="cursor: pointer" class="form-check-label fw-bold text-center w-100" :for="division.name">{{division.name}}</label>
             </div>
         </div>
+        <!-- Modal -->
+        <div class="modal fade" id="publishable" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+                <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Publish Projects to Annex E & F</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive" style="height: 70vh">
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                                <template v-for="chargings, division in annexones" :key="'publishable_'+division">
+                                    <template v-for="headers, charging in chargings" :key="'publishable_'+charging">
+                                        <template v-for="items, header in headers" :key="'publishable_'+charging+'_'+header">
+                                            <tr v-for="item in items" :key="'publishable_'+item.id">
+                                                <td>{{item.project.title}}</td>
+                                                <td>{{item.division}}</td>
+                                                <td>{{item.program}}</td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" style="width: 100px" class="btn rounded-pill btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn rounded-pill btn-success" @click="publish()">Publish Projects</button>
+                </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 <script>
@@ -101,11 +139,13 @@ export default {
             loading: true,
             filtershow: '',
             keyword: '',
-            printmode: false
+            printmode: false,
+            // publishabletab: 'annexe'
         }
     },
     methods: {
         ...mapActions('division', ['fetchDivisions']),
+        ...mapActions('annexone', ['publishAnnexOneProjects']),
         setYear(year, key){
             return parseInt(year) + parseInt(key)
         },
@@ -275,7 +315,28 @@ export default {
             var splited = today.split(' ')
             today = splited[1]+' '+splited[2]+', '+splited[3]
             return today
-        }
+        },
+
+        publish(){
+            var timer = 5000
+            this.publishAnnexOneProjects(this.$route.params.workshopId).then(res => {
+                var icon = res.errors ? 'error' : 'success'
+                timer = 0
+                this.toastMsg(icon, res.message)
+            })
+            toast.fire({
+                icon: 'info',
+                title: 'Publishing Projects',
+                html: '<h5>Loading <i class="fas fa-spin fa-spinner fa-lg ml-2"></i></h5>',
+                timer: timer
+            })
+        },
+        toastMsg(icon, msg){
+            toast.fire({
+                icon: icon,
+                title: msg
+            })
+        },
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),

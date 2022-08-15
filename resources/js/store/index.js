@@ -4,6 +4,7 @@ import division from './modules/divisions/division'
 import program from './modules/programs/program'
 import project from './modules/programs/project'
 import workshop from './modules/workshops/workshop'
+import annexe from './modules/workshops/annexe'
 import annexf from './modules/workshops/annexf'
 import annexone from './modules/workshops/annexone'
 import common from './modules/workshops/common'
@@ -13,7 +14,7 @@ const store = createStore({
         user,
         division,
         program, project,
-        workshop, annexf, annexone, common,
+        workshop, annexe, annexf, annexone, common,
         tag
     }
 })

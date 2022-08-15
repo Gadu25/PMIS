@@ -234,8 +234,9 @@
                         <table class="table table-sm table-bordered table-hover">
                             <thead>
                                 <tr>
-                                <th>Project Name/Activity</th>
-                                <th style="width: 87px;">Actions</th>
+                                    <th>Project Name/Activity</th>
+                                    <th>Status</th>
+                                    <th style="width: 87px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -250,6 +251,7 @@
                                                         <template v-for="annexf in items" :key="'annexf_'+annexf.id">
                                                             <tr>
                                                                 <td>{{annexf.title}}</td>
+                                                                <td><span class="badge bg-success">{{annexf.status}}</span></td>
                                                                 <td>
                                                                     <button style="width: 37px" class="btn btn-sm btn-primary mb-1 me-1" @click="editForm(annexf, 'form')"><i class="far fa-pencil-alt"></i></button>
                                                                     <button style="width: 37px" class="btn btn-sm btn-danger mb-1" @click="deleteForm(annexf.id)"><i class="far fa-trash-alt"></i></button><br>

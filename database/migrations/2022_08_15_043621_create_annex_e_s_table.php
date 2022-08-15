@@ -13,11 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('annex_f_s', function (Blueprint $table) {
+        Schema::create('annex_e_s', function (Blueprint $table) {
             $table->id();
             $table->foreignId('workshop_id')->constrained('workshops')->cascadeOnDelete();
-            $table->string('status');
+            $table->foreignId('project_id')->constrined('projects')->cascadeOnDelete();
             $table->mediumText('remarks')->nullable();
+            $table->string('status');
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('annex_f_s');
+        Schema::dropIfExists('annex_e_s');
     }
 };

@@ -6,10 +6,10 @@
             <div class="form-group row mb-2" v-if="!form.id">
                 <div :class="'mb-2 col-sm-'+ ((subprograms.length > 0 && clusters.length > 0) ? 4 : (subprograms.length > 0) ? 6 : 12 )">
                     <div class="form-floating">
-                        <select class="form-select" id="Program" v-model="form.program_id" disabled>
-                            <option value="" selected hidden disabled>Select Program</option>
+                        <select class="form-select" id="Program" v-model="form.program_id" disabled @change="progChange()">
+                            <option :value="0" selected hidden disabled>Select Program</option>
                             <template v-for="program in options.programs" :key="program.id+'_progOption'">
-                                <option :value="program.id" v-if="program.id == form.program_id">{{program.title}}</option>
+                                <option :value="program.id">{{program.title}}</option>
                             </template>
                         </select>
                         <label for="Program">Program</label>
@@ -74,13 +74,7 @@
             </div>
         </template>
         <template v-if="!formshow">
-            <!-- <div class="d-flex justify-content-end">
-                <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
-            </div> -->
-            <div class="d-flex justify-content-between flex-wrap">
-                <div class="btn-group btn-group-sm mb-2">
-                    <button class="btn shadow-none" @click="progChange(program.id)" :class="form.program_id == program.id ? 'btn-secondary' : 'btn-outline-secondary'" v-for="program in programs" :key="program.id+'_progBtn'">{{program.title}}</button>
-                </div>
+            <div class="d-flex justify-content-end flex-wrap">
                 <div>
                     <button class="btn btn-sm btn-success" v-if="form.program_id == ''" disabled><i class="fas fa-plus"></i></button>
                     <button class="btn btn-sm btn-success" v-else @click="resetForm()"><i class="fas fa-plus"></i></button>
@@ -98,7 +92,7 @@ export default {
             formshow: false,
             form: {
                 id: '',
-                program_id: '',
+                program_id: this.program_id,
                 subprogram_id: '',
                 cluster_id: '',
                 division_id: '',
@@ -121,7 +115,6 @@ export default {
             this.clusters = []
             this.units = []
             this.subunits = []
-            console.log(this.user)
             var user = this.user
             this.form.division_id = user.division_id
             this.divChange()
@@ -230,9 +223,7 @@ export default {
                 }
             }
         },
-        progChange(id){
-            console.log(this.options)
-            this.form.program_id = id
+        progChange(){
             this.form.subprogram_id = ''
             this.form.cluster_id = ''
             var program = this.options.programs.find(elem => elem.id == this.form.program_id)
@@ -279,6 +270,9 @@ export default {
         // Others
         setOptions(){
             this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'e'}).then(res => {
+                if(this.form.program_id != 0){
+                    this.progChange()
+                }
                 this.loading = false
             })
         },
@@ -296,7 +290,18 @@ export default {
     },
     created(){
         this.setOptions()
-
+    },
+    props: {
+        program_id: Number
+    },
+    watch: { 
+      	program_id: function(newVal, oldVal) {
+            this.form.program_id = newVal
+            if(newVal != 0){
+                this.progChange()
+                console.log(this.subprograms)
+            }
+        }
     }
 }
 </script>

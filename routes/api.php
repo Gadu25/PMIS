@@ -36,6 +36,13 @@ Route::prefix('/project')->group(function(){
 });
 
 Route::prefix('/workshop')->group(function(){
+    Route::prefix('/annex-e')->group(function(){
+        Route::middleware('auth:sanctum')->post('/display', [WorkshopController::class, 'getAnnexE']);
+        Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexE']);
+        Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexE']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyAnnexE']);
+    });
+
     Route::prefix('/annex-f')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexF']);
         Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexF']);
@@ -48,6 +55,7 @@ Route::prefix('/workshop')->group(function(){
         Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexOne']);
         Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyAnnexOne']);
         Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getAnnexOne']);
+        Route::middleware('auth:sanctum')->post('/publish/{workshopId}', [WorkshopController::class, 'publishAnnexOneProjects']);
     });
 
     Route::prefix('/common-indicator')->group(function(){

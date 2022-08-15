@@ -31,6 +31,12 @@ const actions = {
             return res.data
         })
         return response
+    },
+    async publishAnnexOneProjects({commit}, workshopId){
+        const response = await axios.post('/api/workshop/annex-one/publish/'+workshopId).then(res => {
+            return res.data
+        })
+        return response
     }
 }
 
