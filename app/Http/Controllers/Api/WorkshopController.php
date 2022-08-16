@@ -12,6 +12,7 @@ use App\Models\Project;
 
 use App\Models\AnnexE;
 use App\Models\AnnexESub;
+use App\Models\PerformanceIndicator;
 
 use App\Models\AnnexF;
 use App\Models\AnnexFSub;
@@ -119,50 +120,54 @@ class WorkshopController extends Controller
     public function getAnnexE(Request $request){
         DB::beginTransaction();
         try{
-            // if()
-            $annexes = AnnexE::with(['project', 'subs'])
+            $annexes = AnnexE::with(['project'])
                 ->whereHas('project', function($q) use($request){
                     if($request['type'] == 'Program'){
-                        $q->where('program_id', $request['program_id']);
+                        if($request['program_id'] != 0){$q->where('program_id', $request['program_id']);}
                         if($request['subprogram_id'] != 0){$q->where('subprogram_id', $request['subprogram_id']);}
                         if($request['cluster_id'] != 0){$q->where('cluster_id', $request['cluster_id']);}
+                        if($request['program_id'] == 0){ $q->whereIn('program_id', [1,2,3]);}
                     }
                     else{
-                        $q->where('division_id', $request['division_id']);
+                        if($request['division_id'] != 0){$q->where('division_id', $request['division_id']);}
                         if($request['unit_id'] != 0){$q->where('unit_id', $request['unit_id']);}
                         if($request['subunit_id'] != 0){$q->where('subunit_id', $request['subunit_id']);}
+                        if($request['division_id'] == 0){ $q->whereIn('division_id', [1,2,3,4,5]);}
                     }
                 })
-                ->where('status', 'Submitted')->get();
+                ->where('status', $request['status'])
+                ->get();
 
             foreach($annexes as $annexe){
+                foreach($annexe->indicators as $indicator){
+                    $indicator->details;
+                }
+                $annexe->header = ($annexe->project->cluster_id !== null) ? $annexe->project->cluster->title : $annexe->project->program->title;
                 foreach($annexe->subs as $sub){
+                    foreach($sub->indicators as $indicator){
+                        $indicator->details;
+                    }
                     $sub->subproject;
                 }
             }
-            return $annexes;
+            $grouped = $annexes->groupBy(['header']);
+            return $grouped;
         }
         catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
         }
-        // $annexes = AnnexE::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
-        // foreach($annexes as $annexe){
-        //     $project = $annexe->project;
-        //     $annexe->program_header = ($project->cluster_id !== null) ? $project->cluster->title : (($project->subprogram_id !== null) ? $project->subprogram->title_short : '');
-        //     $annexe->division_header = ($project->subunit_id !== null) ? $project->subunit->name : (($project->unit_id !== null) ? $project->unit->name : '');
-        //     foreach($annexe->subs as $annexesub){
-        //         $annexesub->subproject;
-        //     }
-        // }
-        // $result = [];
-        // $result['divisions'] = $annexes->groupBy(['project.division_id', 'division_header']);
-        // $result['programs'] = $annexes->groupBy(['project.program_id', 'program_header']);
-        // return $result;
     }
 
     public function storeAnnexE(Request $request){
-        
+        DB::beginTransaction();
+        try {
+            
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
     }
     
     public function updateAnnexE(Request $request, $id){
@@ -463,12 +468,39 @@ class WorkshopController extends Controller
         DB::beginTransaction();
         try {
             $annexones = AnnexOne::where('workshop_id', $workshopId)->get();
+            $commonindicators = CommonIndicator::with(['tags'])
+                ->where('workshop_id', $workshopId)
+                ->where('type', 'Performance')->get();
             foreach($annexones as $annexone){
                 $annexe = new AnnexE;
                 $annexe->workshop_id = $workshopId;
                 $annexe->project_id = $annexone->project_id;
                 $annexe->status = 'New';
                 $annexe->save();
+
+                $project = $annexe->project;
+
+                foreach($commonindicators as $commonindicator){
+                    $coprogram_id    = $commonindicator->program_id;
+                    $cosubprogram_id = $commonindicator->subprogram_id;
+                    $cocluster_id    = $commonindicator->cluster_id;
+                    // common indicator - for projects under program
+                    if($coprogram_id == $project->program_id && $cosubprogram_id === null && $cocluster_id === null){
+                        $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+                    }
+                    else 
+                    // common indicator - for projects under cluster
+                    if($coprogram_id == $project->program_id && $cosubprogram_id !== null && $cocluster_id !== null){
+                        if($cocluster_id == $project->cluster_id){
+                            $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+                        }
+                    }
+                    else
+                    // common indicator - for projects under subprogram
+                    if($coprogram_id == $project->program_id && $cosubprogram_id == $project->subprogram_id){
+                        $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+                    }
+                }
 
                 $annexf = new AnnexF;
                 $annexf->workshop_id = $workshopId;
@@ -495,6 +527,33 @@ class WorkshopController extends Controller
         catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
+        }
+    }
+
+    private function saveAnnexECommonIndicator($annexe, $commonindicator){
+        $performanceindicator = new PerformanceIndicator;
+        $performanceindicator->description = $commonindicator->description;
+        $performanceindicator->common = true;
+        $annexe->indicators()->save($performanceindicator);
+        $performanceindicator->tags()->sync([$commonindicator->tags[0]->id]);
+
+        $tempTags = [];
+        foreach($commonindicator->subindicators as $sub){
+            $tag = $sub->tags[0];
+            if(!in_array($tag->name, $tempTags)){
+                $annexesub = new AnnexESub;
+                $annexesub->annex_e_id = $annexe->id;
+                $annexesub->temp_title = $tag->name;
+                $annexesub->save();
+
+                array_push($tempTags, $tag->name);
+            }
+
+            $performanceindicator = new PerformanceIndicator;
+            $performanceindicator->description = $sub->description;
+            $performanceindicator->common = true;
+            $annexesub->indicators()->save($performanceindicator);
+            $performanceindicator->tags()->sync([$tag->id]);
         }
     }
 

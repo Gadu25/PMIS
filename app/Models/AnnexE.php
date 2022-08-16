@@ -20,4 +20,8 @@ class AnnexE extends Model
     public function subs(){
         return $this->hasMany(AnnexESub::class);
     }
+
+    public function indicators(){
+        return $this->morphMany(PerformanceIndicator::class, 'indicatorable');
+    }
 }

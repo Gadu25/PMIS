@@ -144,6 +144,7 @@ export default {
         }
     },
     methods: {
+        ...mapActions('workshop', ['fetchWorkshop']),
         ...mapActions('division', ['fetchDivisions']),
         ...mapActions('annexone', ['publishAnnexOneProjects']),
         setYear(year, key){
@@ -323,6 +324,7 @@ export default {
                 var icon = res.errors ? 'error' : 'success'
                 timer = 0
                 this.toastMsg(icon, res.message)
+                this.fetchWorkshop(this.$route.params.workshopId)
             })
             toast.fire({
                 icon: 'info',

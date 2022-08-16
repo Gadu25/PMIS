@@ -13,11 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('annex_e_subs', function (Blueprint $table) {
+        Schema::create('indicator_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('annex_e_id')->constrained('annex_e_s')->cascadeOnDelete();
-            $table->foreignId('subproject_id')->nullable()->constrained('subprojects')->cascadeOnDelete();
-            $table->string('temp_title')->nullable();
             $table->timestamps();
         });
     }
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('annex_e_subs');
+        Schema::dropIfExists('indicator_details');
     }
 };

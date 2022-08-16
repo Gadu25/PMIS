@@ -32,4 +32,8 @@ class CommonIndicator extends Model
     public function cluster(){
         return $this->belongsTo(Cluster::class, 'cluster_id');
     }
+
+    public function details(){
+        return $this->morphOne(IndicatorDetail::class, 'indicatorable');
+    }
 }

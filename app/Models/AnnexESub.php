@@ -12,12 +12,16 @@ class AnnexESub extends Model
     protected $fillables = [
         'annex_e_id', 'subproject_id'
     ];
-    
+
+    public function subproject(){
+        return $this->belongsTo(Subproject::class, 'subproject_id');
+    }
+
     public function annexe(){
         return $this->belongsTo(AnnexE::class, 'annex_f_id');
     }
 
-    public function subproject(){
-        return $this->belongsTo(Subproject::class, 'subproject_id');
+    public function indicators(){
+        return $this->morphMany(PerformanceIndicator::class, 'indicatorable');
     }
 }
