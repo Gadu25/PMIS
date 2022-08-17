@@ -13,8 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('indicator_details', function (Blueprint $table) {
+        Schema::create('indicator_breakdowns', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('performance_indicator_id')->constrained('performance_indicators')->cascadeOnDelete();
+            $table->integer('quarter');
+            $table->string('month');
+            $table->float('number');
             $table->timestamps();
         });
     }
@@ -26,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('indicator_details');
+        Schema::dropIfExists('indicator_breakdowns');
     }
 };
