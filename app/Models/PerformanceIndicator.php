@@ -28,4 +28,8 @@ class PerformanceIndicator extends Model
     public function details(){
         return $this->morphOne(IndicatorDetail::class, 'indicatorable');
     }
+
+    public function breakdowns(){
+        return $this->hasMany(IndicatorBreakdown::class);
+    }
 }

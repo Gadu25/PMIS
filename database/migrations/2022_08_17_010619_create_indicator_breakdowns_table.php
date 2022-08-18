@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('performance_indicator_id')->constrained('performance_indicators')->cascadeOnDelete();
             $table->integer('quarter');
-            $table->string('month');
+            $table->integer('month');
             $table->float('number');
             $table->timestamps();
         });

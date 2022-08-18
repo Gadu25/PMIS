@@ -95,7 +95,7 @@
                     </div>
                     <div v-else>
                         <div class="d-flex justify-content-end mb-2">
-                            <button class="btn btn-sm btn-success me-1">Batch Status Change</button>
+                            <button class="btn btn-sm btn-success me-1" v-if="displaysyncstatus != 'New'">Batch Status Change</button>
                             <button class="btn btn-sm btn-success"><i class="fas fa-plus"></i> New</button>
                         </div>
                         <div class="table-responsive" style="height: 70vh">
@@ -154,7 +154,7 @@
                     <button class="btn btn-sm btn-danger" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
                     <div>
                         <button class="btn btn-sm btn-outline-secondary shadow-none me-1" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#form" @click="showComputeForm()"><i class="far fa-cogs"></i></button>
-                        <button class="btn btn-sm btn-primary" @click="detailshow = false"><i class="fas fa-save"></i> Save changes</button>
+                        <button class="btn btn-sm btn-primary" @click="submitForm()"><i class="fas fa-save"></i> Save changes</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -267,6 +267,7 @@
                                         <td v-for="col in indcols" :key="col+'_empty_'+sub.id"></td>
                                     </template>
                                 </tr>
+                                                        
                                 <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
                                     <template v-if="key != 0">
                                         <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
@@ -301,14 +302,14 @@
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="form" tabindex="-1">
+    <div class="modal fade" id="form" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" :class="!breakdownform ? 'modal-lg' : ''">
             <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" v-if="breakdownform">{{form.indicators[breakdownkey].description}}</h5>
                 <h5 class="modal-title" v-if="computeform"> <span>{{form.project_title}} Performance Indicators</span></h5>
                 <h5 class="modal-title" v-if="indicatorshow"> <span>Performance Indicators</span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" ref="Close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0" v-if="breakdownform">
                 <table class="table table-sm table-bordered m-0 align-middle">
@@ -394,15 +395,11 @@
                 </table>
             </div>
             <div class="modal-body p-0" v-if="indicatorshow">
-                <!-- <div class="d-flex justify-content-end">
-                    <button class="btn btn-sm btn-success rounded-0"><i class="fas fa-plus"></i> Indicator</button>
-                </div> -->
                 <table class="table table-sm table-bordered m-0">
                     <thead class="text-center">
                         <tr>
                             <th style="width: 40%">Program/Project</th>
                             <th>Performance Indicators (PIs)</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -414,20 +411,24 @@
                                 </div>
                             </td>
                            <template v-if="form.indicators.length>0">
-                                <td :colspan="form.indicators[0].common ? 2 : 1">{{form.indicators[0].description}}</td>
-                                <td v-if="!form.indicators[0].common" class="text-center">
-                                    <button class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                    <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                <td :class="!form.indicators[0].common ? 'p-0' : ''">
+                                    <span v-if="form.indicators[0].common">{{form.indicators[0].description}}</span>
+                                    <div v-else class="position-relative">
+                                        <button @click="removeIndicator(form.indicators[0])" class="btn btn-sm btn-outline-danger position-absolute end-0 h-100 rounded-0 border-0 shadow-none"><i class="fas fa-times"></i></button>
+                                        <input type="text" v-model="form.indicators[0].description" class="form-control rounded-0 border-0 shadow-none" placeholder="Indicator description...">
+                                    </div>
                                 </td>
                            </template>
                         </tr>
                         <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
                             <template v-if="key != 0">
-                            <td :colspan="indicator.common ? 2 : 1">{{indicator.description}}</td>
-                                <td v-if="!form.indicators[0].common" class="text-center">
-                                    <button class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                    <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
-                                </td>
+                            <td :class="!indicator.common ? 'p-0' : ''">
+                                <span v-if="indicator.common">{{indicator.description}}</span>
+                                <div v-else class="position-relative">
+                                    <button @click="removeIndicator(indicator)" class="btn btn-sm btn-outline-danger position-absolute end-0 h-100 rounded-0 border-0 shadow-none"><i class="fas fa-times"></i></button>
+                                    <input v-model="indicator.description" type="text" class="form-control rounded-0 border-0 shadow-none" placeholder="Indicator description...">
+                                </div>
+                            </td>
                             </template>
                         </tr>
                         <template v-for="sub, key in form.subs" :key="key">
@@ -439,19 +440,23 @@
                                     </div>
                                 </td>
                                 <template v-if="sub.indicators.length>0">
-                                    <td :colspan="sub.indicators[0].common ? 2 : 1">{{sub.indicators[0].description}}</td>
-                                    <td v-if="!sub.indicators[0].common" class="text-center">
-                                        <button class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                        <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                    <td :class="!sub.indicators[0].common ? 'p-0' : ''">
+                                        <span v-if="sub.indicators[0].common">{{sub.indicators[0].description}}</span>
+                                        <div v-else class="position-relative">
+                                            <button @click="removeIndicator(sub.indicators[0], sub.id)" class="btn btn-sm btn-outline-danger position-absolute end-0 h-100 rounded-0 border-0 shadow-none"><i class="fas fa-times"></i></button>
+                                            <input v-model="sub.indicators[0].description" type="text" class="form-control rounded-0 border-0 shadow-none" placeholder="Indicator description...">
+                                        </div>
                                     </td>
                                 </template>
                             </tr>
                             <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
                                 <template v-if="key != 0">
-                                <td :colspan="indicator.common ? 2 : 1">{{indicator.description}}</td>
-                                    <td v-if="!indicator.common" class="text-center">
-                                        <button class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                        <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                    <td :class="!indicator.common ? 'p-0' : ''">
+                                        <span v-if="indicator.common">{{indicator.description}}</span>
+                                        <div v-else class="position-relative">
+                                            <button @click="removeIndicator(indicator, sub.id)" class="btn btn-sm btn-outline-danger position-absolute end-0 h-100 rounded-0 border-0 shadow-none"><i class="fas fa-times"></i></button>
+                                            <input v-model="indicator.description" type="text" class="form-control rounded-0 border-0 shadow-none" placeholder="Indicator description...">
+                                        </div>
                                     </td>
                                 </template>
                             </tr>
@@ -460,7 +465,8 @@
                 </table>
             </div>
             <div class="modal-footer">
-                <button type="button" :class="computeform ? 'btn-primary' : 'btn-secondary'" class="btn  rounded-pill" data-bs-dismiss="modal" style="min-width: 100px">{{ computeform ? 'Save' : 'Done'}}</button>
+                <button @click="submitForm()" type="button" v-if="indicatorshow" class="btn btn-primary rounded-pill" style="min-width: 100px">Save</button>
+                <button type="button" v-else :class="computeform ? 'btn-primary' : 'btn-secondary'" class="btn rounded-pill" data-bs-dismiss="modal" style="min-width: 100px">{{ computeform ? 'Save' : 'Done'}}</button>
             </div>
             </div>
         </div>
@@ -482,6 +488,7 @@ export default {
         return {
             displaytype: 'Program',
             displaystatus: 'New',
+            displaysyncstatus: 'New',
             disProg: {
                 program_id: 0,
                 subprogram_id: 0,
@@ -509,7 +516,8 @@ export default {
                 project_id: '',
                 project_title: '',
                 indicators: [],
-                subs: []
+                subs: [],
+                formtype: ''
             },
             // indicator columns
             indcols: ['description', 'actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'],
@@ -531,7 +539,7 @@ export default {
     },
     methods: {
         ...mapActions('workshop', ['fetchWorkshop']),
-        ...mapActions('annexe', ['fetchAnnexEs']),
+        ...mapActions('annexe', ['fetchAnnexEs', 'saveAnnexE']),
         ...mapActions('program', ['fetchPrograms']),
         ...mapActions('division', ['fetchDivisions']),
         displaytypeChange(){
@@ -599,10 +607,42 @@ export default {
             options.status     = this.displaystatus
             this.fetchAnnexEs(options).then(res => {
                 this.syncing = false
+                this.displaysyncstatus = this.displaystatus
             })
         },
 
         // Form
+        submitForm(){
+            if(this.formValidated()){
+                this.saveAnnexE(this.form).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
+                    if(!res.errors){
+                        this.syncRecords()
+                        this.$refs.Close.click()
+                        this.detailshow = false
+                        this.formshow = false
+                    }
+                })
+            }
+        },
+        formValidated(){
+            var form = this.form
+            if(this.form.formtype == 'indicator'){
+                for(let i = 0; i < form.indicators.length; i++){
+                    var indicator = form.indicators[i]
+                    if(indicator.description == ''){ this.toastMsg('warning', 'Performance Indicator Description Required'); return false }
+                }
+
+                for(let i = 0; i < form.subs.length; i++){
+                    for(let j = 0; j < form.subs[i].indicators.length; j++){
+                        var indicator = form.subs[i].indicators[j]
+                        if(indicator.description == ''){ this.toastMsg('warning', 'Performance Indicator Description Required'); return false }
+                    }
+                }
+            }
+            return true
+        },
         editForm(item, type){
             this.breakdownform = false
             this.computeform = false
@@ -627,12 +667,21 @@ export default {
                     fourth:           (indicator.details === null) ? 0 : indicator.details.fourth,
                     common:           indicator.common,
                     breakdowns: [
-                        {quarter: 1, first: 0, second: 0, third: 0},
-                        {quarter: 2, first: 0, second: 0, third: 0},
-                        {quarter: 3, first: 0, second: 0, third: 0},
-                        {quarter: 4, first: 0, second: 0, third: 0},
+                        {quarter: 1, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
+                        {quarter: 2, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
+                        {quarter: 3, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
+                        {quarter: 4, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
                     ]
                 }
+                for(let j = 0; j < indicator.breakdowns.length; j++){
+                    var breakdown = indicator.breakdowns[j]
+                    var breakdownForm = tempIndicator.breakdowns.find(elem => elem.quarter == breakdown.quarter)
+                    var idNum    = breakdown.month == 1 ? 'fid' : breakdown.month == 2 ? 'sid' : 'tid'
+                    var monthNum = breakdown.month == 1 ? 'first' : breakdown.month == 2 ? 'second' : 'third'
+                    breakdownForm[idNum]    = breakdown.id
+                    breakdownForm[monthNum] = breakdown.number
+                }
+
                 this.form.indicators.push(tempIndicator)
             }
 
@@ -673,14 +722,20 @@ export default {
 
             this.detailshow = (type == 'details')
             this.indicatorshow = (type == 'indicator')
+            this.form.formtype = type
         },
         addIndicator(id = null){
             var item = id ? this.form.subs.find(elem => elem.id == id) : this.form
             var tempIndicator = {
                 id: '',
-                description: 'test'
+                description: '',
+                common: false
             }
             item.indicators.push(tempIndicator)
+        },
+        removeIndicator(indicator, id = null){
+            var item = id ? this.form.subs.find(elem => elem.id == id) : this.form
+            item.indicators.remove(indicator)
         },
         showComputeForm(){
             this.indicatorshow = false
@@ -690,7 +745,6 @@ export default {
             this.indicatorshow = false
             this.breakdownform = true
             this.breakdownkey = key
-            console.log(this.form.indicators[key].breakdowns)
         },
         totalIndicatorBreakdown(key, col){
             var result = 0

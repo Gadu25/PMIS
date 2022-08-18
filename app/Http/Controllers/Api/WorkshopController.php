@@ -119,6 +119,7 @@ class WorkshopController extends Controller
     }
 
     // Annex E
+
     public function getAnnexE(Request $request){
         DB::beginTransaction();
         try{
@@ -143,11 +144,13 @@ class WorkshopController extends Controller
             foreach($annexes as $annexe){
                 foreach($annexe->indicators as $indicator){
                     $indicator->details;
+                    $indicator->breakdowns;
                 }
                 $annexe->header = ($annexe->project->cluster_id !== null) ? $annexe->project->cluster->title : $annexe->project->program->title;
                 foreach($annexe->subs as $sub){
                     foreach($sub->indicators as $indicator){
                         $indicator->details;
+                        $indicator->breakdowns;
                     }
                     $sub->subproject;
                 }
@@ -173,11 +176,80 @@ class WorkshopController extends Controller
     }
     
     public function updateAnnexE(Request $request, $id){
-        
+        DB::beginTransaction();
+        try {
+            $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
+            $annexe = AnnexE::findOrFail($id);
+            $initialIndicators = $annexe->indicators;
+            $tempIndicatorIds = [];
+            foreach($request['indicators'] as $indicator){
+                $performanceindicator = ($indicator['id']) ? PerformanceIndicator::findOrFail($indicator['id']) : new PerformanceIndicator;
+                if($request['formtype'] == 'indicator'){
+                    $performanceindicator->description = $indicator['description'];
+                    $annexe->indicators()->save($performanceindicator);
+                    array_push($tempIndicatorIds, $performanceindicator->id);
+                }
+                if($request['formtype'] == 'details'){
+                    if($this->indicatorHaveDetails($indicator)){
+                        $details = ($performanceindicator->details != null) ? IndicatorDetail::findOrFail($performanceindicator->details->id) : new IndicatorDetail ;
+                        foreach($columns as $column){
+                            $details[$column] = $this->formatAmount($indicator[$column]);
+                        }
+                        $performanceindicator->details()->save($details);
+                    }
+                    if($request['program_id'] != 1){
+                        $nums = [1,2,3];
+                        foreach($indicator['breakdowns'] as $bd){
+                            foreach($nums as $num){
+                                $numId  = ($num == 1) ? 'fid'   : (($num == 2) ? 'sid'    : 'tid');
+                                $numKey = ($num == 1) ? 'first' : (($num == 2) ? 'second' : 'third');
+                                if($this->formatAmount($bd[$numKey]) > 0){
+                                    $breakdown = ($bd[$numId]) ? IndicatorBreakdown::findOrFail($bd[$numId]) : new IndicatorBreakdown; 
+                                    $breakdown->quarter = $bd['quater'];
+                                    $breakdown->month = $num;
+                                    $breakdown->number = $bd[$numKey];
+                                    $performanceindicator->breakdowns()->save($breakdown);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if($request['formtype'] == 'indicator'){
+                foreach($initialIndicators as $indicator){
+                    if(!$indicator->common && !in_array($indicator->id, $tempIndicatorIds)){
+                        $indicator->details()->delete();
+                        $indicator->breakdowns()->delete();
+                        $indicator->delete();
+                    }
+                }
+            }
+
+            DB::commit();
+            return ['message' => 'Successfully saved!'];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
     }
     
     public function destroyAnnexE($id){
 
+    }
+
+    private function indicatorHaveDetails($indicator){
+        $state = false;
+        $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
+        foreach($columns as $column){
+            if(!$state){
+                $state = ($this->formatAmount($indicator[$column]) > 0);
+            }
+            else{
+                return $state;
+            }
+        }
     }
 
     // Annex F 

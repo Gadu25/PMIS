@@ -28,7 +28,7 @@ const routes = [
             { path: '/budget-executive-documents/annex-e/:workshopId', name: 'AnnexE', component: AnnexE, meta: { requiresAuth: true, title: 'Annex E' } },
             { path: '/budget-executive-documents/annex-f/:workshopId', name: 'AnnexF', component: AnnexF, meta: { requiresAuth: true, title: 'Annex F' } },
             { path: '/budget-executive-documents/annex-one/:workshopId', name: 'AnnexOne', component: AnnexOne, meta: { requiresAuth: true, title: 'Annex One' } },
-            { path: '/budget-executive-documents/common-indicators/:workshopId', name: 'CommonIndicators', component: CommonIndicators, meta: { requiresAuth: true, title: 'Common Indicators' } },
+            { path: '/budget-executive-documents/common-indicators/:workshopId', name: 'CommonIndicators', component: CommonIndicators, meta: { requiresAuth: true, title: 'Common Performance Indicators' } },
         ]
     },
 ]

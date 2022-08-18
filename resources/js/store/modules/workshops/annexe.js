@@ -18,9 +18,6 @@ const actions = {
     },
     async saveAnnexE({commit}, form){
         const response = form.id ? await axios.put('/api/workshop/annex-e/'+form.id, form) : await axios.post('/api/workshop/annex-e', form)
-        if(!response.data.errors){
-            commit('setAnnexEs', response.data.annexes)
-        }
         return response.data
     },
     async deleteAnnexE({commit}, id){

@@ -42,7 +42,7 @@
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexE', params: { workshopId: workshop.id } }"><li>Annex E</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
-                                            <router-link @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Indicators</li></router-link>
+                                            <router-link @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Performance Indicators</li></router-link>
                                         </ul>
                                         <div class="actions ms-2">
                                             <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
