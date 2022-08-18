@@ -80,7 +80,8 @@
                             </div>
                         </div>
                     </div>
-
+                    <!-- <money-format :value="cost">
+                    </money-format> -->
                 </div>
                 <div class="col-sm-9 mb-3">
                     <div class="card shadow overflow-auto" style="height: 76vh" v-if="!editmode">
@@ -191,7 +192,7 @@
                                             <template v-else>
                                                 <template v-if="form.indicators[0].description != 'Sub-Total'">
                                                     <p v-if="form.indicators[0].id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{form.indicators[0][col] = totalIndicator(col)}}</p>
-                                                    <input v-else type="text" v-money="money" v-model="form.indicators[0][col]" class="form-control indicator-input">
+                                                    <input  v-else type="text" v-model="form.indicators[0][col]" v-money="money" class="form-control indicator-input">
                                                 </template>
                                                 <template v-else>
                                                     <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
@@ -201,7 +202,7 @@
                                         <!-- Program 2: S&T Educational Development Program -->
                                         <template v-else>
                                             <p class="px-2 py-1 m-0" v-if="col == 'description'">{{form.indicators[0][col]}}</p>
-                                            <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-money="money" v-model="form.indicators[0][col]" class="form-control indicator-input">
+                                            <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="form.indicators[0][col]" v-money="money" class="form-control indicator-input">
                                             <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(0)" v-else>{{form.indicators[0][col] = formatNumber(totalIndicatorBreakdown(0, col))}}</p>
                                         </template>
                                     </td>
@@ -220,7 +221,7 @@
                                             <template v-else>
                                                 <template v-if="indicator.description != 'Sub-Total'">
                                                     <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
-                                                    <input v-else type="text" v-money="money" v-model="indicator[col]" class="form-control indicator-input">
+                                                    <input v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                 </template>
                                                 <template v-else>
                                                     <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
@@ -230,7 +231,7 @@
                                         <!-- Program 2: S&T Educational Development Program -->
                                         <template v-else>
                                             <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                            <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-money="money" v-model="indicator[col]" class="form-control indicator-input">
+                                            <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                             <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                         </template>
                                     </td>
@@ -247,7 +248,7 @@
                                                 <template v-else>
                                                     <template v-if="sub.indicators[0].description != 'Sub-Total'">
                                                         <p v-if="sub.indicators[0].id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{sub.indicators[0][col] = totalIndicator(col)}}</p>
-                                                        <input v-else type="text" v-money="money" v-model="sub.indicators[0][col]" class="form-control indicator-input">
+                                                        <input v-else type="text" v-model="sub.indicators[0][col]" v-money="money" class="form-control indicator-input">
                                                     </template>
                                                     <template v-else>
                                                         <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col, sub.id)}}</p>
@@ -257,7 +258,7 @@
                                             <!-- Program 2: S&T Educational Development Program -->
                                             <template v-else>
                                                 <p class="px-2 py-1 m-0" v-if="col == 'description'">{{sub.indicators[0][col]}}</p>
-                                                <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-money="money" class="form-control indicator-input">
+                                                <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="sub.indicators[0][col]" v-money="money" class="form-control indicator-input">
                                                 <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(0)" v-else>{{sub.indicators[0][col] = formatNumber(totalIndicatorBreakdown(0, col))}}</p>
                                             </template>
                                         </td>
@@ -277,7 +278,7 @@
                                                 <template v-else>
                                                     <template v-if="indicator.description != 'Sub-Total'">
                                                         <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
-                                                        <input v-else type="text" v-money="money" v-model="indicator[col]" class="form-control indicator-input">
+                                                        <input v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                     </template>
                                                     <template v-else>
                                                         <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col, sub.id)}}</p>
@@ -287,7 +288,7 @@
                                             <!-- Program 2: S&T Educational Development Program -->
                                             <template v-else>
                                                 <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-money="money" class="form-control indicator-input">
+                                                <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                 <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                             </template>
                                         </td>
@@ -473,19 +474,21 @@
     </div>
 </template>
 <script>
-import { VMoney } from 'v-money'
+// import { VMoney } from 'v-money'
+import MoneyFormat from 'vue-money-format'
 import EmptyTable from './EmptyTable.vue'
 import Display from './Display.vue'
 import Form from './Form.vue'
 import { mapActions, mapGetters } from 'vuex'
 export default {
     name: 'AnnexE',
-    components: { EmptyTable, Display, Form },
-    directives: {
-        money: VMoney
-    },
+    components: { EmptyTable, Display, Form, 'money-format': MoneyFormat },
+    // directives: {
+    //     money: VMoney
+    // },
     data(){
         return {
+            cost: 12345,
             displaytype: 'Program',
             displaystatus: 'New',
             displaysyncstatus: 'New',

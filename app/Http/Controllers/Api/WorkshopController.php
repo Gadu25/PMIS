@@ -190,6 +190,11 @@ class WorkshopController extends Controller
                     array_push($tempIndicatorIds, $performanceindicator->id);
                 }
                 if($request['formtype'] == 'details'){
+                    // if(is_float($indicator['id'])){
+                    //     $performanceindicator = new PerformanceIndicator;
+                    //     $performanceindicator->description = $indicator['description'];
+                    //     $annexe->indicators()->save($performanceindicator);
+                    // }
                     if($this->indicatorHaveDetails($indicator)){
                         $details = ($performanceindicator->details != null) ? IndicatorDetail::findOrFail($performanceindicator->details->id) : new IndicatorDetail ;
                         foreach($columns as $column){
@@ -205,7 +210,7 @@ class WorkshopController extends Controller
                                 $numKey = ($num == 1) ? 'first' : (($num == 2) ? 'second' : 'third');
                                 if($this->formatAmount($bd[$numKey]) > 0){
                                     $breakdown = ($bd[$numId]) ? IndicatorBreakdown::findOrFail($bd[$numId]) : new IndicatorBreakdown; 
-                                    $breakdown->quarter = $bd['quater'];
+                                    $breakdown->quarter = $bd['quarter'];
                                     $breakdown->month = $num;
                                     $breakdown->number = $bd[$numKey];
                                     $performanceindicator->breakdowns()->save($breakdown);
