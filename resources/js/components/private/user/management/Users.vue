@@ -153,7 +153,7 @@
                                                     <select class="form-control" id="Title" v-model="profile.title_id">
                                                         <option value="">Select Title</option>
                                                         <template v-for="title in titles" :key="'title_'+title.id">
-                                                            <option v-if="title.name != 'Superadmin Profile' || (title.name == 'Superadmin Profile' && authuser.active_profile.title.name == 'Superadmin Profile')" :value="title.id">{{title.name}}</option>
+                                                            <option v-if="title.name != 'Superadmin' || (title.name == 'Superadmin' && authuser.active_profile.title.name == 'Superadmin')" :value="title.id">{{title.name}}</option>
                                                         </template>
                                                     </select>
                                                     <label for="Title">Title</label>
