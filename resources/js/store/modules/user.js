@@ -2,15 +2,48 @@ import axios from "axios";
 
 const state = {
     user: [],
-    authUser: []
+    users: [],
+    authUser: [],
+    titles: []
 }
 
 const getters = {
     getUser: (state) => state.user,
-    getAuthUser: (state) => state.authUser
+    getUsers: (state) => state.users,
+    getAuthUser: (state) => state.authUser,
+    getTitles: (state) => state.titles
 }
 
 const actions = {
+    // User Manager functions
+    async fetchUsers({commit}){
+        const response = await axios.get('/api/user').then(res => {
+            commit('setUsers', res.data)
+            return res.data
+        })
+        return response
+    },
+    async fetchUsersByDivision({commit}, id){
+        const response = await axios.get('/api/user/division/'+id).then(res => {
+            commit('setUsers', res.data)
+            return res.data
+        })
+        return response
+    },
+    async fetchTitles({commit}){
+        const response = await axios.get('/api/user/title').then(res => {
+            commit('setTitles', res.data)
+            return res.data
+        })
+        return response
+    },
+    async saveUser({commit}, form){
+        const response = form.id ? await axios.put('/api/user/'+form.id, form) : await axios.post('/api/user', form)
+        if(!response.data.errors){
+            commit('setUsers', response.data.users)
+        }
+        return response.data
+    },
     // User functions
 
     // Auth functions
@@ -47,7 +80,9 @@ const actions = {
 
 const mutations = {
     setUser: (state, data) => state.user = data,
+    setUsers: (state, data) => state.users = data,
     setAuthUser: (state, data) => state.authUser = data,
+    setTitles: (state, data) => state.titles = data,
 }
 
 export default {

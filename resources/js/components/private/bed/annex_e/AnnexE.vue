@@ -80,8 +80,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- <money-format :value="cost">
-                    </money-format> -->
                 </div>
                 <div class="col-sm-9 mb-3">
                     <div class="card shadow overflow-auto" style="height: 76vh" v-if="!editmode">
@@ -123,10 +121,10 @@
                                                         </table>
                                                     </td>
                                                     <td class="text-center" :rowspan="item.subs.length + 1">
-                                                        <button style="width: 48px"  class="shadow-none btn btn-sm btn-primary me-1 mb-1"><i class="far fa-pencil-alt"></i></button>
-                                                        <button style="width: 48px"  class="shadow-none btn btn-sm btn-danger me-1 mb-1"><i class="far fa-trash-alt"></i></button><br>
+                                                        <!-- <button style="width: 48px"  class="shadow-none btn btn-sm btn-primary me-1 mb-1"><i class="far fa-pencil-alt"></i></button> -->
                                                         <button style="width: 100px" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" data-bs-toggle="modal" data-bs-target="#form" @click="editForm(item, 'indicator')"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                        <button style="width: 100px" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far fa-pencil-alt"></i> Details</button>
+                                                        <button style="width: 100px" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far fa-pencil-alt"></i> Details</button><br>
+                                                        <button style="width: 100px"  class="shadow-none btn btn-sm btn-danger me-1 mb-1"><i class="far fa-trash-alt"></i> Remove</button>
                                                     </td>
                                                 </tr>
                                                 <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -395,7 +393,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="modal-body p-0" v-if="indicatorshow">
+            <div class="modal-body p-0 overflow-auto" style="height: 50vh;" v-if="indicatorshow">
                 <table class="table table-sm table-bordered m-0">
                     <thead class="text-center">
                         <tr>
@@ -474,18 +472,13 @@
     </div>
 </template>
 <script>
-// import { VMoney } from 'v-money'
-import MoneyFormat from 'vue-money-format'
 import EmptyTable from './EmptyTable.vue'
 import Display from './Display.vue'
 import Form from './Form.vue'
 import { mapActions, mapGetters } from 'vuex'
 export default {
     name: 'AnnexE',
-    components: { EmptyTable, Display, Form, 'money-format': MoneyFormat },
-    // directives: {
-    //     money: VMoney
-    // },
+    components: { EmptyTable, Display, Form },
     data(){
         return {
             cost: 12345,
@@ -631,16 +624,20 @@ export default {
         },
         formValidated(){
             var form = this.form
+            var withSubtotal = this.withSubtotal(form.indicators)
             if(this.form.formtype == 'indicator'){
                 for(let i = 0; i < form.indicators.length; i++){
                     var indicator = form.indicators[i]
                     if(indicator.description == ''){ this.toastMsg('warning', 'Performance Indicator Description Required'); return false }
+                    if(withSubtotal && indicator.description.includes('Sub-Total')){ this.toastMsg('warning', 'Sub-Total already exists'); return false }
                 }
 
                 for(let i = 0; i < form.subs.length; i++){
+                    withSubtotal = this.withSubtotal(form.subs[i].indicators)
                     for(let j = 0; j < form.subs[i].indicators.length; j++){
                         var indicator = form.subs[i].indicators[j]
                         if(indicator.description == ''){ this.toastMsg('warning', 'Performance Indicator Description Required'); return false }
+                        if(withSubtotal && indicator.description.includes('Sub-Total')){ this.toastMsg('warning', 'Sub-Total already exists'); return false }
                     }
                 }
             }
@@ -819,7 +816,7 @@ export default {
                 first: 0,
                 second: 0,
                 third: 0,
-                fourh: 0
+                fourth: 0
             }
             item.indicators.push(subtotalIndicator)
         },

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Profile;
 use App\Models\Division;
 use App\Models\Unit;
+use App\Models\Title;
 
 class SuperadminSeeder extends Seeder
 {
@@ -31,9 +32,11 @@ class SuperadminSeeder extends Seeder
         $user->unit_id = $unit->id;
         $user->save();
 
+        $title = Title::where('name', 'Superadmin Profile')->first();
+
         $profile = new Profile;
         $profile->user_id = $user->id;
-        $profile->title = 'Superadmin Profile';
+        $profile->title_id = $title->id;
         $profile->access_level = 'Admin';
         $profile->save();
     }

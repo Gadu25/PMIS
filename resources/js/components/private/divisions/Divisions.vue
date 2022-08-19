@@ -1,6 +1,6 @@
 <template>
     <div class="px-5 py-4" v-if="!loading">
-        <h2 class="text-center">Divisions and Units</h2>
+        <h2 class="text-center">Divisions and Units</h2><hr>
         <div class="accordion shadow-lg" id="accordionExample">
             <div class="accordion-item" v-for="division in divisions" :key="division.id+'_div'">
                 <h2 class="accordion-header" id="headingOne">

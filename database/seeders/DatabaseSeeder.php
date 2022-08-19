@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // $this->call(DivisionSeeder::class);
+        // $this->call(TitleSeeder::class);
         // $this->call(ProgramSeeder::class);
         // $this->call(SuperadminSeeder::class);
     }

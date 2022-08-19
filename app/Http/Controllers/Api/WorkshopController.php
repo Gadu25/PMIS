@@ -183,18 +183,20 @@ class WorkshopController extends Controller
             $initialIndicators = $annexe->indicators;
             $tempIndicatorIds = [];
             foreach($request['indicators'] as $indicator){
-                $performanceindicator = ($indicator['id']) ? PerformanceIndicator::findOrFail($indicator['id']) : new PerformanceIndicator;
+                $performanceindicator = (is_int($indicator['id'])) ? PerformanceIndicator::findOrFail($indicator['id']) : new PerformanceIndicator;
+                if(is_int($indicator['id'])){
+                    array_push($tempIndicatorIds, $indicator['id']);
+                }
                 if($request['formtype'] == 'indicator'){
                     $performanceindicator->description = $indicator['description'];
                     $annexe->indicators()->save($performanceindicator);
                     array_push($tempIndicatorIds, $performanceindicator->id);
                 }
                 if($request['formtype'] == 'details'){
-                    // if(is_float($indicator['id'])){
-                    //     $performanceindicator = new PerformanceIndicator;
-                    //     $performanceindicator->description = $indicator['description'];
-                    //     $annexe->indicators()->save($performanceindicator);
-                    // }
+                    if($indicator['description'] == 'Sub-Total' && !is_int($indicator['id'])){
+                        $performanceindicator->description = $indicator['description'];
+                        $annexe->indicators()->save($performanceindicator);
+                    }
                     if($this->indicatorHaveDetails($indicator)){
                         $details = ($performanceindicator->details != null) ? IndicatorDetail::findOrFail($performanceindicator->details->id) : new IndicatorDetail ;
                         foreach($columns as $column){
@@ -221,7 +223,58 @@ class WorkshopController extends Controller
                 }
             }
 
-            if($request['formtype'] == 'indicator'){
+            foreach($initialIndicators as $indicator){
+                if(!$indicator->common && !in_array($indicator->id, $tempIndicatorIds)){
+                    $indicator->details()->delete();
+                    $indicator->breakdowns()->delete();
+                    $indicator->delete();
+                }
+            }
+
+            foreach($request['subs'] as $sub){
+                $annexesub = AnnexESub::findOrFail($sub['id']);
+                $initialIndicators = $annexesub->indicators;
+                $tempIndicatorIds = [];
+                foreach($sub['indicators'] as $indicator){
+                    $performanceindicator = (is_int($indicator['id'])) ? PerformanceIndicator::findOrFail($indicator['id']) : new PerformanceIndicator;
+                    if(is_int($indicator['id'])){
+                        array_push($tempIndicatorIds, $indicator['id']);
+                    }
+                    if($request['formtype'] == 'indicator'){
+                        $performanceindicator->description = $indicator['description'];
+                        $annexesub->indicators()->save($performanceindicator);
+                        array_push($tempIndicatorIds, $performanceindicator->id);
+                    }
+                    if($request['formtype'] == 'details'){
+                        if($indicator['description'] == 'Sub-Total' && !is_int($indicator['id'])){
+                            $performanceindicator->description = $indicator['description'];
+                            $annexesub->indicators()->save($performanceindicator);
+                        }
+                        if($this->indicatorHaveDetails($indicator)){
+                            $details = ($performanceindicator->details != null) ? IndicatorDetail::findOrFail($performanceindicator->details->id) : new IndicatorDetail ;
+                            foreach($columns as $column){
+                                $details[$column] = $this->formatAmount($indicator[$column]);
+                            }
+                            $performanceindicator->details()->save($details);
+                        }
+                        if($request['program_id'] != 1){
+                            $nums = [1,2,3];
+                            foreach($indicator['breakdowns'] as $bd){
+                                foreach($nums as $num){
+                                    $numId  = ($num == 1) ? 'fid'   : (($num == 2) ? 'sid'    : 'tid');
+                                    $numKey = ($num == 1) ? 'first' : (($num == 2) ? 'second' : 'third');
+                                    if($this->formatAmount($bd[$numKey]) > 0){
+                                        $breakdown = ($bd[$numId]) ? IndicatorBreakdown::findOrFail($bd[$numId]) : new IndicatorBreakdown; 
+                                        $breakdown->quarter = $bd['quarter'];
+                                        $breakdown->month = $num;
+                                        $breakdown->number = $bd[$numKey];
+                                        $performanceindicator->breakdowns()->save($breakdown);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 foreach($initialIndicators as $indicator){
                     if(!$indicator->common && !in_array($indicator->id, $tempIndicatorIds)){
                         $indicator->details()->delete();

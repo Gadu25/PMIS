@@ -19,6 +19,7 @@
                     <router-link active-class="active" :to="{ name: 'Divisions' }">Divisions and Units</router-link>
                     <router-link active-class="active" :to="{ name: 'Programs' }">Programs and Projects</router-link>
                     <router-link active-class="active" :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
+                    <router-link active-class="active" :to="{ name: 'Users' }">User Management</router-link>
                     <a href="/login" @click="logout">Logout</a>
                 </div>
             </div>

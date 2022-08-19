@@ -24,6 +24,7 @@
                     <button style="min-width: 100px;" class="btn btn-primary rounded-pill" type="submit">Submit</button></div>
                 </div>
             </form>
+            <template v-else>
             <button class="btn btn-sm btn-success float-end" @click="resetForm()"><i class="fas fa-plus"></i></button>
             <h4><strong>Planning Workshops</strong></h4><hr>
             <div class="d-flex justify-content-center">
@@ -55,6 +56,7 @@
                     </div>
                 </div>
             </div>
+            </template>
         </div>
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
     </div>

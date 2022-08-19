@@ -16,7 +16,12 @@ Route::controller(AuthController::class)->group(function(){
 });
 
 Route::prefix('/user')->group(function(){
+    Route::middleware('auth:sanctum')->get('/', [UserController::class, 'index']);
+    Route::middleware('auth:sanctum')->post('/', [UserController::class, 'store']);
     Route::middleware('auth:sanctum')->get('/auth', [UserController::class, 'authUser']);
+    Route::middleware('auth:sanctum')->get('/title', [UserController::class, 'getTitles']);
+    Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'update']);
+    Route::middleware('auth:sanctum')->get('/division/{id}', [UserController::class, 'getByDivision']);
 });
 
 Route::prefix('/division')->group(function(){

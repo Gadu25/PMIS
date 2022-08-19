@@ -45,4 +45,16 @@ class User extends Authenticatable
     public function activeProfile(){
         return $this->hasOne(Profile::class)->where('active', true);
     }
+
+    public function division(){
+        return $this->belongsTo(Division::class, 'division_id');
+    }
+    
+    public function unit(){
+        return $this->belongsTo(Unit::class, 'unit_id');
+    }
+    
+    public function subunit(){
+        return $this->belongsTo(Subunit::class, 'subunit_id');
+    }
 }
