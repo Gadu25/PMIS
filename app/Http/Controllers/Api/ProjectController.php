@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\Subproject;
+use App\Models\Staff;
 use DB;
 
 class ProjectController extends Controller
@@ -50,6 +51,33 @@ class ProjectController extends Controller
                 $subproject->delete();
             }
 
+            $tempIds = [];
+            $forDelete = [];
+            
+            if($project->leader){
+                array_push($forDelete, $project->leader->id);
+                foreach($project->encoders as $encoder){
+                    array_push($forDelete, $encoder->id);
+                }
+            }
+            foreach($proj['staffs'] as $value){
+                $staff = $value['id'] ? Staff::findOrFail($value['id']) : new Staff;
+                $staff->project_id = $project->id;
+                $staff->profile_id = $value['profile_id'];
+                $staff->type = $value['type'];
+                $staff->save();
+
+                if($value['id'] != ''){
+                    array_push($tempIds, $value['id']);
+                }
+            }
+
+            foreach($forDelete as $id){
+                if(!in_array($id, $tempIds)){
+                    $staff = Staff::findOrFail($id)->delete();
+                }
+            }
+
             DB::commit();
             return ['message' => 'Successfully saved!', 'projects' => $this->getProjects()];
         }
@@ -80,6 +108,14 @@ class ProjectController extends Controller
                     $subproject->project_id = $project->id;
                     $subproject->save();
                 }
+                
+                foreach($proj['staffs'] as $value){
+                    $staff = $value['id'] ? Staff::findOrFail($value['id']) : new Staff;
+                    $staff->project_id = $project->id;
+                    $staff->profile_id = $value['profile_id'];
+                    $staff->type = $value['type'];
+                    $staff->save();
+                }
             }
             DB::commit();
             return ['message' => 'Successfully added!', 'projects' => $this->getProjects()];
@@ -91,12 +127,17 @@ class ProjectController extends Controller
     }
 
     private function getProjects(){
-        $projects = Project::orderBy('id', 'asc')->get();
+        $projects = Project::with(['leader', 'encoders'])->orderBy('id', 'asc')->get();
 
         foreach($projects as $project){
             $project->subprojects;
-
             $project->program;
+            $project->project_leader = '';
+            if($project->leader){
+                $user = $project->leader->profile->user;
+                $project->project_leader = $user->firstname.' '.$user->lastname;
+            }
+
             if($project->subprogram_id){ $project->subprogram; }
             if($project->cluster_id){ $project->cluster; }
 

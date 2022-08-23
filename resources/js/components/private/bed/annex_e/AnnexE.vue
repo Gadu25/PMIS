@@ -593,18 +593,20 @@ export default {
                 this.subunits = unit.subunits
             }
         },
-        syncRecords(){
+        syncRecords(status = null){
             this.syncing = true
             var type = this.displaytype
 
             var options = (type == 'Program') ? this.disProg : this.disDiv
             options.type = type
             options.workshopId = this.$route.params.workshopId
-            options.status     = this.displaystatus
+            options.status     = status ? status : this.displaystatus
             this.fetchAnnexEs(options).then(res => {
                 this.syncing = false
-                this.displaysyncstatus = this.displaystatus
+                this.displaystatus = options.status
+                this.displaysyncstatus = options.status
             })
+            
         },
 
         // Form
@@ -614,7 +616,8 @@ export default {
                     var icon = res.errors ? 'error' : 'success'
                     this.toastMsg(icon, res.message)
                     if(!res.errors){
-                        this.syncRecords()
+                        console.log(res.status)
+                        this.syncRecords(res.status)
                         this.$refs.Close.click()
                         this.detailshow = false
                         this.formshow = false
@@ -644,7 +647,7 @@ export default {
             return true
         },
         editForm(item, type){
-            this.breakdownform = false
+            this.breakdownform = (item.project.program_id != 1)
             this.computeform = false
             this.totalSelectedId = 0
             this.form.id = item.id

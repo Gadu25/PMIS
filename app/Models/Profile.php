@@ -20,4 +20,12 @@ class Profile extends Model
     public function user(){
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function encoderOf(){
+        return $this->hasMany(Staff::class)->where('type', 'encoder');
+    }
+
+    public function leaderOf(){
+        return $this->hasMany(Staff::class)->where('type', 'leader');
+    }
 }

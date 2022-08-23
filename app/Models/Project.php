@@ -37,6 +37,14 @@ class Project extends Model
         return $this->belongsTo(Subunit::class, 'subunit_id');
     }
 
+    public function leader(){
+        return $this->hasOne(Staff::class)->where('type', 'Leader');
+    }
+
+    public function encoders(){
+        return $this->hasMany(Staff::class)->where('type', 'Encoder');
+    }
+
     public function subprojects(){
         return $this->hasMany(Subproject::class);
     }

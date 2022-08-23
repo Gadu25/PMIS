@@ -63,7 +63,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group row mb-2" v-if="user.active_profile.title == 'Superadmin Profile' && !form.id">
+                <div class="form-group row mb-2" v-if="user.active_profile.title.name == 'Superadmin' && !form.id">
                     <div :class="'mb-2 col-sm-'+ ((units.length > 0 && subunits.length > 0) ? 4 : (units.length > 0) ? 6 : 12 )">
                         <div class="form-floating">
                             <select class="form-select" id="Division" v-model="form.division_id" @change="divChange()">
@@ -281,7 +281,7 @@ export default {
             this.form.subprogram_id = (item.project.subprogram_id) ? item.project.subprogram_id : 0
             this.subpChange()
             this.form.cluster_id =  (item.project.cluster_id) ? item.project.cluster_id : 0
-            if(this.user.active_profile.title == 'Superadmin Profile'){
+            if(this.user.active_profile.title.name == 'Superadmin'){
                 this.form.division_id = item.project.division_id
                 this.divChange()
                 this.form.unit_id = (item.project.unit_id) ? item.project.unit_id : 0

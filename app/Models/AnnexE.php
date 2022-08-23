@@ -24,4 +24,8 @@ class AnnexE extends Model
     public function indicators(){
         return $this->morphMany(PerformanceIndicator::class, 'indicatorable');
     }
+
+    public function histories(){
+        return $this->morphMany(History::class, 'historiable');
+    }
 }
