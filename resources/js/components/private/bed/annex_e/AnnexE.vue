@@ -152,7 +152,7 @@
                 <div class="d-flex justify-content-between mb-3">
                     <button class="btn btn-sm btn-danger" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
                     <div>
-                        <button class="btn btn-sm btn-outline-secondary shadow-none me-1" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#form" @click="showComputeForm()"><i class="far fa-cogs"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary shadow-none me-1" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#detailform" @click="showComputeForm()"><i class="far fa-cogs"></i></button>
                         <button class="btn btn-sm btn-primary" @click="submitForm()"><i class="fas fa-save"></i> Save changes</button>
                     </div>
                 </div>
@@ -179,31 +179,41 @@
                                 <th>Oct 1 - Dec 30</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody v-if="!detailsyncing">
                             <tr>
                                 <td :rowspan="form.indicators.length + 1">{{form.project_title}}</td>
                                 <template v-if="form.indicators.length > 0">
-                                    <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
-                                        <!-- Program 1: S&T Scholarship Program -->
-                                        <template v-if="form.program_id == 1">
-                                            <p :class="form.indicators[0].id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{form.indicators[0][col]}}</p>
-                                            <template v-else>
-                                                <template v-if="form.indicators[0].description != 'Sub-Total'">
-                                                    <p v-if="form.indicators[0].id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{form.indicators[0][col] = totalIndicator(col)}}</p>
-                                                    <input  v-else type="text" v-model="form.indicators[0][col]" v-money="money" class="form-control indicator-input">
+                                    <template v-for="indicator, key in form.indicators" :key="'indicator_'+key">
+                                        <template v-if="key == 0">
+                                            <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
+                                                <!-- Program 1: S&T Scholarship Program -->
+                                                <template v-if="form.program_id == 1">
+                                                    <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
+                                                    <template v-else>
+                                                        <template v-if="indicator.description != 'Sub-Total'">
+                                                            <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
+                                                            <input  v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
+                                                        </template>
+                                                        <template v-else>
+                                                            <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
+                                                        </template>
+                                                    </template>
                                                 </template>
+                                                <!-- Program 2: S&T Educational Development Program -->
+                                                
                                                 <template v-else>
-                                                    <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
+                                                    <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
+                                                    <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
+                                                    <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                                 </template>
-                                            </template>
+                                                <!-- <template v-else>
+                                                    <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
+                                                    <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
+                                                    <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
+                                                </template> -->
+                                            </td>
                                         </template>
-                                        <!-- Program 2: S&T Educational Development Program -->
-                                        <template v-else>
-                                            <p class="px-2 py-1 m-0" v-if="col == 'description'">{{form.indicators[0][col]}}</p>
-                                            <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="form.indicators[0][col]" v-money="money" class="form-control indicator-input">
-                                            <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(0)" v-else>{{form.indicators[0][col] = formatNumber(totalIndicatorBreakdown(0, col))}}</p>
-                                        </template>
-                                    </td>
+                                    </template>
                                 </template>
                                 <template v-else>
                                     <!-- No indicators.jpeg -->
@@ -230,7 +240,7 @@
                                         <template v-else>
                                             <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
                                             <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                            <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
+                                            <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                         </template>
                                     </td>
                                 </template>
@@ -257,7 +267,7 @@
                                             <template v-else>
                                                 <p class="px-2 py-1 m-0" v-if="col == 'description'">{{sub.indicators[0][col]}}</p>
                                                 <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="sub.indicators[0][col]" v-money="money" class="form-control indicator-input">
-                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(0)" v-else>{{sub.indicators[0][col] = formatNumber(totalIndicatorBreakdown(0, col))}}</p>
+                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(0)" v-else>{{sub.indicators[0][col] = formatNumber(totalIndicatorBreakdown(0, col))}}</p>
                                             </template>
                                         </td>
                                     </template>
@@ -287,12 +297,15 @@
                                             <template v-else>
                                                 <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
                                                 <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#form" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
+                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                             </template>
                                         </td>
                                     </template>
                                 </tr>
                             </template>
+                        </tbody>
+                        <tbody v-else>
+                            <tr><td colspan="9" class="text-center p-5"><h1>Loading Resources <i class="far fa-sync fa-spin"></i></h1></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -301,13 +314,12 @@
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="form" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal fade" id="detailform" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" :class="!breakdownform ? 'modal-lg' : ''">
             <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" v-if="breakdownform">{{form.indicators[breakdownkey].description}}</h5>
                 <h5 class="modal-title" v-if="computeform"> <span>{{form.project_title}} Performance Indicators</span></h5>
-                <h5 class="modal-title" v-if="indicatorshow"> <span>Performance Indicators</span></h5>
                 <button type="button" ref="Close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0" v-if="breakdownform">
@@ -393,6 +405,21 @@
                     </tbody>
                 </table>
             </div>
+            <div class="modal-footer">
+                <button @click="submitForm()" type="button" v-if="indicatorshow" class="btn btn-primary rounded-pill" style="min-width: 100px">Save</button>
+                <button type="button" v-else :class="computeform ? 'btn-primary' : 'btn-secondary'" class="btn rounded-pill" data-bs-dismiss="modal" style="min-width: 100px">{{ computeform ? 'Save' : 'Done'}}</button>
+            </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="form" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" v-if="indicatorshow"> <span>Performance Indicators</span></h5>
+                <button type="button" ref="Close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
             <div class="modal-body p-0 overflow-auto" style="height: 50vh;" v-if="indicatorshow">
                 <table class="table table-sm table-bordered m-0">
                     <thead class="text-center">
@@ -465,7 +492,6 @@
             </div>
             <div class="modal-footer">
                 <button @click="submitForm()" type="button" v-if="indicatorshow" class="btn btn-primary rounded-pill" style="min-width: 100px">Save</button>
-                <button type="button" v-else :class="computeform ? 'btn-primary' : 'btn-secondary'" class="btn rounded-pill" data-bs-dismiss="modal" style="min-width: 100px">{{ computeform ? 'Save' : 'Done'}}</button>
             </div>
             </div>
         </div>
@@ -481,7 +507,6 @@ export default {
     components: { EmptyTable, Display, Form },
     data(){
         return {
-            cost: 12345,
             displaytype: 'Program',
             displaystatus: 'New',
             displaysyncstatus: 'New',
@@ -506,6 +531,7 @@ export default {
             // form
             formshow: false,
             detailshow: false,
+            detailsyncing: false,
             form: {
                 id: '',
                 program_id: 0,
@@ -647,15 +673,23 @@ export default {
             return true
         },
         editForm(item, type){
-            this.breakdownform = (item.project.program_id != 1)
+            // this.detailsyncing = true
+            this.detailshow = (type == 'details')
+            this.indicatorshow = (type == 'indicator')
             this.computeform = false
             this.totalSelectedId = 0
+            this.breakdownkey = 0
+            this.breakdownform = (item.project.program_id != 1)
+            this.form.formtype = type
             this.form.id = item.id
             this.form.program_id = item.project.program_id
             this.form.project_id = item.project_id
             this.form.project_title = item.project.title
-            this.form.indicators = []
 
+            this.fillFormIndicators(item)
+        },
+        fillFormIndicators(item){
+            this.form.indicators = []
             for(let i = 0; i < item.indicators.length; i++){
                 var indicator = item.indicators[i]
                 var tempIndicator = {
@@ -684,7 +718,6 @@ export default {
                     breakdownForm[idNum]    = breakdown.id
                     breakdownForm[monthNum] = breakdown.number
                 }
-
                 this.form.indicators.push(tempIndicator)
             }
 
@@ -722,10 +755,6 @@ export default {
                 }
                 this.form.subs.push(tempSub)
             }
-
-            this.detailshow = (type == 'details')
-            this.indicatorshow = (type == 'indicator')
-            this.form.formtype = type
         },
         addIndicator(id = null){
             var item = id ? this.form.subs.find(elem => elem.id == id) : this.form
