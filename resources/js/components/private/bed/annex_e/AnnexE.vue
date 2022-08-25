@@ -93,14 +93,25 @@
                         </div>
                     </div>
                     <div v-else>
-                        <div class="d-flex justify-content-end mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold shadow px-2 py-1 rounded">
+                                <i class="fas" :class="displaysyncstatus == 'New' ? 'fa-sparkles text-warning' : 
+                                    displaysyncstatus == 'Draft' ? 'fa-edit' :
+                                    displaysyncstatus == 'For Review' ? 'fa-search' : 
+                                    displaysyncstatus == 'For Approval' ? 'fa-clipboard-list-check' : 
+                                    displaysyncstatus == 'Approved' ? 'fa-clipboard-check text-success' : 'fa-badge-check text-info'"></i>  
+                                {{(displaysyncstatus == 'New') ? 'Newly Added Projects!' : (displaysyncstatus == 'Draft' ? 'Drafts' : displaysyncstatus)}}
+                            </span>
+                            <div>
                             <button class="btn btn-sm btn-success me-1" v-if="displaysyncstatus != 'New'">Batch Status Change</button>
                             <button class="btn btn-sm btn-success"><i class="fas fa-plus"></i> New</button>
+                            </div>
                         </div>
                         <div class="table-responsive" style="height: 70vh">
                             <table class="table table-sm table-bordered table-hover">
                                 <thead class="text-center">
                                     <tr>
+                                        <!-- <th></th> -->
                                         <th style="width: 40%">Program/Project</th>
                                         <th style="width: 40%">Performance Indicators (PIs)</th>
                                         <th style="width: 20%">Actions</th>
@@ -112,7 +123,12 @@
                                             <tr><th class="bg-success text-white" colspan="3">{{header}}</th></tr>
                                             <template v-for="item in items" :key="'annexe_'+item.id">
                                                 <tr>
-                                                    <td><div class="ms-2 fw-bold">{{item.project.title}}</div></td>
+                                                    <!-- <td></td> -->
+                                                    <td><div class="ms-2 fw-bold"><i class="fas me-2" :class="displaysyncstatus == 'New' ? 'fa-sparkles text-warning' : 
+                                                        displaysyncstatus == 'Draft' ? 'fa-edit' :
+                                                        displaysyncstatus == 'For Review' ? 'fa-search' : 
+                                                        displaysyncstatus == 'For Approval' ? 'fa-clipboard-list-check' : 
+                                                        displaysyncstatus == 'Approved' ? 'fa-clipboard-check text-success' : 'fa-badge-check text-info'"></i>{{item.project.title}} </div></td>
                                                     <td class="p-0" style="height: 1px;">
                                                         <table class="table table-sm h-100 m-0">
                                                             <tr v-for="indicator, key in item.indicators" :key="'indicator_'+indicator.id">
@@ -128,6 +144,7 @@
                                                     </td>
                                                 </tr>
                                                 <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
+                                                    <!-- <td></td> -->
                                                     <td><div class="ms-4">{{(sub.subproject_id !== null) ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : sub.temp_title == 'phd' ? 'PhD' : sub.temp_title)}}</div></td>
                                                     
                                                     <td class="p-0" style="height: 1px;">
@@ -150,10 +167,12 @@
             </div>
             <div v-if="detailshow">
                 <div class="d-flex justify-content-between mb-3">
-                    <button class="btn btn-sm btn-danger" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
+                    <button class="btn btn-sm btn-danger" v-if="!detailsyncing" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
+                    <button class="btn btn-sm btn-danger" v-if="detailsyncing" disabled><i class="fas fa-times"></i> Cancel</button>
                     <div>
                         <button class="btn btn-sm btn-outline-secondary shadow-none me-1" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#detailform" @click="showComputeForm()"><i class="far fa-cogs"></i></button>
-                        <button class="btn btn-sm btn-primary" @click="submitForm()"><i class="fas fa-save"></i> Save changes</button>
+                        <button class="btn btn-sm btn-primary" v-if="!detailsyncing" @click="submitForm()"><i class="fas fa-save"></i> Save changes</button>
+                        <button class="btn btn-sm btn-primary" v-if="detailsyncing" disabled><i class="fas fa-save"></i> Save changes</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -200,24 +219,18 @@
                                                     </template>
                                                 </template>
                                                 <!-- Program 2: S&T Educational Development Program -->
-                                                
                                                 <template v-else>
                                                     <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
                                                     <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                     <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                                 </template>
-                                                <!-- <template v-else>
-                                                    <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                    <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                    <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
-                                                </template> -->
                                             </td>
                                         </template>
                                     </template>
                                 </template>
                                 <template v-else>
                                     <!-- No indicators.jpeg -->
-                                    <td v-for="col in indcols" :key="col+'_empty_'+sub.id"></td>
+                                    <td v-for="col in indcols" :key="col+'_empty_'"></td>
                                 </template>
                             </tr>
                             <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
@@ -245,38 +258,41 @@
                                     </td>
                                 </template>
                             </tr>
-                            <template v-for="sub, key in form.subs" :key="'sub_'+key">
+                            <template v-for="sub, skey in form.subs" :key="'sub_'+skey">
                                 <tr>
                                     <td :rowspan="sub.indicators.length+1">{{sub.title}}</td>
                                     <template v-if="sub.indicators.length > 0">
-                                        <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
-                                            <!-- Program 1: S&T Scholarship Program -->
-                                            <template v-if="form.program_id == 1">
-                                                <p class="px-2 py-1 m-0" v-if="col == 'description'">{{sub.indicators[0][col]}}</p>
-                                                <template v-else>
-                                                    <template v-if="sub.indicators[0].description != 'Sub-Total'">
-                                                        <p v-if="sub.indicators[0].id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{sub.indicators[0][col] = totalIndicator(col)}}</p>
-                                                        <input v-else type="text" v-model="sub.indicators[0][col]" v-money="money" class="form-control indicator-input">
+                                        <template v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
+                                            <template v-if="key == 0">
+                                                <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
+                                                    <!-- Program 1: S&T Scholarship Program -->
+                                                    <template v-if="form.program_id == 1">
+                                                        <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
+                                                        <template v-else>
+                                                            <template v-if="indicator.description != 'Sub-Total'">
+                                                                <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
+                                                                <input  v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
+                                                            </template>
+                                                            <template v-else>
+                                                                <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
+                                                            </template>
+                                                        </template>
                                                     </template>
+                                                    <!-- Program 2: S&T Educational Development Program -->
                                                     <template v-else>
-                                                        <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col, sub.id)}}</p>
+                                                        <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
+                                                        <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
+                                                        <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key, skey)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col, skey))}}</p>
                                                     </template>
-                                                </template>
+                                                </td>
                                             </template>
-                                            <!-- Program 2: S&T Educational Development Program -->
-                                            <template v-else>
-                                                <p class="px-2 py-1 m-0" v-if="col == 'description'">{{sub.indicators[0][col]}}</p>
-                                                <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="sub.indicators[0][col]" v-money="money" class="form-control indicator-input">
-                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(0)" v-else>{{sub.indicators[0][col] = formatNumber(totalIndicatorBreakdown(0, col))}}</p>
-                                            </template>
-                                        </td>
+                                        </template>
                                     </template>
                                     <template v-else>
                                         <!-- No indicators.jpeg -->
                                         <td v-for="col in indcols" :key="col+'_empty_'+sub.id"></td>
                                     </template>
-                                </tr>
-                                                        
+                                </tr>      
                                 <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
                                     <template v-if="key != 0">
                                         <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
@@ -297,7 +313,7 @@
                                             <template v-else>
                                                 <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
                                                 <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
+                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key, skey)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col, skey))}}</p>
                                             </template>
                                         </td>
                                     </template>
@@ -318,7 +334,7 @@
         <div class="modal-dialog modal-dialog-centered" :class="!breakdownform ? 'modal-lg' : ''">
             <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" v-if="breakdownform">{{form.indicators[breakdownkey].description}}</h5>
+                <h5 class="modal-title" v-if="breakdownform && form.indicators.length > 0">{{form.indicators[breakdownkey].description}}</h5>
                 <h5 class="modal-title" v-if="computeform"> <span>{{form.project_title}} Performance Indicators</span></h5>
                 <button type="button" ref="Close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -330,8 +346,9 @@
                             <th colspan="3">Monthly Physical Targets</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr v-for="breakdown in form.indicators[breakdownkey].breakdowns" :key="'quarter_'+breakdown.quarter">
+                    <tbody v-if="form.indicators.length > 0">
+                        <!-- <tr v-for="breakdown in form.indicators[breakdownkey].breakdowns" :key="'quarter_'+breakdown.quarter"> -->
+                        <tr v-for="breakdown in breakdowns" :key="'quarter_'+breakdown.quarter">
                             <td class="text-center fw-bold">{{formatQtr(breakdown.quarter)}}</td>
                             <td class="p-0" v-for="month in breakdownmonths" :key="'quarter_'+breakdown.quarter+'_'+month">
                                 <div class="form-floating">
@@ -543,6 +560,7 @@ export default {
             },
             // indicator columns
             indcols: ['description', 'actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'],
+            breakdowns: [],
             breakdownform: false,
             breakdownmonths: ['first','second','third'],
             breakdownkey: 0,
@@ -642,7 +660,6 @@ export default {
                     var icon = res.errors ? 'error' : 'success'
                     this.toastMsg(icon, res.message)
                     if(!res.errors){
-                        console.log(res.status)
                         this.syncRecords(res.status)
                         this.$refs.Close.click()
                         this.detailshow = false
@@ -672,8 +689,8 @@ export default {
             }
             return true
         },
-        editForm(item, type){
-            // this.detailsyncing = true
+        async editForm(item, type){
+            this.detailsyncing = true
             this.detailshow = (type == 'details')
             this.indicatorshow = (type == 'indicator')
             this.computeform = false
@@ -686,40 +703,6 @@ export default {
             this.form.project_id = item.project_id
             this.form.project_title = item.project.title
 
-            this.fillFormIndicators(item)
-        },
-        fillFormIndicators(item){
-            this.form.indicators = []
-            for(let i = 0; i < item.indicators.length; i++){
-                var indicator = item.indicators[i]
-                var tempIndicator = {
-                    id: indicator.id,
-                    description:      indicator.description,
-                    actual:           (indicator.details === null) ? 0 : indicator.details.actual,
-                    estimate:         (indicator.details === null) ? 0 : indicator.details.estimate,
-                    physical_targets: (indicator.details === null) ? 0 : indicator.details.physical_targets,
-                    first:            (indicator.details === null) ? 0 : indicator.details.first,
-                    second:           (indicator.details === null) ? 0 : indicator.details.second,
-                    third:            (indicator.details === null) ? 0 : indicator.details.third,
-                    fourth:           (indicator.details === null) ? 0 : indicator.details.fourth,
-                    common:           indicator.common,
-                    breakdowns: [
-                        {quarter: 1, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
-                        {quarter: 2, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
-                        {quarter: 3, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
-                        {quarter: 4, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
-                    ]
-                }
-                for(let j = 0; j < indicator.breakdowns.length; j++){
-                    var breakdown = indicator.breakdowns[j]
-                    var breakdownForm = tempIndicator.breakdowns.find(elem => elem.quarter == breakdown.quarter)
-                    var idNum    = breakdown.month == 1 ? 'fid' : breakdown.month == 2 ? 'sid' : 'tid'
-                    var monthNum = breakdown.month == 1 ? 'first' : breakdown.month == 2 ? 'second' : 'third'
-                    breakdownForm[idNum]    = breakdown.id
-                    breakdownForm[monthNum] = breakdown.number
-                }
-                this.form.indicators.push(tempIndicator)
-            }
 
             this.form.subs = []
             for(let i = 0; i < item.subs.length; i++){
@@ -730,31 +713,97 @@ export default {
                     title: (sub.subproject_id) ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : sub.temp_title == 'phd' ? 'PhD' : sub.temp_title),
                     indicators: []
                 }
-                for(let j = 0; j < sub.indicators.length; j++){
-                    var indicator = sub.indicators[j]
-                    var tempIndicator = {
-                        id: indicator.id,
-                        description:      indicator.description,
-                        actual:           (indicator.details === null) ? 0 : indicator.details.actual,
-                        estimate:         (indicator.details === null) ? 0 : indicator.details.estimate,
-                        physical_targets: (indicator.details === null) ? 0 : indicator.details.physical_targets,
-                        first:            (indicator.details === null) ? 0 : indicator.details.first,
-                        second:           (indicator.details === null) ? 0 : indicator.details.second,
-                        third:            (indicator.details === null) ? 0 : indicator.details.third,
-                        fourth:           (indicator.details === null) ? 0 : indicator.details.fourth,
-                        common:           indicator.common,
-                        breakdowns: [
-                            {quarter: 1, first: 0, second: 0, third: 0},
-                            {quarter: 2, first: 0, second: 0, third: 0},
-                            {quarter: 3, first: 0, second: 0, third: 0},
-                            {quarter: 4, first: 0, second: 0, third: 0},
-                        ]
+
+                await this.fillFormIndicators(sub, tempSub).then(res => {
+                    this.form.subs.push(tempSub)
+                })
+            }
+            
+            this.form.indicators = []
+            await this.fillFormIndicators(item).then(res => {
+                console.log('got hereee')
+                this.detailsyncing = false
+            })
+            // console.log(this.detailsyncing)
+            // this.detailsyncing = false
+        },
+        async fillFormIndicators(item, tempSub = false){
+            const promise = await new Promise((resolve, reject) => {
+                var time = 0
+                setTimeout(async() => {
+                    var start = new Date().getTime();
+                    for(let i = 0; i < item.indicators.length; i++){
+                        var indicator = item.indicators[i]
+                        var tempIndicator = {
+                            id: indicator.id,
+                            description:      indicator.description,
+                            actual:           (indicator.details === null) ? 0 : indicator.details.actual,
+                            estimate:         (indicator.details === null) ? 0 : indicator.details.estimate,
+                            physical_targets: (indicator.details === null) ? 0 : indicator.details.physical_targets,
+                            first:            (indicator.details === null) ? 0 : indicator.details.first,
+                            second:           (indicator.details === null) ? 0 : indicator.details.second,
+                            third:            (indicator.details === null) ? 0 : indicator.details.third,
+                            fourth:           (indicator.details === null) ? 0 : indicator.details.fourth,
+                            common:           indicator.common,
+                            breakdowns: [
+                                {quarter: 1, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
+                                {quarter: 2, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
+                                {quarter: 3, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
+                                {quarter: 4, fid: '', first: 0, sid: '', second: 0, tid: '', third: 0},
+                            ]
+                        }
+                        await this.fillBreakdown(tempIndicator, indicator).then(res => {
+                            if(!tempSub){
+                                this.form.indicators.push(res) 
+                            }
+                            else{
+                                tempSub.indicators.push(res)
+                            }
+                        })
                     }
 
-                    tempSub.indicators.push(tempIndicator)
-                }
-                this.form.subs.push(tempSub)
-            }
+                    var end = new Date().getTime();
+                    time = end - start;
+                    resolve('done')
+                }, time)
+            })
+            return promise
+        },
+        async fillBreakdown(tempIndicator, indicator){
+            const p = await new Promise((resolve, reject) => {
+                var time = 0
+                setTimeout(() => {
+                    var start = new Date().getTime();
+                    for(let j = 0; j < indicator.breakdowns.length; j++){
+                        var breakdown = indicator.breakdowns[j]
+                        var breakdownForm = tempIndicator.breakdowns.find(elem => elem.quarter == breakdown.quarter)
+                        this.fillBreakdownDetail(breakdown, breakdownForm)
+                    }
+
+                    var end = new Date().getTime();
+                    time = end - start;
+                    resolve(tempIndicator)
+                }, time)
+            })
+            return p
+        },
+        async fillBreakdownDetail(breakdown, breakdownForm){
+            const p = await new Promise(async (resolve, reject) => {
+                var time = 0
+                setTimeout(()  => {
+                    var start = new Date().getTime();
+
+                    var idNum    = breakdown.month == 1 ? 'fid' : breakdown.month == 2 ? 'sid' : 'tid'
+                    var monthNum = breakdown.month == 1 ? 'first' : breakdown.month == 2 ? 'second' : 'third'
+                    breakdownForm[idNum]    = breakdown.id
+                    breakdownForm[monthNum] = breakdown.number
+
+                    var end = new Date().getTime();
+                    time = end - start;
+                    resolve(breakdownForm)
+                }, time)
+            })
+            return p
         },
         addIndicator(id = null){
             var item = id ? this.form.subs.find(elem => elem.id == id) : this.form
@@ -773,27 +822,31 @@ export default {
             this.indicatorshow = false
             this.computeform = true
         },
-        showIndicatorBreakdown(key){
+        showIndicatorBreakdown(key, isSub = false){
             this.indicatorshow = false
             this.breakdownform = true
             this.breakdownkey = key
+            this.breakdowns = (isSub === false) ? this.form.indicators[key].breakdowns : this.form.subs[isSub].indicators[key].breakdowns
         },
-        totalIndicatorBreakdown(key, col){
+        totalIndicatorBreakdown(key, col, isSub = false){
             var result = 0
-            if(col != 'physical_targets'){
-                var quarter = col == 'first' ? 1 : col == 'second' ? 2 : col == 'third' ? 3 : 4
-                var breakdown = this.form.indicators[key].breakdowns.find(elem => elem.quarter == quarter)
-                for(let j = 0; j < this.breakdownmonths.length; j++){
-                    var col = this.breakdownmonths[j]
-                    result = result + this.strToFloat(breakdown[col])
-                }
-            }
-            else{
-                for(let i = 0; i < this.form.indicators[key].breakdowns.length; i++){
-                    var breakdown = this.form.indicators[key].breakdowns[i]
+            var indicators = (isSub === false) ? this.form.indicators : this.form.subs[isSub].indicators
+            if(indicators.length > 0){
+                if(col != 'physical_targets'){
+                    var quarter = col == 'first' ? 1 : col == 'second' ? 2 : col == 'third' ? 3 : 4
+                    var breakdown = indicators[key].breakdowns.find(elem => elem.quarter == quarter)
                     for(let j = 0; j < this.breakdownmonths.length; j++){
                         var col = this.breakdownmonths[j]
                         result = result + this.strToFloat(breakdown[col])
+                    }
+                }
+                else{
+                    for(let i = 0; i < indicators[key].breakdowns.length; i++){
+                        var breakdown = indicators[key].breakdowns[i]
+                        for(let j = 0; j < this.breakdownmonths.length; j++){
+                            var col = this.breakdownmonths[j]
+                            result = result + this.strToFloat(breakdown[col])
+                        }
                     }
                 }
             }

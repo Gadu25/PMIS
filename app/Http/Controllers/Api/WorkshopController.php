@@ -199,12 +199,22 @@ class WorkshopController extends Controller
             foreach($request['subs'] as $sub){
                 $annexesub = AnnexESub::findOrFail($sub['id']);
                 $initialIndicators = $annexesub->indicators;
-                $withsubs = $this->saveIndicatorDetails($request, $annexesub, $initialIndicators, $sub['indicators']);
+                if(sizeof($sub['indicators']) > 0){
+                    $withsubs = $this->saveIndicatorDetails($request, $annexesub, $initialIndicators, $sub['indicators'], true);
+                }
+                else{
+                    foreach($initialIndicators as $indicator){
+                            $indicator->details()->delete();
+                            $indicator->breakdowns()->delete();
+                            $indicator->delete();
+                    }
+                }
             }
 
             $subjectaction = $subjectaction.($withsubs ? '<p> Annex E Subs - updated as well </p>' : '');
             $subject = '<p>Action: '.$subjectaction.'</p> <p>Item: Annex E </p> <p>Project Title: '.$annexe->project->title.'</p>';
             $this->createHistory($annexe, $subject);
+
 
             DB::commit();
             return ['message' => 'Successfully saved!', 'status' => $status];
@@ -219,10 +229,11 @@ class WorkshopController extends Controller
 
     }
 
-    private function saveIndicatorDetails($request, $parent, $initialIndicators, $indicators = []){
+    private function saveIndicatorDetails($request, $parent, $initialIndicators, $indicators = [], $isSub = false){
         $action = ($request['formtype'] == 'indicator') ? '<p>Updated indicators </p>' : (($request['formtype'] == 'indicator') ? '<p>Updated indicator details </p>' : '');
         $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
-        $indicators = (sizeof($indicators) > 0) ? $indicators : $request['indicators'];
+        $indicators = ($isSub === false) ? $request['indicators'] : $indicators;
+        // $indicators = (sizeof($indicators) > 0) ? $indicators : $request['indicators'];
         $tempIndicatorIds = [];
         foreach($indicators as $indicator){
             $existingIndicator = (is_int($indicator['id']));
@@ -285,7 +296,7 @@ class WorkshopController extends Controller
             }
         }
 
-        return (sizeof($indicators) > 0) ? true : $action;
+        return ($isSub !== false) ? true : $action;
     }
 
     private function indicatorHaveDetails($indicator){
