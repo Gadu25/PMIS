@@ -126,7 +126,7 @@ class WorkshopController extends Controller
     public function getAnnexE(Request $request){
         DB::beginTransaction();
         try{
-            $annexes = AnnexE::with(['project', 'histories'])
+            $annexes = AnnexE::with(['project', 'histories.profile.user', 'indicators.details', 'indicators.breakdowns', 'subs.subproject', 'subs.indicators', 'subs.indicators.details', 'subs.indicators.breakdowns'])
                 ->whereHas('project', function($q) use($request){
                     if($request['type'] == 'Program'){
                         if($request['program_id'] != 0){$q->where('program_id', $request['program_id']);}
@@ -143,29 +143,49 @@ class WorkshopController extends Controller
                 })
                 ->where('status', $request['status'])
                 ->get();
-
-            foreach($annexes as $annexe){
-                $annexe->project->leader;
-                foreach($annexe->indicators as $indicator){
-                    $indicator->details;
-                    $indicator->breakdowns;
-                }
-                $annexe->header = ($annexe->project->cluster_id !== null) ? $annexe->project->cluster->title : $annexe->project->program->title;
-                foreach($annexe->subs as $sub){
-                    foreach($sub->indicators as $indicator){
-                        $indicator->details;
-                        $indicator->breakdowns;
+            
+            
+            $programs = Program::with(['subprograms.clusters'])->get();
+            $grouped = $annexes->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']);
+            foreach($programs as $program){
+                $program->subpwithitems = false;
+                $program->items = $this->setItems($grouped, $program->id);
+                foreach($program->subprograms as $subprogram){
+                    $subprogram->items = $this->setItems($grouped, $program->id, $subprogram->id);
+                    if(!$program->subpwithitems){
+                        $program->subpwithitems = (sizeof($subprogram->items) > 0);
                     }
-                    $sub->subproject;
+                    $subprogram->cluswithitems = false;
+                    foreach($subprogram->clusters as $cluster){
+                        $cluster->items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
+                        if(!$subprogram->cluswithitems){
+                            $subprogram->cluswithitems = (sizeof($cluster->items) > 0);
+                            if(!$program->subpwithitems){
+                                $program->subpwithitems = (sizeof($cluster->items) > 0);
+                            }
+                        }
+                    }
                 }
             }
-            $grouped = $annexes->groupBy(['header']);
-            return $grouped;
+
+            return $programs;
         }
         catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
         }
+    }
+
+    private function setItems($grouped, $progId, $subpId = '', $clusId = ''){
+        $items = [];
+        if($grouped->has($progId)){
+            if($grouped[$progId]->has($subpId)){
+                if($grouped[$progId][$subpId]->has($clusId)){
+                    $items = $grouped[$progId][$subpId][$clusId];
+                }
+            }
+        }
+        return $items;
     }
 
     public function storeAnnexE(Request $request){
@@ -182,42 +202,36 @@ class WorkshopController extends Controller
     public function updateAnnexE(Request $request, $id){
         DB::beginTransaction();
         try {
-            $subjectaction = '';
-            $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
             $annexe = AnnexE::findOrFail($id);
-            $status = $annexe->status;
-            if($annexe->status == 'New'){
-                $status = 'Draft';
-                $annexe->status = $status;
+            $subject = '<p>Table: Annex E </p><p><b>Project: '.$annexe->project->title.'</b></p>';
+            $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
+            $statchange = ($annexe->status != $request['status']);
+            if($statchange && $request['status'] != 'same'){
+                $prevstatus = $annexe->status;
+                $annexe->status = $request['status'];
+                $annexe->remarks = ($request['remarks'] != '') ? $request['remarks'] : null;
                 $annexe->save();
-                $subjectaction = "<p>Change Status `New` to `Draft`</p>";
+                $subject = $subject."<p>Status: Change `".$prevstatus."` to `".$annexe->status."`</p>";
+                $remarks = ($annexe->remarks !== null) ? '<p>Remarks: '.$remarks.'</p>' : '';
+                $subject = $subject.$remarks;
             }
             $initialIndicators = $annexe->indicators;
-            $action = $this->saveIndicatorDetails($request, $annexe, $initialIndicators);
-            $subjectaction = $subjectaction.$action;
+
+            $action = $this->saveIndicatorDetails($request, $annexe, $initialIndicators, $statchange);
+            $subject = $subject.$action;
             $withsubs = false;
             foreach($request['subs'] as $sub){
                 $annexesub = AnnexESub::findOrFail($sub['id']);
+                $subject = $subject.'<p><b>Sub: '.(($annexesub->temp_title === null) ? $annexesub->subproject->title : $annexesub->temp_title).'</b></p>';
                 $initialIndicators = $annexesub->indicators;
-                if(sizeof($sub['indicators']) > 0){
-                    $withsubs = $this->saveIndicatorDetails($request, $annexesub, $initialIndicators, $sub['indicators'], true);
-                }
-                else{
-                    foreach($initialIndicators as $indicator){
-                            $indicator->details()->delete();
-                            $indicator->breakdowns()->delete();
-                            $indicator->delete();
-                    }
-                }
+                $action = $this->saveIndicatorDetails($request, $annexesub, $initialIndicators, $statchange, $sub['indicators'], true);
+                $subject = $subject.$action;
             }
-
-            $subjectaction = $subjectaction.($withsubs ? '<p> Annex E Subs - updated as well </p>' : '');
-            $subject = '<p>Action: '.$subjectaction.'</p> <p>Item: Annex E </p> <p>Project Title: '.$annexe->project->title.'</p>';
+            
             $this->createHistory($annexe, $subject);
 
-
             DB::commit();
-            return ['message' => 'Successfully saved!', 'status' => $status];
+            return ['message' => 'Successfully saved!', 'status' => $annexe->status];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -229,8 +243,7 @@ class WorkshopController extends Controller
 
     }
 
-    private function saveIndicatorDetails($request, $parent, $initialIndicators, $indicators = [], $isSub = false){
-        $action = ($request['formtype'] == 'indicator') ? '<p>Updated indicators </p>' : (($request['formtype'] == 'indicator') ? '<p>Updated indicator details </p>' : '');
+    private function saveIndicatorDetails($request, $parent, $initialIndicators, $statchange, $indicators = [], $isSub = false){
         $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
         $indicators = ($isSub === false) ? $request['indicators'] : $indicators;
         // $indicators = (sizeof($indicators) > 0) ? $indicators : $request['indicators'];
@@ -296,7 +309,16 @@ class WorkshopController extends Controller
             }
         }
 
-        return ($isSub !== false) ? true : $action;
+        if(!$statchange){
+            $item = $isSub ? 'Sub Indicator - ' : 'Indicator - ';
+            $action = (sizeof($indicators) > sizeof($initialIndicators) ? 'Added new indicators' : (sizeof($indicators) < sizeof($initialIndicators) ? 'Removed indicators' : (sizeof($indicators) == 0 && sizeof($initialIndicators) > 0 ? 'Removed all indicators' : (($request['formtype'] == 'details') ? 'Update Indicator Details' : 'No Changes'))));
+            $action = $item.$action;
+            return '<p>Action: '.$action.'</p>';
+        }
+        else{
+            return ((!$isSub) ? '<p>Updated Indicator Status </p>' : '');
+        }
+        
     }
 
     private function indicatorHaveDetails($indicator){

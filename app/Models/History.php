@@ -13,6 +13,10 @@ class History extends Model
         'historiable_id','historiable_type','subject','profile_id'
     ];
 
+    public function profile(){
+        return $this->belongsTo(Profile::class, 'profile_id');
+    }
+
     // public function historiable(){
     //     return $this->morphTo();
     // }
