@@ -96,7 +96,7 @@
                 <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Publish Projects to Annex E & F</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" ref="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive" style="height: 70vh">
@@ -325,6 +325,7 @@ export default {
                 timer = 0
                 this.toastMsg(icon, res.message)
                 this.fetchWorkshop(this.$route.params.workshopId)
+                this.$refs.Close.click()
             })
             toast.fire({
                 icon: 'info',

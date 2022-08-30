@@ -26,6 +26,6 @@ class AnnexE extends Model
     }
 
     public function histories(){
-        return $this->morphMany(History::class, 'historiable');
+        return $this->morphMany(History::class, 'historiable')->orderBy('created_at', 'desc');
     }
 }

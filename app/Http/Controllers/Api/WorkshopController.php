@@ -29,6 +29,7 @@ use App\Models\CommonIndicator;
 use App\Models\CommonIndicatorSub;
 
 use App\Models\History;
+use App\Models\Notification;
 
 use Auth;
 use DB;
@@ -144,7 +145,6 @@ class WorkshopController extends Controller
                 ->where('status', $request['status'])
                 ->get();
             
-            
             $programs = Program::with(['subprograms.clusters'])->get();
             $grouped = $annexes->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']);
             foreach($programs as $program){
@@ -203,31 +203,40 @@ class WorkshopController extends Controller
         DB::beginTransaction();
         try {
             $annexe = AnnexE::findOrFail($id);
-            $subject = '<p>Table: Annex E </p><p><b>Project: '.$annexe->project->title.'</b></p>';
             $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
             $statchange = ($annexe->status != $request['status']);
+            $initialIndicators = $annexe->indicators;
+            $subject = '';
+            $action = $this->saveIndicatorDetails($request, $annexe, $initialIndicators, $statchange);
+
+            foreach($request['subs'] as $sub){
+                $annexesub = AnnexESub::findOrFail($sub['id']);
+                $initialIndicators = $annexesub->indicators;
+                $this->saveIndicatorDetails($request, $annexesub, $initialIndicators, $statchange, $sub['indicators'], true);
+            }
+
+            $subject = $subject.(($request['status'] == 'New' || $request['status'] == 'Draft' || $request['status'] == 'For Review' || $request['status'] == 'same') ? $action : '<p class="m-0">Action: Change Status </p>');
+            $subject = $subject.((!$statchange || $request['status'] == 'same') ? '<p class="m-0">Status: Unchanged</p>' : '');
+
             if($statchange && $request['status'] != 'same'){
                 $prevstatus = $annexe->status;
                 $annexe->status = $request['status'];
                 $annexe->remarks = ($request['remarks'] != '') ? $request['remarks'] : null;
                 $annexe->save();
-                $subject = $subject."<p>Status: Change `".$prevstatus."` to `".$annexe->status."`</p>";
-                $remarks = ($annexe->remarks !== null) ? '<p>Remarks: '.$remarks.'</p>' : '';
+                $subject = $subject.'<p class="m-0">Status: '.$prevstatus.' => '.$annexe->status.'</p>';
+                $remarks = ($request['remarks'] != '') ? '<p>Remarks: '.$request['remarks'].'</p>' : '';
                 $subject = $subject.$remarks;
             }
-            $initialIndicators = $annexe->indicators;
 
-            $action = $this->saveIndicatorDetails($request, $annexe, $initialIndicators, $statchange);
-            $subject = $subject.$action;
-            $withsubs = false;
-            foreach($request['subs'] as $sub){
-                $annexesub = AnnexESub::findOrFail($sub['id']);
-                $subject = $subject.'<p><b>Sub: '.(($annexesub->temp_title === null) ? $annexesub->subproject->title : $annexesub->temp_title).'</b></p>';
-                $initialIndicators = $annexesub->indicators;
-                $action = $this->saveIndicatorDetails($request, $annexesub, $initialIndicators, $statchange, $sub['indicators'], true);
-                $subject = $subject.$action;
-            }
+            // need to clarify how notification will work
+            // titles, 1 = director, 2 = deputy, 3 = div chief, 4 unit head, 5 proj leader, 6 staff, 7 superadmin
+            // if($request['status'] != 'New' && ($request['status'] == 'Draft' && $annexe->status != 'Draft')){
+            //     $stat = $request['status'];
+            //     $title_id = ($stat == 'For Review') ? 4 : $stat == 'For Approval'
+            //     $this->getRecipient()
+            // }
             
+
             $this->createHistory($annexe, $subject);
 
             DB::commit();
@@ -309,15 +318,15 @@ class WorkshopController extends Controller
             }
         }
 
-        if(!$statchange){
-            $item = $isSub ? 'Sub Indicator - ' : 'Indicator - ';
-            $action = (sizeof($indicators) > sizeof($initialIndicators) ? 'Added new indicators' : (sizeof($indicators) < sizeof($initialIndicators) ? 'Removed indicators' : (sizeof($indicators) == 0 && sizeof($initialIndicators) > 0 ? 'Removed all indicators' : (($request['formtype'] == 'details') ? 'Update Indicator Details' : 'No Changes'))));
-            $action = $item.$action;
-            return '<p>Action: '.$action.'</p>';
-        }
-        else{
-            return ((!$isSub) ? '<p>Updated Indicator Status </p>' : '');
-        }
+        // if(!$statchange){
+        $item = $isSub ? 'Sub Indicator - ' : 'Indicator - ';
+        $action = (sizeof($indicators) > sizeof($initialIndicators) ? 'Added new indicators' : (sizeof($indicators) < sizeof($initialIndicators) ? 'Removed indicators' : (sizeof($indicators) == 0 && sizeof($initialIndicators) > 0 ? 'Removed all indicators' : (($request['formtype'] == 'details') ? 'Update Indicator Details' : 'No Changes'))));
+        $action = $item.$action;
+        return '<p class="m-0">Action: '.$action.'</p>';
+        // }
+        // else{
+        //     return ((!$isSub) ? '<p>Updated Indicator Status </p>' : '');
+        // }
         
     }
 
@@ -942,6 +951,23 @@ class WorkshopController extends Controller
         $workshop = Workshop::findOrFail($id);
         $str = explode('-', $workshop->start);
         return (int)$str[0];
+    }
+
+    private function sendNotification(){
+        // $recipientId = $this->getRecipient($)
+    }
+
+    private function getRecipient($titleId, $divId, $unitId = null, $subId = null){
+        $user = User::with(['activeProfile'])
+                    ->whereHas('profile', function($q) use($titleId) {
+                        $q->where('title_id', $titleId);
+                        $q->where('active', true);
+                    })
+                    ->where('division_id', $divId)
+                    ->where('unit_id', $unitId)
+                    ->where('subunit_id', $subuId)
+                    ->first();
+        return $user;
     }
 
     private function createHistory($item, $subject){

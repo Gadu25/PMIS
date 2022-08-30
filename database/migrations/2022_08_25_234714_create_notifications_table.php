@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('profile_id')->constrained('profiles')->cascadeOnDelete();
+            $table->foreignId('sender')->constrained('profiles')->cascadeOnDelete();
+            $table->foreignId('recipient')->constrained('profiles')->cascadeOnDelete();
             $table->mediumText('title');
             $table->mediumText('body');
             $table->timestamps();

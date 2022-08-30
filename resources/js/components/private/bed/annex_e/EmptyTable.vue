@@ -1,4 +1,6 @@
 <template>
+    <h6 class="text-end fw-bold">Annex E</h6>
+    <h6 class="text-center mb-3 fw-bold">CY {{workshop.year}} PHYSICAL PLAN </h6>
     <table class="table table-sm table-bordered">
         <thead class="align-middle text-center">
             <tr>
@@ -27,6 +29,7 @@
             </tr>
         </tbody>
     </table>
+    <span class="position-absolute bottom-0"><small>Empty Data Set</small></span>
 </template>
 <script>
 import { mapGetters } from 'vuex'

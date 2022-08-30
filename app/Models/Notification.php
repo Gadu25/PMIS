@@ -10,6 +10,6 @@ class Notification extends Model
     use HasFactory;
 
     protected $fillables = [
-        'profile_id', 'title', 'body'
+        'profile_to', 'profile_from', 'title', 'body'
     ];
 }
