@@ -127,41 +127,71 @@ class WorkshopController extends Controller
     public function getAnnexE(Request $request){
         DB::beginTransaction();
         try{
-            $annexes = AnnexE::with(['project', 'histories.profile.user', 'indicators.details', 'indicators.breakdowns', 'subs.subproject', 'subs.indicators', 'subs.indicators.details', 'subs.indicators.breakdowns'])
-                ->whereHas('project', function($q) use($request){
-                    if($request['type'] == 'Program'){
-                        if($request['program_id'] != 0){$q->where('program_id', $request['program_id']);}
-                        if($request['subprogram_id'] != 0){$q->where('subprogram_id', $request['subprogram_id']);}
-                        if($request['cluster_id'] != 0){$q->where('cluster_id', $request['cluster_id']);}
-                        if($request['program_id'] == 0){ $q->whereIn('program_id', [1,2,3]);}
-                    }
-                    else{
-                        if($request['division_id'] != 0){$q->where('division_id', $request['division_id']);}
-                        if($request['unit_id'] != 0){$q->where('unit_id', $request['unit_id']);}
-                        if($request['subunit_id'] != 0){$q->where('subunit_id', $request['subunit_id']);}
-                        if($request['division_id'] == 0){ $q->whereIn('division_id', [1,2,3,4,5]);}
-                    }
-                })
-                ->where('status', $request['status'])
-                ->get();
+            $query = AnnexE::query();
+            $query = $query->with(['project', 'histories.profile.user', 'indicators.details', 'indicators.breakdowns', 'subs.subproject', 'subs.indicators.details', 'subs.indicators.breakdowns'])
+                        ->where('status', $request['status'])
+                        ->where('workshop_id', $request['workshopId']);
             
-            $programs = Program::with(['subprograms.clusters'])->get();
+            $query = $query->whereHas('project', function($q) use($request){
+                if($request['type'] == 'Program'){
+                    if($request['program_id'] != 0){$q->where('program_id', $request['program_id']);}
+                    if($request['subprogram_id'] != 0){$q->where('subprogram_id', $request['subprogram_id']);}
+                    if($request['cluster_id'] != 0){$q->where('cluster_id', $request['cluster_id']);}
+                }
+                else{
+                    if($request['division_id'] != 0){$q->where('division_id', $request['division_id']);}
+                    if($request['unit_id'] != 0){$q->where('unit_id', $request['unit_id']);}
+                    if($request['subunit_id'] != 0){$q->where('subunit_id', $request['subunit_id']);}
+                }
+            });
+
+            $annexes = $query->get();
             $grouped = $annexes->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']);
+
+            $query = CommonIndicator::query();
+            if($request['type'] == 'Program'){
+                if($request['program_id'] != 0){$query = $query->where('program_id', $request['program_id']);}
+                if($request['subprogram_id'] != 0){$query = $query->where('subprogram_id', $request['subprogram_id']);}
+                if($request['cluster_id'] != 0){$query = $query->where('cluster_id', $request['cluster_id']);}
+            }
+
+            $commonindicators = $query->with(['details', 'tags', 'subindicators.details'])
+                ->whereNot('type', 'Performance')
+                ->where('workshop_id', $request['workshopId'])
+                ->get();
+
+            $cigrouped = $commonindicators->groupBy(['program_id', 'subprogram_id', 'cluster_id']);
+
+            $programs = Program::with(['subprograms.clusters'])->get();
             foreach($programs as $program){
                 $program->subpwithitems = false;
+                $program->subpwithci = false;
+                $program->commonindicators = $this->setItems($cigrouped, $program->id);
                 $program->items = $this->setItems($grouped, $program->id);
                 foreach($program->subprograms as $subprogram){
+                    $subprogram->commonindicators = $this->setItems($cigrouped, $program->id, $subprogram->id);
                     $subprogram->items = $this->setItems($grouped, $program->id, $subprogram->id);
                     if(!$program->subpwithitems){
                         $program->subpwithitems = (sizeof($subprogram->items) > 0);
                     }
+                    if(!$program->subpwithci){
+                        $program->subpwithci = (sizeof($subprogram->commonindicators) > 0);
+                    }
                     $subprogram->cluswithitems = false;
+                    $subprogram->cluswithci = false;
                     foreach($subprogram->clusters as $cluster){
+                        $cluster->commonindicators = $this->setItems($cigrouped, $program->id, $subprogram->id, $cluster->id);
                         $cluster->items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
                         if(!$subprogram->cluswithitems){
                             $subprogram->cluswithitems = (sizeof($cluster->items) > 0);
                             if(!$program->subpwithitems){
                                 $program->subpwithitems = (sizeof($cluster->items) > 0);
+                            }
+                        }
+                        if(!$subprogram->cluswithci){
+                            $subprogram->cluswithci = (sizeof($cluster->commonindicators) > 0);
+                            if(!$program->subpwithci){
+                                $program->subpwithci = (sizeof($cluster->commonindicators) > 0);
                             }
                         }
                     }

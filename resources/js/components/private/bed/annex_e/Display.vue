@@ -2,14 +2,14 @@
     <div>
         <h6 class="text-end fw-bold">Annex E</h6>
         <h6 class="text-center mb-3 fw-bold">CY {{workshop.year}} PHYSICAL PLAN </h6>
-        <div class="table-responsive" :style="!printmode ? 'height: 62vh' : ''">
+        <div class="table-responsive" :style="!printmode ? 'height: 60vh; padding: 4px;' : 'font-size: 12px;'" v-dragscroll>
             <table class="table table-sm table-bordered">
                 <thead class="align-middle text-center" :class="!syncing && !printmode ? 'position-sticky top-0 bg-secondary text-white' : ''">
                     <tr>
-                        <th rowspan="3">Program / Project</th>
-                        <th rowspan="3">Performance Indicators (PIs)</th>
-                        <th colspan="2">Previous Year Acccomplishments <br> CY {{parseInt(workshop.year)}}</th>
-                        <th rowspan="3">CY {{parseInt(workshop.year) + 1}} <br> Physical Targets</th>
+                        <th rowspan="3"><span class="text-nowrap">Program / Project</span></th>
+                        <th rowspan="3"><span class="text-nowrap">Performance Indicators (PIs)</span></th>
+                        <th colspan="2"><span class="text-nowrap">Previous Year Acccomplishments</span> <br> CY {{parseInt(workshop.year)}}</th>
+                        <th rowspan="3">CY {{parseInt(workshop.year) + 1}} <br> <span class="text-nowrap">Physical Targets</span></th>
                         <th colspan="4">CY {{parseInt(workshop.year) + 1}} Quarterly Physical Targets</th>
                     </tr>
                     <tr>
@@ -27,12 +27,24 @@
                 </thead>
                 <tbody>
                     <template v-for="program in annexes" :key="'program_'+program.id">
-                        <template v-if="program.subpwithitems">
-                            <tr>
-                                <td colspan="9" class="bg-success fw-bold text-white">{{program.title}}</td>
-                            </tr>
-                            <template v-for="item in program.items" :key="'cluster-item'+item.id">
-                                <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'New'"> <td :rowspan="getRowspan(item.indicators)">{{item.project.title}}</td> </tr>
+                        <template v-if="program.subpwithitems || program.subpwithci || program.commonindicators.length > 0">
+                            <tr><td colspan="9" class="bg-success fw-bold text-white">{{program.title}}</td></tr>
+                            <template v-for="ci in program.commonindicators" :key="'other_'+ci.id">
+                                <tr class="text-primary fw-bold">
+                                    <td colspan="2">{{ci.description}}</td>
+                                    <template v-for="detail in details" :key="ci.id+'_details_'+detail">
+                                        <td>{{(ci.details) ? ci.details[detail] : ''}}</td>
+                                    </template>
+                                </tr>
+                                <tr class="text-primary" v-for="sub in ci.subindicators" :key="'ci_sub_'+sub.id">
+                                    <td colspan="2"><div class="ms-2">{{sub.description}}</div></td>
+                                    <template v-for="detail in details" :key="sub.id+'_details_'+detail">
+                                        <td>{{(sub.details) ? sub.details[detail] : ''}}</td>
+                                    </template>
+                                </tr>
+                            </template>
+                            <template v-for="item in program.items" :key="'program-item'+item.id">
+                                <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'New'"> <td :rowspan="getRowspan(item.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1">{{item.project.title}}</td> </tr>
                                 <template v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">
                                     <tr v-if="indicator.details">
                                         <td>{{indicator.description}}</td>
@@ -43,7 +55,7 @@
                                 </template>
                                 <template v-for="sub in item.subs" :key="'sub_'+sub.id">
                                     <tr v-if="getRowspan(sub.indicators) > 1 || item.status == 'New'">
-                                        <td :rowspan="getRowspan(sub.indicators)"><div class="ms-2">{{!sub.temp_title ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : (sub.temp_title == 'phd') ? 'PhD' : sub.temp_title)}}</div></td>
+                                        <td :rowspan="getRowspan(sub.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1"><div class="ms-2">{{!sub.temp_title ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : (sub.temp_title == 'phd') ? 'PhD' : sub.temp_title)}}</div></td>
                                     </tr>
                                     <template v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">
                                         <tr v-if="indicator.details">
@@ -56,12 +68,24 @@
                                 </template>
                             </template>
                             <template v-for="subprogram in program.subprograms" :key="'subprogram_'+subprogram.id">
-                                <template v-if="subprogram.items.length > 0 || subprogram.cluswithitems">
-                                    <tr>
-                                        <td colspan="9" class="fw-bold">{{subprogram.title}}</td>
-                                    </tr>
-                                    <template v-for="item in subprogram.items" :key="'cluster-item'+item.id">
-                                        <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'New'"> <td :rowspan="getRowspan(item.indicators)">{{item.project.title}}</td> </tr>
+                                <template v-if="subprogram.items.length > 0 || subprogram.commonindicators.length > 0 || subprogram.cluswithitems || subprogram.cluswithci">
+                                    <tr> <td colspan="9" class="fw-bold">{{subprogram.title}}</td> </tr>
+                                    <template v-for="ci in subprogram.commonindicators" :key="'other_'+ci.id">
+                                        <tr class="text-primary fw-bold">
+                                            <td colspan="2">{{ci.description}}</td>
+                                            <template v-for="detail in details" :key="ci.id+'_details_'+detail">
+                                                <td>{{(ci.details) ? ci.details[detail] : ''}}</td>
+                                            </template>
+                                        </tr>
+                                        <tr class="text-primary" v-for="sub in ci.subindicators" :key="'ci_sub_'+sub.id">
+                                            <td colspan="2"><div class="ms-2">{{sub.description}}</div></td>
+                                            <template v-for="detail in details" :key="sub.id+'_details_'+detail">
+                                                <td>{{(sub.details) ? sub.details[detail] : ''}}</td>
+                                            </template>
+                                        </tr>
+                                    </template>
+                                    <template v-for="item in subprogram.items" :key="'subprogram-item'+item.id">
+                                        <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'New'"> <td :rowspan="getRowspan(item.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1">{{item.project.title}}</td> </tr>
                                         <template v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">
                                             <tr v-if="indicator.details">
                                                 <td>{{indicator.description}}</td>
@@ -72,7 +96,7 @@
                                         </template>
                                         <template v-for="sub in item.subs" :key="'sub_'+sub.id">
                                             <tr v-if="getRowspan(sub.indicators) > 1 || item.status == 'New'">
-                                                <td :rowspan="getRowspan(sub.indicators)"><div class="ms-2">{{!sub.temp_title ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : (sub.temp_title == 'phd') ? 'PhD' : sub.temp_title)}}</div></td>
+                                                <td :rowspan="getRowspan(sub.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1"><div class="ms-2">{{!sub.temp_title ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : (sub.temp_title == 'phd') ? 'PhD' : sub.temp_title)}}</div></td>
                                             </tr>
                                             <template v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">
                                                 <tr v-if="indicator.details">
@@ -85,10 +109,24 @@
                                         </template>
                                     </template>
                                     <template v-for="cluster in subprogram.clusters" :key="'cluster_'+cluster.id">
-                                        <template v-if="cluster.items.length > 0">
+                                        <template v-if="cluster.items.length > 0 || cluster.commonindicators.length > 0">
                                             <tr> <td colspan="9" style="background: lightgreen;"><div class="ms-2 fw-bold">{{cluster.title}}</div></td> </tr>
+                                            <template v-for="ci in cluster.commonindicators" :key="'other_'+ci.id">
+                                                <tr class="text-primary fw-bold">
+                                                    <td colspan="2">{{ci.description}}</td>
+                                                    <template v-for="detail in details" :key="ci.id+'_details_'+detail">
+                                                        <td>{{(ci.details) ? ci.details[detail] : ''}}</td>
+                                                    </template>
+                                                </tr>
+                                                <tr class="text-primary" v-for="sub in ci.subindicators" :key="'ci_sub_'+sub.id">
+                                                    <td colspan="2"><div class="ms-2">{{sub.description}}</div></td>
+                                                    <template v-for="detail in details" :key="sub.id+'_details_'+detail">
+                                                        <td>{{(sub.details) ? sub.details[detail] : ''}}</td>
+                                                    </template>
+                                                </tr>
+                                            </template>
                                             <template v-for="item in cluster.items" :key="'cluster-item'+item.id">
-                                                <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'New'"> <td :rowspan="getRowspan(item.indicators)">{{item.project.title}}</td> </tr>
+                                                <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'New'"> <td :rowspan="getRowspan(item.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1">{{item.project.title}}</td> </tr>
                                                 <template v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">
                                                     <tr v-if="indicator.details">
                                                         <td>{{indicator.description}}</td>
@@ -99,7 +137,7 @@
                                                 </template>
                                                 <template v-for="sub in item.subs" :key="'sub_'+sub.id">
                                                     <tr v-if="getRowspan(sub.indicators) > 1 || item.status == 'New'">
-                                                        <td :rowspan="getRowspan(sub.indicators)"><div class="ms-2">{{!sub.temp_title ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : (sub.temp_title == 'phd') ? 'PhD' : sub.temp_title)}}</div></td>
+                                                        <td :rowspan="getRowspan(sub.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1"><div class="ms-2">{{!sub.temp_title ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : (sub.temp_title == 'phd') ? 'PhD' : sub.temp_title)}}</div></td>
                                                     </tr>
                                                     <template v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">
                                                         <tr v-if="indicator.details">
@@ -119,14 +157,19 @@
                     </template>
                 </tbody>
             </table>
+            <span :class="!printmode? 'position-absolute bottom-0' : ''" v-if="annexes.length > 0">Annex E {{displaysyncstatus}} Projects <span v-if="printmode">{{this.getDateToday()}}</span></span>
         </div>
-        <span class="position-absolute bottom-0" v-if="annexes.length > 0"><small>Annex E {{displaysyncstatus}} Projects </small></span>
     </div>
 </template>
 <script>
+import moment from 'moment'
 import { mapGetters } from 'vuex'
+import { dragscroll } from 'vue-dragscroll'
 export default {
     name: 'Display',
+    directives: {
+        dragscroll: dragscroll,
+    },
     data(){
         return {
             details: ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'],
@@ -141,6 +184,10 @@ export default {
                 }
             }
             return length
+        },
+        getDateToday(){
+            return moment().format("dddd, LL, h:mm:ss A");
+
         }
     },
     computed: {
@@ -153,6 +200,9 @@ export default {
         displaysyncstatus: String,
         syncing: Boolean,
         printmode: Boolean
+    },
+    created(){
+        
     }
 }
 </script>

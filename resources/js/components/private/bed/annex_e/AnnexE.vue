@@ -20,7 +20,7 @@
                                     <option value="Approved">Approved</option>
                                     <option value="Submitted">Submitted</option>
                                 </select>
-                                <label for="Status">Status</label>
+                                <label for="Status">PI Status</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <select class="form-control" id="displayType" v-model="displaytype" @change="displaytypeChange()">
@@ -82,139 +82,141 @@
                     </div>
                 </div>
                 <div class="col-sm-9 mb-3">
-                    <button class="btn " @click="printmode = !printmode">print</button>
-                    <div class="card shadow overflow-auto" :style="!printmode ? 'height: 76vh' : ''" v-if="!editmode">
-                        <div class="card-body">
-                            <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
-                            <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" />
-                            <EmptyTable v-else />
+                    <!-- Display View -->
+                    <template v-if="!editmode">
+                        <div class="mb-3">
+                            <button class="btn btn-sm shadow-none min-100" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
+                            <button v-if="printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
                         </div>
-                    </div>
+                        <div class="card shadow overflow-auto" :style="!printmode ? 'height: 72vh' : ''">
+                            <div class="card-body">
+                                <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
+                                <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" id="printMe"/>
+                                <EmptyTable v-else />
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Edit View -->
                     <div v-else>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold shadow px-2 py-1 rounded">
-                                <i class="fas" :class="displaysyncstatus == 'New' ? 'fa-sparkles text-warning' : 
-                                    displaysyncstatus == 'Draft' ? 'fa-edit' :
-                                    displaysyncstatus == 'For Review' ? 'fa-search' : 
-                                    displaysyncstatus == 'For Approval' ? 'fa-clipboard-list-check' : 
-                                    displaysyncstatus == 'Approved' ? 'fa-clipboard-check text-success' : 'fa-badge-check text-info'"></i>  
+                        <div class="btn-group btn-group-sm mb-2 shadow">
+                            <button class="btn btn-sm shadow-none rounded-0" :class="tab == 'performance' ? 'btn-primary' : 'btn-outline-primary'" @click="tab = 'performance'">Performance</button>
+                            <button class="btn btn-sm shadow-none rounded-0" :class="tab != 'performance' ? 'btn-primary' : 'btn-outline-primary'" @click="tab = 'other'">Outcome & Output</button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2" v-if="tab == 'performance'">
+                            <span class="fw-bold  px-4 py-1 rounded">
+                                <i class="fas" :class="setStatusIcon(displaysyncstatus)"></i>  
                                 {{(displaysyncstatus == 'New') ? 'Newly Added Projects!' : (displaysyncstatus == 'Draft' ? 'Drafts' : displaysyncstatus)}}
                             </span>
                             <div>
-                            <!-- <button class="btn btn-sm btn-success me-1" v-if="displaysyncstatus != 'New'">Batch Status Change</button> -->
                             <button class="btn btn-sm btn-success"><i class="fas fa-plus"></i> New</button>
                             </div>
                         </div>
-                        <div class="table-responsive" style="height: 70vh">
+                        <div class="table-responsive" style="height: 68vh">
                             <table class="table table-sm table-bordered table-hover">
                                 <thead class="text-center">
                                     <tr>
-                                        <th style="width: 40%">Program/Project</th>
-                                        <th style="width: 40%">Performance Indicators (PIs)</th>
+                                        <th style="width: 40%" v-if="tab == 'performance'"><span class="text-nowrap">Program/Project</span></th>
+                                        <th style="width: 40%"><span class="text-nowrap">{{tab == 'performance' ? 'Performance' : 'Outcome & Output'}} Indicators (PIs)</span></th>
                                         <th style="width: 20%">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody >
                                     <template v-if="!syncing">
                                         <template v-for="program in annexes" :key="'program_'+program.id">
-                                            <tr v-if="program.subpwithitems"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
-                                            <template v-for="item in program.items" :key="'cluster-item_'+item.id">
-                                                <tr>
-                                                    <td><div class="ms-3"><i class="fas me-2" :class="item.status == 'New' ? 'fa-sparkles text-warning' : 
-                                                        item.status == 'Draft' ? 'fa-edit' :
-                                                        item.status == 'For Review' ? 'fa-search' : 
-                                                        item.status == 'For Approval' ? 'fa-clipboard-list-check' : 
-                                                        item.status == 'Approved' ? 'fa-clipboard-check text-success' : 'fa-badge-check text-info'"></i>{{item.project.title}}</div></td>
-                                                    <td class="p-0" style="height: 1px;">
-                                                        <table class="table table-sm h-100 m-0">
-                                                            <tr v-for="indicator, key in item.indicators" :key="'indicator_'+indicator.id">
-                                                                <td :class="(item.indicators.length - 1) != key ? 'border-bottom' : ''">{{indicator.description}}</td>
-                                                            </tr>
-                                                        </table>
-                                                    </td>
-                                                </tr>
-                                                <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
-                                                    <td><div class="ms-4">{{(sub.subproject_id !== null) ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : sub.temp_title == 'phd' ? 'PhD' : sub.temp_title)}}</div></td>
-                                                    <td class="p-0" style="height: 1px;">
-                                                        <table class="table table-sm h-100 m-0">
-                                                            <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+indicator.id">
-                                                                <td :class="(sub.indicators.length - 1) != key ? 'border-bottom' : ''"><div class="ms-2">{{indicator.description}}</div></td>
-                                                            </tr>
-                                                        </table>
-                                                    </td>
-                                                    <td class="text-center" :rowspan="item.subs.length + 1">
-                                                        <button style="width: 100px" v-if="item.status == 'Draft' || item.status == 'New'" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" data-bs-toggle="modal" data-bs-target="#form" @click="editForm(item, 'indicator')"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                        <button style="width: 100px" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="item.status == 'Draft' || item.status == 'New' ? 'fa-pencil-alt' : 'fa-search'"></i> {{item.status == 'Draft' || item.status == 'New' ? 'Details' : 'Review'}}</button><br>
-                                                        <button style="width: 100px" v-if="item.status == 'Draft' || item.status == 'New'" class="shadow-none btn btn-sm btn-danger me-1 mb-1"><i class="far fa-trash-alt"></i> Remove</button>
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                            <template v-for="subprogram in program.subprograms" :key="'subprogram_'+subprogram.id">
-                                                <tr v-if="subprogram.items.length > 0 || subprogram.cluswithitems"><th colspan="3">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</th></tr>
-                                                <template v-for="item in subprogram.items" :key="'cluster-item_'+item.id">
+                                            <tr v-if="program.subpwithitems && tab == 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
+                                            <tr v-if="program.subpwithci && tab != 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
+                                            <template v-if="tab == 'performance'">
+                                                <template v-for="item in program.items" :key="'cluster-item_'+item.id">
                                                     <tr>
-                                                        <td><div class="ms-3"><i class="fas me-2" :class="item.status == 'New' ? 'fa-sparkles text-warning' : 
-                                                            item.status == 'Draft' ? 'fa-edit' :
-                                                            item.status == 'For Review' ? 'fa-search' : 
-                                                            item.status == 'For Approval' ? 'fa-clipboard-list-check' : 
-                                                            item.status == 'Approved' ? 'fa-clipboard-check text-success' : 'fa-badge-check text-info'"></i>{{item.project.title}}</div></td>
-                                                        <td class="p-0" style="height: 1px;">
-                                                            <table class="table table-sm h-100 m-0">
-                                                                <tr v-for="indicator, key in item.indicators" :key="'indicator_'+indicator.id">
-                                                                    <td :class="(item.indicators.length - 1) != key ? 'border-bottom' : ''">{{indicator.description}}</td>
-                                                                </tr>
-                                                            </table>
-                                                        </td>
-                                                        <td class="text-center" :rowspan="item.subs.length + 1">
-                                                            <button style="width: 100px" v-if="item.status == 'Draft' || item.status == 'New'" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" data-bs-toggle="modal" data-bs-target="#form" @click="editForm(item, 'indicator')"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                            <button style="width: 100px" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="item.status == 'Draft' || item.status == 'New' ? 'fa-pencil-alt' : 'fa-search'"></i> {{item.status == 'Draft' || item.status == 'New' ? 'Details' : 'Review'}}</button><br>
-                                                            <button style="width: 100px" v-if="item.status == 'Draft' || item.status == 'New'" class="shadow-none btn btn-sm btn-danger me-1 mb-1"><i class="far fa-trash-alt"></i> Remove</button>
-                                                        </td>
+                                                        <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
+                                                        <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                     </tr>
                                                     <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
-                                                        <td><div class="ms-4">{{(sub.subproject_id !== null) ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : sub.temp_title == 'phd' ? 'PhD' : sub.temp_title)}}</div></td>
-                                                        <td class="p-0" style="height: 1px;">
-                                                            <table class="table table-sm h-100 m-0">
-                                                                <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+indicator.id">
-                                                                    <td :class="(sub.indicators.length - 1) != key ? 'border-bottom' : ''"><div class="ms-2">{{indicator.description}}</div></td>
-                                                                </tr>
-                                                            </table>
+                                                        <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
+                                                        <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                        <td class="text-center" :rowspan="item.subs.length + 1">
+                                                            <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                            <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                            <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
                                                         </td>
                                                     </tr>
                                                 </template>
-                                                <template v-for="cluster in subprogram.clusters" :key="'cluster_'+cluster.id">
-                                                    <tr v-if="cluster.items.length > 0"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
-                                                    <template v-for="item in cluster.items" :key="'cluster-item_'+item.id">
+                                            </template>
+                                            <template v-else>
+                                                <template v-for="indicator in program.commonindicators" :key="'program_commonindicator_'+indicator.id">
+                                                    <tr>
+                                                        <td>{{indicator.description}} </td>
+                                                        <td :rowspan="indicator.subindicators.length+1" class="text-center">
+                                                            <button class="btn btn-sm btn-primary min-100" v-if="indicator.tags.length == 0"><i class="far fa-pencil-alt"></i> Edit</button>
+                                                            <button class="btn btn-sm btn-primary min-100" v-else disabled><i class="far fa-pencil-alt"></i> Edit</button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
+                                                        <td><div class="ms-2">{{sub.description}}</div></td>
+                                                    </tr>
+                                                </template>
+                                            </template>
+                                            <template v-for="subprogram in program.subprograms" :key="'subprogram_'+subprogram.id">
+                                                <tr v-if="(subprogram.items.length > 0 || subprogram.cluswithitems) && tab == 'performance'"><th colspan="3">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</th></tr>
+                                                <tr v-if="(subprogram.commonindicators.length > 0 || subprogram.cluswithci) && tab != 'performance'"><th colspan="3">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</th></tr>
+                                                <template v-if="tab == 'performance'">
+                                                    <template v-for="item in subprogram.items" :key="'cluster-item_'+item.id">
                                                         <tr>
-                                                            <td><div class="ms-3"><i class="fas me-2" :class="item.status == 'New' ? 'fa-sparkles text-warning' : 
-                                                                item.status == 'Draft' ? 'fa-edit' :
-                                                                item.status == 'For Review' ? 'fa-search' : 
-                                                                item.status == 'For Approval' ? 'fa-clipboard-list-check' : 
-                                                                item.status == 'Approved' ? 'fa-clipboard-check text-success' : 'fa-badge-check text-info'"></i>{{item.project.title}}</div></td>
-                                                            <td class="p-0" style="height: 1px;">
-                                                                <table class="table table-sm h-100 m-0">
-                                                                    <tr v-for="indicator, key in item.indicators" :key="'indicator_'+indicator.id">
-                                                                        <td :class="(item.indicators.length - 1) != key ? 'border-bottom' : ''">{{indicator.description}}</td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
+                                                            <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
+                                                            <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                             <td class="text-center" :rowspan="item.subs.length + 1">
-                                                                <button style="width: 100px" v-if="item.status == 'Draft' || item.status == 'New'" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" data-bs-toggle="modal" data-bs-target="#form" @click="editForm(item, 'indicator')"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                <button style="width: 100px" class="shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="item.status == 'Draft' || item.status == 'New' ? 'fa-pencil-alt' : 'fa-search'"></i> {{item.status == 'Draft' || item.status == 'New' ? 'Details' : 'Review'}}</button><br>
-                                                                <button style="width: 100px" v-if="item.status == 'Draft' || item.status == 'New'" class="shadow-none btn btn-sm btn-danger me-1 mb-1"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
                                                             </td>
                                                         </tr>
                                                         <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
-                                                            <td><div class="ms-4">{{(sub.subproject_id !== null) ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : sub.temp_title == 'phd' ? 'PhD' : sub.temp_title)}}</div></td>
-                                                            
-                                                            <td class="p-0" style="height: 1px;">
-                                                                <table class="table table-sm h-100 m-0">
-                                                                    <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+indicator.id">
-                                                                        <td :class="(sub.indicators.length - 1) != key ? 'border-bottom' : ''"><div class="ms-2">{{indicator.description}}</div></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
+                                                            <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
+                                                            <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                         </tr>
+                                                    </template>
+                                                </template>
+                                                <template v-else>
+                                                    <template v-for="indicator in subprogram.commonindicators" :key="'program_commonindicator_'+indicator.id">
+                                                        <tr>
+                                                            <td>{{indicator.description}} </td>
+                                                            <td :rowspan="indicator.subindicators.length+1"></td>
+                                                        </tr>
+                                                        <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
+                                                            <td><div class="ms-2">{{sub.description}}</div></td>
+                                                        </tr>
+                                                    </template>
+                                                </template>
+                                                <template v-for="cluster in subprogram.clusters" :key="'cluster_'+cluster.id">
+                                                    <tr v-if="cluster.items.length > 0 && tab == 'performace'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
+                                                    <tr v-if="cluster.commonindicators.length > 0 && tab != 'performace'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
+                                                    <template v-if="tab == 'performance'">
+                                                        <template v-for="item in cluster.items" :key="'cluster-item_'+item.id">
+                                                            <tr>
+                                                                <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
+                                                                <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                                <td class="text-center" :rowspan="item.subs.length+1">
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
+                                                                <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
+                                                                <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                            </tr>
+                                                        </template>
+                                                    </template>
+                                                    <template v-else>
+                                                        <template v-for="indicator in subprogram.commonindicators" :key="'program_commonindicator_'+indicator.id">
+                                                            <tr>
+                                                                <td>{{indicator.description}} </td>
+                                                                <td :rowspan="indicator.subindicators.length+1"></td>
+                                                            </tr>
+                                                            <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
+                                                                <td><div class="ms-2">{{sub.description}}</div></td>
+                                                            </tr>
+                                                        </template>
                                                     </template>
                                                 </template>
                                             </template>
@@ -227,95 +229,46 @@
                     </div>
                 </div>
             </div>
-            <div v-if="detailshow">
-                <div class="d-flex justify-content-between mb-3">
-                    <button class="btn btn-sm btn-danger" v-if="!detailsyncing" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
-                    <button class="btn btn-sm btn-danger" v-if="detailsyncing" disabled><i class="fas fa-times"></i> Cancel</button>
-                    <div v-if="form.status == 'New' || form.status == 'Draft'">
-                        <template v-if="!detailsyncing">
-                            <button class="btn btn-sm btn-outline-secondary shadow-none me-1" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#detailform" @click="showComputeForm()"><i class="far fa-cogs"></i></button>
-                            <button class="btn btn-sm btn-secondary me-1" @click="submitForm('Draft')"><i class="fas fa-edit"></i> Save as Draft</button>
-                            <button class="btn btn-sm btn-success" @click="submitForm('For Review')"><i class="fas fa-search"></i> Submit "For Review"</button>
-                        </template>
-                        <template v-else>
-                            <button class="btn btn-sm btn-secondary me-1" disabled><i class="fas fa-edit"></i> Save as Draft</button>
-                            <button class="btn btn-sm btn-success" disabled><i class="fas fa-search"></i> Submit "For Review"</button>
-                        </template>
-                    </div>
-                    <div v-if="form.status != 'New' && form.status != 'Draft' && form.status != 'Submitted'">
-                        <template v-if="!detailsyncing">
+            <div v-if="detailshow && !detailsyncing">
+                <template v-if="!detailsyncing">
+                    <div class="d-flex justify-content-between mb-3">
+                        <button class="btn btn-sm btn-danger" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
+                        <div v-if="!isForReview(form.status)">
+                            <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
+                            <button class="btn btn-sm btn-secondary me-1"         @click="submitForm('Draft')"><i class="fas fa-edit"></i> Save as Draft</button>
+                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')"><i class="fas fa-search"></i> Submit "For Review"</button>
+                        </div>
+                        <div v-if="isForReview(form.status) && form.status != 'Submitted'">
                             <button class="btn btn-sm btn-secondary min-100 me-1" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
-                            <button class="btn btn-sm btn-success min-100 me-1" @click="submitForm('approve')"><i class="fas fa-check"></i> Approved</button>
-                        </template>
-                        <template v-else>
-                            <button disabled class="btn btn-sm btn-secondary min-100 me-1"><i class="fas fa-times"></i> Reject</button>
-                            <button disabled class="btn btn-sm btn-success min-100 me-1"><i class="fas fa-check"></i> Approved</button>
-                        </template>
+                            <button class="btn btn-sm btn-success min-100 me-1"   @click="submitForm('approve')"><i class="fas fa-check"></i> Approved</button>
+                        </div>
                     </div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead class="align-middle text-center">
-                            <tr>
-                                <th rowspan="3">Program / Project</th>
-                                <th rowspan="3">Performance Indicators (PIs)</th>
-                                <th colspan="2">Previous Year Acccomplishments <br> CY {{parseInt(workshop.year)}}</th>
-                                <th rowspan="3">CY {{parseInt(workshop.year) + 1}} <br> Physical Targets</th>
-                                <th colspan="4">CY {{parseInt(workshop.year) + 1}} Quarterly Physical Targets</th>
-                            </tr>
-                            <tr>
-                                <th>Actual</th>
-                                <th>Estimate</th>
-                                <th rowspan="2">1st</th>
-                                <th rowspan="2">2nd</th>
-                                <th rowspan="2">3rd</th>
-                                <th rowspan="2">4th</th>
-                            </tr>
-                            <tr>
-                                <th>Jan 1 - Sep 30</th>
-                                <th>Oct 1 - Dec 30</th>
-                            </tr>
-                        </thead>
-                        <tbody v-if="!detailsyncing">
-                            <tr>
-                                <td :rowspan="form.indicators.length + 1">{{form.project_title}}</td>
-                                <template v-if="form.indicators.length > 0">
-                                    <template v-for="indicator, key in form.indicators" :key="'indicator_'+key">
-                                        <template v-if="key == 0">
-                                            <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
-                                                <template v-if="form.status == 'New' || form.status == 'Draft'">
-                                                    <!-- Program 1: S&T Scholarship Program -->
-                                                    <template v-if="form.program_id == 1">
-                                                        <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                        <template v-else>
-                                                            <template v-if="indicator.description != 'Sub-Total'">
-                                                                <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
-                                                                <input  v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                            </template>
-                                                            <template v-else>
-                                                                <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
-                                                            </template>
-                                                        </template>
-                                                    </template>
-                                                    <!-- Program 2: S&T Educational Development Program -->
-                                                    <template v-else>
-                                                        <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                        <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                        <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
-                                                    </template>
-                                                </template>
-                                                <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{indicator[col]}}</p>
-                                            </td>
-                                        </template>
-                                    </template>
-                                </template>
-                                <template v-else>
-                                    <!-- No indicators.jpeg -->
-                                    <td v-for="col in indcols" :key="col+'_empty_'"></td>
-                                </template>
-                            </tr>
-                            <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
-                                <template v-if="key != 0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="align-middle text-center">
+                                <tr>
+                                    <th rowspan="3">Program / Project</th>
+                                    <th rowspan="3">Performance Indicators (PIs)</th>
+                                    <th colspan="2">Previous Year Acccomplishments <br> CY {{parseInt(workshop.year)}}</th>
+                                    <th rowspan="3">CY {{parseInt(workshop.year) + 1}} <br> Physical Targets</th>
+                                    <th colspan="4">CY {{parseInt(workshop.year) + 1}} Quarterly Physical Targets</th>
+                                </tr>
+                                <tr>
+                                    <th>Actual</th>
+                                    <th>Estimate</th>
+                                    <th rowspan="2">1st</th>
+                                    <th rowspan="2">2nd</th>
+                                    <th rowspan="2">3rd</th>
+                                    <th rowspan="2">4th</th>
+                                </tr>
+                                <tr>
+                                    <th>Jan 1 - Sep 30</th>
+                                    <th>Oct 1 - Dec 30</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td :rowspan="form.indicators.length + 1">{{form.project_title}}</td></tr>
+                                <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
                                     <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
                                         <template v-if="form.status == 'New' || form.status == 'Draft'">
                                             <!-- Program 1: S&T Scholarship Program -->
@@ -333,55 +286,17 @@
                                             </template>
                                             <!-- Program 2: S&T Educational Development Program -->
                                             <template v-else>
-                                                <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
+                                                <p     class="px-2 py-1 m-0"                v-if="col == 'description'">{{indicator[col]}}</p>
+                                                <input class="form-control indicator-input" v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money">
+                                                <p     class="px-2 py-1 m-0 text-end"       v-else @click="showIndicatorBreakdown(key)" data-bs-toggle="modal" data-bs-target="#detailform" style="cursor: pointer;">{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                             </template>
                                         </template>
                                         <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{indicator[col]}}</p>
                                     </td>
-                                </template>
-                            </tr>
-                            <template v-for="sub, skey in form.subs" :key="'sub_'+skey">
-                                <tr>
-                                    <td :rowspan="sub.indicators.length+1">{{sub.title}}</td>
-                                    <template v-if="sub.indicators.length > 0">
-                                        <template v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
-                                            <template v-if="key == 0">
-                                                <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
-                                                    <template v-if="form.status == 'New' || form.status == 'Draft'">
-                                                        <!-- Program 1: S&T Scholarship Program -->
-                                                        <template v-if="form.program_id == 1">
-                                                            <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                            <template v-else>
-                                                                <template v-if="indicator.description != 'Sub-Total'">
-                                                                    <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
-                                                                    <input  v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                                </template>
-                                                                <template v-else>
-                                                                    <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
-                                                                </template>
-                                                            </template>
-                                                        </template>
-                                                        <!-- Program 2: S&T Educational Development Program -->
-                                                        <template v-else>
-                                                            <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                            <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                            <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key, skey)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col, skey))}}</p>
-                                                        </template>
-                                                    </template>
-                                                    <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{indicator[col]}}</p>
-                                                </td>
-                                            </template>
-                                        </template>
-                                    </template>
-                                    <template v-else>
-                                        <!-- No indicators.jpeg -->
-                                        <td v-for="col in indcols" :key="col+'_empty_'+sub.id"></td>
-                                    </template>
-                                </tr>      
-                                <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
-                                    <template v-if="key != 0">
+                                </tr>
+                                <template v-for="sub, skey in form.subs" :key="'sub_'+skey">
+                                    <tr><td :rowspan="sub.indicators.length+1">{{sub.title}}</td></tr>      
+                                    <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
                                         <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
                                             <template v-if="form.status == 'New' || form.status == 'Draft'">
                                                 <!-- Program 1: S&T Scholarship Program -->
@@ -399,49 +314,46 @@
                                                 </template>
                                                 <!-- Program 2: S&T Educational Development Program -->
                                                 <template v-else>
-                                                    <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
-                                                    <input v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
-                                                    <p class="px-2 py-1 m-0 text-end" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#detailform" @click="showIndicatorBreakdown(key, skey)" v-else>{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col, skey))}}</p>
+                                                    <p     class="px-2 py-1 m-0"                v-if="col == 'description'">{{indicator[col]}}</p>
+                                                    <input class="form-control indicator-input" v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money">
+                                                    <p     class="px-2 py-1 m-0 text-end"       v-else @click="showIndicatorBreakdown(key, skey)" data-bs-toggle="modal" data-bs-target="#detailform" style="cursor: pointer;">{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col, skey))}}</p>
                                                 </template>
                                             </template>
                                             <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{indicator[col]}}</p>
                                         </td>
-                                    </template>
-                                </tr>
-                            </template>
-                        </tbody>
-                        <tbody v-else>
-                            <tr><td colspan="9" class="text-center p-5"><h1>Loading Resources <i class="far fa-sync fa-spin"></i></h1></td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <template v-if="form.histories.length > 0">
-                    <hr>
-                    <div class="row">
-                        <div class="col-sm-8">
-                            <h6><strong>Timeline</strong></h6>
-                            <div class="card mb-3" style="height: 40vh;">
-                                <div class="card-body">
-                                    Coming soon...
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <template v-if="form.histories.length > 0">
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <h6><strong>Timeline</strong></h6>
+                                <div class="card shadow mb-3 minmax-2040">
+                                    <div class="card-body">
+                                        Coming soon...
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <h6><strong>History</strong></h6>
-                            <div class="project-history p-2">
-                                <div class="card mb-3 shadow" v-for="history in form.histories" :key="'history_'+history.id">
-                                    <div class="card-body position-relative mx-2 mb-2">
-                                        <div class="pb-4" v-html="history.subject"></div>
-                                        <small>
-                                        <p class="m-0 position-absolute start-0 bottom-0">{{history.profile.user.firstname + ' ' + history.profile.user.lastname }}</p>
-                                        <p class="m-0 position-absolute end-0 bottom-0">{{history.created_at}}</p></small>
+                            <div class="col-sm-4">
+                                <h6><strong>History</strong></h6>
+                                <div class="minmax-2040 overflow-auto p-2">
+                                    <div class="card mb-3 shadow" v-for="history in form.histories" :key="'history_'+history.id">
+                                        <div class="card-body position-relative mx-2 mb-2">
+                                            <div class="pb-4" v-html="history.subject"></div>
+                                            <small>
+                                            <p class="m-0 position-absolute bottom-0 start-0 fw-bold"><i class="far fa-user-circle"></i> {{history.profile.user.firstname + ' ' + history.profile.user.lastname }}</p>
+                                            <p class="m-0 position-absolute bottom-0 end-0">{{history.created_at}}</p></small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
                 </template>
+                <h1 class="text-center p-5" v-else> <i class="fas fa-spinner fa-spin"></i> Loading Resources </h1>
             </div>
         </template>
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
@@ -655,6 +567,7 @@ export default {
     components: { EmptyTable, Display, Form },
     data(){
         return {
+            tab: 'performance',
             printmode: false,
             displaytype: 'Program',
             displaystatus: 'New',
@@ -1149,6 +1062,21 @@ export default {
             status = (status == '') ? 'New' : status
             this.displaystatus = status
             this.displaysyncstatus = status
+        },
+        setStatusIcon(status){
+            return status == 'New' ? 'fa-sparkles text-warning' : 
+            status == 'Draft' ? 'fa-edit' :
+            status == 'For Review' ? 'fa-search' : 
+            status == 'For Approval' ? 'fa-clipboard-list-check' : 
+            status == 'Approved' ? 'fa-clipboard-check text-success' : 'fa-badge-check text-info'
+        },
+        setSubTitle(sub){
+            return sub.subproject_id ? sub.subproject.title :
+            sub.temp_title == 'ms' ? 'MS' :
+            sub.temp_title == 'phd' ? 'PhD' : sub.temp_title
+        },
+        isForReview(status){
+            return status != 'Draft' && status != 'New'
         }
     },
     computed: {
@@ -1201,8 +1129,8 @@ export default {
 .min-100{
     min-width: 100px;
 }
-.project-history{
-    height: 40vh;
-    overflow: auto;
+.minmax-2040{
+    max-height: 40vh;
+    min-height: 20vh;
 }
 </style>
