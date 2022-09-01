@@ -123,8 +123,8 @@
                                 <tbody >
                                     <template v-if="!syncing">
                                         <template v-for="program in annexes" :key="'program_'+program.id">
-                                            <tr v-if="program.subpwithitems && tab == 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
-                                            <tr v-if="program.subpwithci && tab != 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
+                                            <tr v-if="(program.subpwithitems || program.items.length > 0) && tab == 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
+                                            <tr v-if="(program.subpwithci || program.commonindicators.length > 0) && tab != 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
                                             <template v-if="tab == 'performance'">
                                                 <template v-for="item in program.items" :key="'cluster-item_'+item.id">
                                                     <tr>
@@ -147,8 +147,8 @@
                                                     <tr>
                                                         <td>{{indicator.description}} </td>
                                                         <td :rowspan="indicator.subindicators.length+1" class="text-center">
-                                                            <button class="btn btn-sm btn-primary min-100" v-if="indicator.tags.length == 0"><i class="far fa-pencil-alt"></i> Edit</button>
-                                                            <button class="btn btn-sm btn-primary min-100" v-else disabled><i class="far fa-pencil-alt"></i> Edit</button>
+                                                            <button class="btn btn-sm btn-outline-secondary min-100" v-if="indicator.tags.length == 0" @click="editFormTwo(indicator)" data-bs-target="#form2" data-bs-toggle="modal"><i class="far fa-pencil-alt"></i> Edit</button>
+                                                            <button class="btn btn-sm btn-outline-secondary min-100" v-else disabled><i class="far fa-pencil-alt"></i> Edit</button>
                                                         </td>
                                                     </tr>
                                                     <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
@@ -556,6 +556,51 @@
             </div>
         </div>
     </div>
+    <!-- Modal -->
+    <div class="modal fade" id="form2" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"> <span>{{form2.type}} Indicator</span></h5>
+                    <button type="button" ref="Close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body overflow-auto" style="max-height: 80vh">
+                    <div class="row">
+                        <div class="col-sm-4"><h6>{{form2.description}}</h6></div>
+                        <div class="col-sm-8">
+                            <div class="form-group row" v-for="row in 2" :key="'row-'+row">
+                                <div :class="'col-sm'+(num < 3 ? '-3' : '')" v-for="num in (row == 1 ? 3 : 4)" :key="num">
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control form-control-sm text-end" v-model="form2[setFormModel(row, num)]" :id="'1_'+num" :placeholder="num">
+                                        <label :for="'1_'+num">{{setFormLabel(row, num)}}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-for="sub in form2.subs" :key="'subform2_'+sub.id">
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-4"><h6>{{sub.description}}</h6></div>
+                            <div class="col-sm-8">
+                                <div class="form-group row" v-for="row in 2" :key="'row-'+row">
+                                    <div :class="'col-sm'+(num < 3 ? '-3' : '')" v-for="num in (row == 1 ? 3 : 4)" :key="num">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control form-control-sm text-end" v-model="sub[setFormModel(row, num)]" :id="'1_'+num" :placeholder="num">
+                                            <label :for="'1_'+num">{{setFormLabel(row, num)}}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary rounded-pill min-100">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 <script>
 import EmptyTable from './EmptyTable.vue'
@@ -590,7 +635,7 @@ export default {
             loading: true,
             editmode: false,
             
-            // form
+            // performance form
             formshow: false,
             detailshow: false,
             detailsyncing: false,
@@ -605,6 +650,17 @@ export default {
                 status: 'Draft',
                 remarks: '',
                 histories: []
+            },
+            // outcome & output form
+            form2: {
+                id: '',
+                description: '',
+                type: '',
+                actual: '',
+                estimate: '',
+                physical_targets: '',
+                first: '', second: '', third: '', fourth: '',
+                subs: []
             },
             // indicator columns
             indcols: ['description', 'actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'],
@@ -1023,6 +1079,50 @@ export default {
         strToFloat(num){
             let strNum = num.toString().replace(/\,/g,'')
             return parseFloat(strNum)
+        },
+        // Form 2
+        editFormTwo(indicator){
+            var form = this.form2
+            form.id = indicator.id
+            form.type = indicator.type
+            form.description = indicator.description
+            var cols = this.indcols
+            for(let i = 0; i < cols.length; i++){
+                if(i != 0){
+                    var col = cols[i]
+                    var details = indicator.details
+                    form[col] = details ? details[col] : ''
+                }
+            }
+            form.subs = []
+            for(let i = 0; i < indicator.subindicators.length; i++){
+                var sub = indicator.subindicators[i]
+                var details = sub.details
+                var temp = {
+                    id: sub.id,
+                    description: sub.description,
+                    actual: details ? details.actual : '',
+                    estimate: details ? details.estimate : '',
+                    physical_targets: details ? details.physical_targets : '',
+                    first: details ? details.first : '',
+                    second: details ? details.second : '',
+                    third: details ? details.third : '',
+                    fourth: details ? details.fourth : '',
+                }
+                form.subs.push(temp)
+            }
+        },
+        setFormLabel(row, num){
+            if(row == 1){
+                return num == 1 ? 'Actual' : num == 2 ? 'Estimate' : 'Physical Targets'
+            }
+            return num == 1 ? 'First' : num == 2 ? 'Second' : num == 3 ? 'Third' : 'Fourth'
+        },
+        setFormModel(row, num){
+            if(row == 1){
+                return num == 1 ? 'actual' : num == 2 ? 'estimate' : 'physical_targets'
+            }
+            return num == 1 ? 'first' : num == 2 ? 'second' : num == 3 ? 'third' : 'fourth'
         },
         // Toast
         toastMsg(icon, msg){
