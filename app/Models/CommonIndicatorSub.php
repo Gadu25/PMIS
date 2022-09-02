@@ -20,4 +20,8 @@ class CommonIndicatorSub extends Model
     public function details(){
         return $this->morphOne(IndicatorDetail::class, 'indicatorable');
     }
+
+    public function commonindicator(){
+        return $this->belongsTo(CommonIndicator::class, 'common_indicator_id');
+    }
 }

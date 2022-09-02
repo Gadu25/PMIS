@@ -15,6 +15,7 @@ use App\Models\AnnexESub;
 use App\Models\PerformanceIndicator;
 use App\Models\IndicatorDetail;
 use App\Models\IndicatorBreakdown;
+use App\Models\Tag;
 
 use App\Models\AnnexF;
 use App\Models\AnnexFSub;
@@ -65,7 +66,6 @@ class WorkshopController extends Controller
 
             DB::commit();
             return ['message' => 'Workshop added!', 'workshops' => $this->getWorkshops()];
-
         }
         catch(\Exception $e){
             DB::rollback();
@@ -128,38 +128,37 @@ class WorkshopController extends Controller
         DB::beginTransaction();
         try{
             $query = AnnexE::query();
-            $query = $query->with(['project', 'histories.profile.user', 'indicators.details', 'indicators.breakdowns', 'subs.subproject', 'subs.indicators.details', 'subs.indicators.breakdowns'])
-                        ->where('status', $request['status'])
-                        ->where('workshop_id', $request['workshopId']);
-            
             $query = $query->whereHas('project', function($q) use($request){
                 if($request['type'] == 'Program'){
-                    if($request['program_id'] != 0){$q->where('program_id', $request['program_id']);}
-                    if($request['subprogram_id'] != 0){$q->where('subprogram_id', $request['subprogram_id']);}
-                    if($request['cluster_id'] != 0){$q->where('cluster_id', $request['cluster_id']);}
+                    if($request['program_id']    != 0){$q->where('program_id',     $request['program_id']);}
+                    if($request['subprogram_id'] != 0){$q->where('subprogram_id',  $request['subprogram_id']);}
+                    if($request['cluster_id']    != 0){$q->where('cluster_id',     $request['cluster_id']);}
                 }
                 else{
                     if($request['division_id'] != 0){$q->where('division_id', $request['division_id']);}
-                    if($request['unit_id'] != 0){$q->where('unit_id', $request['unit_id']);}
-                    if($request['subunit_id'] != 0){$q->where('subunit_id', $request['subunit_id']);}
+                    if($request['unit_id']     != 0){$q->where('unit_id',     $request['unit_id']);}
+                    if($request['subunit_id']  != 0){$q->where('subunit_id',  $request['subunit_id']);}
                 }
             });
 
-            $annexes = $query->get();
+            $annexes = $query->with(
+                ['project', 'histories.profile.user', 'subs.subproject', 
+                'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
+                'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns'])
+                ->where('status', $request['status'])
+                ->where('workshop_id', $request['workshopId'])->get();
             $grouped = $annexes->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']);
 
             $query = CommonIndicator::query();
             if($request['type'] == 'Program'){
-                if($request['program_id'] != 0){$query = $query->where('program_id', $request['program_id']);}
+                if($request['program_id']    != 0){$query = $query->where('program_id',    $request['program_id']);}
                 if($request['subprogram_id'] != 0){$query = $query->where('subprogram_id', $request['subprogram_id']);}
-                if($request['cluster_id'] != 0){$query = $query->where('cluster_id', $request['cluster_id']);}
+                if($request['cluster_id']    != 0){$query = $query->where('cluster_id',    $request['cluster_id']);}
             }
-
             $commonindicators = $query->with(['details', 'tags', 'subindicators.details'])
                 ->whereNot('type', 'Performance')
                 ->where('workshop_id', $request['workshopId'])
                 ->get();
-
             $cigrouped = $commonindicators->groupBy(['program_id', 'subprogram_id', 'cluster_id']);
 
             $programs = Program::with(['subprograms.clusters'])->get();
@@ -171,29 +170,15 @@ class WorkshopController extends Controller
                 foreach($program->subprograms as $subprogram){
                     $subprogram->commonindicators = $this->setItems($cigrouped, $program->id, $subprogram->id);
                     $subprogram->items = $this->setItems($grouped, $program->id, $subprogram->id);
-                    if(!$program->subpwithitems){
-                        $program->subpwithitems = (sizeof($subprogram->items) > 0);
-                    }
-                    if(!$program->subpwithci){
-                        $program->subpwithci = (sizeof($subprogram->commonindicators) > 0);
-                    }
+                    $this->isLoaded($program, $subprogram->items, 'subpwithitems');
+                    $this->isLoaded($program, $subprogram->commonindicators, 'subpwithci');
                     $subprogram->cluswithitems = false;
                     $subprogram->cluswithci = false;
                     foreach($subprogram->clusters as $cluster){
                         $cluster->commonindicators = $this->setItems($cigrouped, $program->id, $subprogram->id, $cluster->id);
                         $cluster->items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
-                        if(!$subprogram->cluswithitems){
-                            $subprogram->cluswithitems = (sizeof($cluster->items) > 0);
-                            if(!$program->subpwithitems){
-                                $program->subpwithitems = (sizeof($cluster->items) > 0);
-                            }
-                        }
-                        if(!$subprogram->cluswithci){
-                            $subprogram->cluswithci = (sizeof($cluster->commonindicators) > 0);
-                            if(!$program->subpwithci){
-                                $program->subpwithci = (sizeof($cluster->commonindicators) > 0);
-                            }
-                        }
+                        $this->isLoaded($subprogram, $cluster->items, 'cluswithitems', $program, 'subpwithitems');
+                        $this->isLoaded($subprogram, $cluster->commonindicators, 'cluswithci', $program, 'subpwithci');
                     }
                 }
             }
@@ -203,6 +188,17 @@ class WorkshopController extends Controller
         catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
+        }
+    }
+
+    private function isLoaded($array, $comparator, $col, $array2 = null, $col2 = null){
+        if(!$array[$col]){
+            $array[$col] = (sizeof($comparator) > 0);
+            if($array2){
+                if(!$array2[$col2]){
+                    $array2[$col2] = (sizeof($comparator) > 0);
+                }
+            }
         }
     }
 
@@ -237,12 +233,12 @@ class WorkshopController extends Controller
             $statchange = ($annexe->status != $request['status']);
             $initialIndicators = $annexe->indicators;
             $subject = '';
-            $action = $this->saveIndicatorDetails($request, $annexe, $initialIndicators, $statchange);
+            $action = $this->saveIndicators($request, $annexe, $initialIndicators);
 
             foreach($request['subs'] as $sub){
                 $annexesub = AnnexESub::findOrFail($sub['id']);
                 $initialIndicators = $annexesub->indicators;
-                $this->saveIndicatorDetails($request, $annexesub, $initialIndicators, $statchange, $sub['indicators'], true);
+                $this->saveIndicators($request, $annexesub, $initialIndicators, $sub['indicators'], true);
             }
 
             $subject = $subject.(($request['status'] == 'New' || $request['status'] == 'Draft' || $request['status'] == 'For Review' || $request['status'] == 'same') ? $action : '<p class="m-0">Action: Change Status </p>');
@@ -277,15 +273,100 @@ class WorkshopController extends Controller
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
         }
     }
+
+    // Other Indicator = Outcome or Output Indicators
+    public function updateOtherIndicatorDetails(Request $request, $id){
+        DB::beginTransaction();
+        try {
+            $commonindicator = CommonIndicator::findOrFail($id);
+            $this->saveIndicatorDetails($commonindicator, $request);
+            foreach($request['subs'] as $sub){
+                $commonindicatorsub = CommonIndicatorSub::findOrFail($sub['id']);
+                $this->saveIndicatorDetails($commonindicatorsub, $sub);
+            }
+            DB::commit();
+            return ['message' => 'Indicator saved!'];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
+        }
+    }
     
     public function destroyAnnexE($id){
 
     }
 
-    private function saveIndicatorDetails($request, $parent, $initialIndicators, $statchange, $indicators = [], $isSub = false){
+    private function saveIndicatorDetails($indicator, $form){
         $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
+        $tag = $form['tag'];
+        $withDetails = $this->indicatorHaveDetails($form);
+        if($withDetails){
+            $details = $indicator->details ? IndicatorDetail::findOrFail($indicator->details->id) : new IndicatorDetail;
+            if($tag){
+                $this->updateCommonIndicatorWithTag($tag['id'], $indicator->item, true, $details, $form); 
+            }
+            foreach($columns as $column){
+                $details[$column] = $this->formatAmount($form[$column]);
+            }
+            $indicator->details()->save($details);
+        }
+        if(!$withDetails && $indicator->details){
+            $indicator->details()->delete();
+        }
+    }
+    
+    private function updateCommonIndicatorWithTag($tagId, $annexe, $withDetails, $initialDetails, $form){
+        $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
+
+        $commonindcators = CommonIndicator::with('tags')
+            ->whereHas('tags', function($query) use($tagId){
+                $query->where('id', $tagId);
+            })
+            ->where('workshop_id', $annexe->workshop_id)
+            ->whereNot('type', 'Performance')->get();
+
+        $commonindicatorsubs = CommonIndicatorSub::with('tags', 'commonindicator')
+            ->whereHas('tags', function($query) use($tagId){
+                $query->where('id', $tagId);
+            })
+            ->whereHas('commonindicator', function($query) use($annexe){
+                $query->where('workshop_id', $annexe->workshop_id);
+            })->get();
+
+        foreach($commonindcators as $commonindicator){
+            $details = $commonindicator->details ? IndicatorDetail::findOrFail($commonindicator->details->id) : new IndicatorDetail;
+            foreach($columns as $column){
+                $details[$column] = $this->formatAmount($details[$column]) + $this->formatAmount($form[$column]) - $this->formatAmount($initialDetails[$column]);
+                
+                if(!$withDetails){
+                    $details[$column] = $this->formatAmount($details[$column]) - $this->formatAmount($initialDetails[$column]);
+                }
+            }
+            $commonindicator->details()->save($details);
+            if(!$this->indicatorHaveDetails($details)){
+                $commonindicator->details()->delete();
+            }
+        }
+
+        foreach($commonindicatorsubs as $commonindicator){
+            $details = $commonindicator->details ? IndicatorDetail::findOrFail($commonindicator->details->id) : new IndicatorDetail;
+            foreach($columns as $column){
+                $details[$column] = $this->formatAmount($details[$column]) + $this->formatAmount($form[$column]) - $this->formatAmount($initialDetails[$column]);
+                
+                if(!$withDetails){
+                    $details[$column] = $this->formatAmount($details[$column]) - $this->formatAmount($initialDetails[$column]);
+                }
+            }
+            $commonindicator->details()->save($details);
+            if(!$this->indicatorHaveDetails($details)){
+                $commonindicator->details()->delete();
+            }
+        }
+    }
+
+    private function saveIndicators($request, $parent, $initialIndicators, $indicators = [], $isSub = false){
         $indicators = ($isSub === false) ? $request['indicators'] : $indicators;
-        // $indicators = (sizeof($indicators) > 0) ? $indicators : $request['indicators'];
         $tempIndicatorIds = [];
         foreach($indicators as $indicator){
             $existingIndicator = (is_int($indicator['id']));
@@ -303,18 +384,7 @@ class WorkshopController extends Controller
                     $performanceindicator->description = $indicator['description'];
                     $parent->indicators()->save($performanceindicator);
                 }
-                if($this->indicatorHaveDetails($indicator)){
-                    $details = ($performanceindicator->details != null) ? IndicatorDetail::findOrFail($performanceindicator->details->id) : new IndicatorDetail ;
-                    foreach($columns as $column){
-                        $details[$column] = $this->formatAmount($indicator[$column]);
-                    }
-                    $performanceindicator->details()->save($details);
-                }
-                else{
-                    if($existingIndicator){
-                        $performanceindicator->details()->delete();
-                    }
-                }
+                $this->saveIndicatorDetails($performanceindicator, $indicator);
                 if($request['program_id'] != 1){
                     $nums = [1,2,3];
                     foreach($indicator['breakdowns'] as $bd){
@@ -348,29 +418,21 @@ class WorkshopController extends Controller
             }
         }
 
-        // if(!$statchange){
         $item = $isSub ? 'Sub Indicator - ' : 'Indicator - ';
         $action = (sizeof($indicators) > sizeof($initialIndicators) ? 'Added new indicators' : (sizeof($indicators) < sizeof($initialIndicators) ? 'Removed indicators' : (sizeof($indicators) == 0 && sizeof($initialIndicators) > 0 ? 'Removed all indicators' : (($request['formtype'] == 'details') ? 'Update Indicator Details' : 'No Changes'))));
         $action = $item.$action;
         return '<p class="m-0">Action: '.$action.'</p>';
-        // }
-        // else{
-        //     return ((!$isSub) ? '<p>Updated Indicator Status </p>' : '');
-        // }
-        
     }
 
-    private function indicatorHaveDetails($indicator){
+    private function indicatorHaveDetails($details){
         $state = false;
         $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
         foreach($columns as $column){
             if(!$state){
-                $state = ($this->formatAmount($indicator[$column]) > 0);
-            }
-            else{
-                return $state;
+                $state = ($this->formatAmount($details[$column]) > 0);
             }
         }
+        return $state;
     }
 
     // Annex F 
@@ -974,7 +1036,7 @@ class WorkshopController extends Controller
     
     private function formatAmount($amount){
         $newAmount = str_replace(',', '', $amount);
-        return (float)$newAmount;
+        return $amount ? (float)$newAmount : 0;
     }
 
     private function getWorkshopYear($id){

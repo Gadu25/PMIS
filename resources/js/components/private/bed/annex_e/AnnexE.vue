@@ -4,13 +4,20 @@
         <h2 class="text-center">Annex E</h2>
         <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small><hr>
         <template v-if="!loading">
+            <div class="d-flex justify-content-between mb-2">
+                <div>
+                    <button v-if="!editmode" class="btn btn-sm shadow-none min-100" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
+                    <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
+                </div>
+                <button v-if="annexes.length > 0" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
+            </div>
             <div class="row flex-row-reverse" v-if="!formshow && !detailshow">
-                <div class="col-sm-3">
-                    <div class="d-flex justify-content-end mb-3">
-                        <button style="width: 120px" class="btn shadow-none" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
-                    </div>
+                <div class="col-sm-3" v-if="filtershow">
                     <div class="card shadow mb-3">
                         <div class="card-body">
+                            <div class="d-flex justify-content-end mb-2">
+                                <button class="btn btn-sm btn-outline-secondary" @click="filtershow = false"><i class="fas fa-arrow-right"></i></button>
+                            </div>
                             <div class="form-floating mb-3">
                                 <select class="form-control" id="Status" v-model="displaystatus">
                                     <option value="New">New</option>
@@ -81,13 +88,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-9 mb-3">
+                <div class="mb-3 position-relative" :class="'col-sm-'+(filtershow ? '9': '12')">
+                    <button class="btn btn-sm btn-outline-secondary float-end ms-1" v-if="!filtershow" @click="filtershow = true"><i class="fas fa-arrow-left"></i></button>
                     <!-- Display View -->
                     <template v-if="!editmode">
-                        <div class="mb-3">
-                            <button class="btn btn-sm shadow-none min-100" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
-                            <button v-if="printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
-                        </div>
                         <div class="card shadow overflow-auto" :style="!printmode ? 'height: 72vh' : ''">
                             <div class="card-body">
                                 <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
@@ -148,7 +152,6 @@
                                                         <td>{{indicator.description}} </td>
                                                         <td :rowspan="indicator.subindicators.length+1" class="text-center">
                                                             <button class="btn btn-sm btn-outline-secondary min-100" v-if="indicator.tags.length == 0" @click="editFormTwo(indicator)" data-bs-target="#form2" data-bs-toggle="modal"><i class="far fa-pencil-alt"></i> Edit</button>
-                                                            <button class="btn btn-sm btn-outline-secondary min-100" v-else disabled><i class="far fa-pencil-alt"></i> Edit</button>
                                                         </td>
                                                     </tr>
                                                     <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
@@ -276,11 +279,11 @@
                                                 <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
                                                 <template v-else>
                                                     <template v-if="indicator.description != 'Sub-Total'">
-                                                        <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
+                                                        <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = formatNumber(totalIndicator(col))}}</p>
                                                         <input v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                     </template>
                                                     <template v-else>
-                                                        <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col)}}</p>
+                                                        <p class="px-2 py-1 m-0 text-end fw-bold">{{formatNumber(subtotalIndicator(col))}}</p>
                                                     </template>
                                                 </template>
                                             </template>
@@ -304,11 +307,11 @@
                                                     <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
                                                     <template v-else>
                                                         <template v-if="indicator.description != 'Sub-Total'">
-                                                            <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = totalIndicator(col)}}</p>
+                                                            <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = formatNumber(totalIndicator(col))}}</p>
                                                             <input v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                         </template>
                                                         <template v-else>
-                                                            <p class="px-2 py-1 m-0 text-end fw-bold">{{subtotalIndicator(col, sub.id)}}</p>
+                                                            <p class="px-2 py-1 m-0 text-end fw-bold">{{formatNumber(subtotalIndicator(col, sub.id))}}</p>
                                                         </template>
                                                     </template>
                                                 </template>
@@ -571,7 +574,7 @@
                             <div class="form-group row" v-for="row in 2" :key="'row-'+row">
                                 <div :class="'col-sm'+(num < 3 ? '-3' : '')" v-for="num in (row == 1 ? 3 : 4)" :key="num">
                                     <div class="form-floating mb-3">
-                                        <input type="text" class="form-control form-control-sm text-end" v-model="form2[setFormModel(row, num)]" :id="'1_'+num" :placeholder="num">
+                                        <input type="text" class="form-control form-control-sm text-end" v-model="form2[setFormModel(row, num)]" v-money="money" :id="'1_'+num" :placeholder="num">
                                         <label :for="'1_'+num">{{setFormLabel(row, num)}}</label>
                                     </div>
                                 </div>
@@ -586,7 +589,7 @@
                                 <div class="form-group row" v-for="row in 2" :key="'row-'+row">
                                     <div :class="'col-sm'+(num < 3 ? '-3' : '')" v-for="num in (row == 1 ? 3 : 4)" :key="num">
                                         <div class="form-floating mb-3">
-                                            <input type="text" class="form-control form-control-sm text-end" v-model="sub[setFormModel(row, num)]" :id="'1_'+num" :placeholder="num">
+                                            <input type="text" class="form-control form-control-sm text-end" v-model="sub[setFormModel(row, num)]" v-money="money" :id="'1_'+num" :placeholder="num">
                                             <label :for="'1_'+num">{{setFormLabel(row, num)}}</label>
                                         </div>
                                     </div>
@@ -596,7 +599,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary rounded-pill min-100">Save</button>
+                    <button type="button" class="btn btn-primary rounded-pill min-100" @click="submitFormTwo()">Save</button>
                 </div>
             </div>
         </div>
@@ -612,6 +615,7 @@ export default {
     components: { EmptyTable, Display, Form },
     data(){
         return {
+            filtershow: true,
             tab: 'performance',
             printmode: false,
             displaytype: 'Program',
@@ -655,6 +659,7 @@ export default {
             form2: {
                 id: '',
                 description: '',
+                tag: null,
                 type: '',
                 actual: '',
                 estimate: '',
@@ -684,7 +689,7 @@ export default {
     },
     methods: {
         ...mapActions('workshop', ['fetchWorkshop']),
-        ...mapActions('annexe', ['fetchAnnexEs', 'saveAnnexE']),
+        ...mapActions('annexe', ['fetchAnnexEs', 'saveAnnexE', 'updateAnnexEOther']),
         ...mapActions('program', ['fetchPrograms']),
         ...mapActions('division', ['fetchDivisions']),
         displaytypeChange(){
@@ -755,7 +760,6 @@ export default {
                 this.displaystatus = options.status
                 this.displaysyncstatus = options.status
             })
-            
         },
 
         // Form
@@ -885,6 +889,7 @@ export default {
                         var tempIndicator = {
                             id: indicator.id,
                             description:      indicator.description,
+                            tag:              indicator.tags.length > 0 ? indicator.tags[0] : null  ,
                             actual:           (indicator.details === null) ? 0 : indicator.details.actual,
                             estimate:         (indicator.details === null) ? 0 : indicator.details.estimate,
                             physical_targets: (indicator.details === null) ? 0 : indicator.details.physical_targets,
@@ -1043,6 +1048,7 @@ export default {
             var subtotalIndicator = {
                 id: id + Math.random(),
                 description: 'Sub-Total',
+                tag: null,
                 actual: 0,
                 estimate: 0,
                 physical_targets: 0,
@@ -1080,36 +1086,42 @@ export default {
             let strNum = num.toString().replace(/\,/g,'')
             return parseFloat(strNum)
         },
-        // Form 2
+        // Form 2 - Outcome and Output
+        submitFormTwo(){
+            this.updateAnnexEOther(this.form2).then(res => {
+                if(!res.errors){
+                    this.syncRecords()
+                    this.$refs.Close.click()
+                }
+                var icon = res.errors ? 'error' : 'success'
+                this.toastMsg(icon, res.message)
+            })
+        },
         editFormTwo(indicator){
             var form = this.form2
             form.id = indicator.id
             form.type = indicator.type
             form.description = indicator.description
-            var cols = this.indcols
-            for(let i = 0; i < cols.length; i++){
-                if(i != 0){
-                    var col = cols[i]
-                    var details = indicator.details
-                    form[col] = details ? details[col] : ''
-                }
-            }
+            this.setIndicatorDetail(form, indicator.details)
+
             form.subs = []
             for(let i = 0; i < indicator.subindicators.length; i++){
                 var sub = indicator.subindicators[i]
-                var details = sub.details
                 var temp = {
                     id: sub.id,
                     description: sub.description,
-                    actual: details ? details.actual : '',
-                    estimate: details ? details.estimate : '',
-                    physical_targets: details ? details.physical_targets : '',
-                    first: details ? details.first : '',
-                    second: details ? details.second : '',
-                    third: details ? details.third : '',
-                    fourth: details ? details.fourth : '',
+                    tag: null
                 }
+                this.setIndicatorDetail(temp, sub.details)
                 form.subs.push(temp)
+            }
+        },
+        setIndicatorDetail(array, details){
+            for(let i = 0; i < this.indcols.length; i++){
+                if(i != 0){
+                    var col = this.indcols[i]
+                    array[col] = details ? details[col] : ''
+                }
             }
         },
         setFormLabel(row, num){

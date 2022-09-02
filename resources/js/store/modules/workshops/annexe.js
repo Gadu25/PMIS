@@ -28,6 +28,12 @@ const actions = {
             return res.data
         })
         return response
+    },
+    async updateAnnexEOther({commit}, form){
+        const response = await axios.put('/api/workshop/annex-e/other/'+form.id, form).then(res => {
+            return res.data
+        })
+        return response
     }
 }
 
