@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Workshop;
 use App\Models\Program;
 use App\Models\Division;
+use App\Models\Unit;
 use App\Models\Project;
 
 use App\Models\AnnexE;
@@ -31,6 +32,7 @@ use App\Models\CommonIndicatorSub;
 
 use App\Models\History;
 use App\Models\Notification;
+use App\Models\Profile;
 
 use Auth;
 use DB;
@@ -142,7 +144,7 @@ class WorkshopController extends Controller
             });
 
             $annexes = $query->with(
-                ['project', 'histories.profile.user', 'subs.subproject', 
+                ['project.leader', 'histories.profile.user', 'subs.subproject', 
                 'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
                 'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns'])
                 ->where('status', $request['status'])
@@ -232,6 +234,7 @@ class WorkshopController extends Controller
             $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
             $statchange = ($annexe->status != $request['status']);
             $initialIndicators = $annexe->indicators;
+            $initialStatus = $annexe->status;
             $subject = '';
             $action = $this->saveIndicators($request, $annexe, $initialIndicators);
 
@@ -253,20 +256,20 @@ class WorkshopController extends Controller
                 $remarks = ($request['remarks'] != '') ? '<p>Remarks: '.$request['remarks'].'</p>' : '';
                 $subject = $subject.$remarks;
             }
-
-            // need to clarify how notification will work
-            // titles, 1 = director, 2 = deputy, 3 = div chief, 4 unit head, 5 proj leader, 6 staff, 7 superadmin
-            // if($request['status'] != 'New' && ($request['status'] == 'Draft' && $annexe->status != 'Draft')){
-            //     $stat = $request['status'];
-            //     $title_id = ($stat == 'For Review') ? 4 : $stat == 'For Approval'
-            //     $this->getRecipient()
-            // }
+            $message = '';
+            $status = $request['status'];
+            if($statchange){
+                if($initialStatus != 'New' || $status == 'For Review'){
+                    $message = $this->sendNotification($annexe->project, $status, 'Annex E');
+                    $subject = $subject.$message;
+                }
+            }
             
 
             $this->createHistory($annexe, $subject);
 
             DB::commit();
-            return ['message' => 'Successfully saved!', 'status' => $annexe->status];
+            return ['message' => 'Successfully saved!', 'status' => $annexe->status, 'recipients' => $message];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -1045,21 +1048,84 @@ class WorkshopController extends Controller
         return (int)$str[0];
     }
 
-    private function sendNotification(){
-        // $recipientId = $this->getRecipient($)
+    private function sendNotification($project, $status, $type){
+        $sender = Auth::user();
+        $projectleader = $project->leader->profile;
+        // $projectleader->user;
+        $message = $this->setMessage($project, $status, $type);
+        $results = '<p class="m-0">Notified: <br>';
+        // notify project leader unless status is for review
+        if($status != 'For Review'){
+            $this->sendMessage($sender, $projectleader->id, $message['title'], $message['body']);
+            $results = $results.'<li>'.$projectleader->user->firstname.' '.$projectleader->user->lastname.'</li>';
+        }
+        $query = Profile::query();
+        $query = $query->with('user')->where('active', true);
+        // notify unit head if status is for review or approved
+        if($status == 'For Review' || $status == 'Approved'){
+            $query = $query->where('title_id', 4)
+                    ->whereHas('user', function($q) use($project){
+                        $q->where('division_id', $project->division_id)
+                        ->where('unit_id', $project->unit_id)
+                        ->where('subunit_id', $project->subunit_id);
+                    });
+        }
+        // notify division chief if status is for approval
+        if($status == 'For Approval'){
+            $query = $query->where('title_id', 3)
+                    ->whereHas('user', function($q) use($project){
+                        $q->where('division_id', $project->division_id);
+                    });
+        }
+        // notify planning unit head if status is submitted
+        if($status == 'Submitted'){
+            $division = Division::where('code', 'OD')->first();
+            $unit     = Unit::where('name', 'Planning Unit')->first();
+            $ids      = ['division_id' => $division->id, 'unit_id' => $unit->id];
+            $query = $query->where('title_id', 4)
+                        ->whereHas('user', function($q) use($ids){
+                            $q->where('division_id', $ids['division_id'])
+                            ->where('unit_id', $ids['unit_id']);
+                        });
+        }
+
+        $recipient = $query->first();
+        if($recipient->id != $projectleader->id){
+            $this->sendMessage($sender, $recipient->id, $message['title'], $message['body']);
+            $results = $results.'<li>'.$recipient->user->firstname.' '.$recipient->user->lastname.'</li>';
+        }
+        return $results.'</p>';
+
+        // Titles
+        // 3 = Division Chief
+        // 4 = Unit Head
+        // 5 = Project Leader
     }
 
-    private function getRecipient($titleId, $divId, $unitId = null, $subId = null){
-        $user = User::with(['activeProfile'])
-                    ->whereHas('profile', function($q) use($titleId) {
-                        $q->where('title_id', $titleId);
-                        $q->where('active', true);
-                    })
-                    ->where('division_id', $divId)
-                    ->where('unit_id', $unitId)
-                    ->where('subunit_id', $subuId)
-                    ->first();
-        return $user;
+    private function sendMessage($sender, $recipientId, $title, $body){
+        $notification = new Notification;
+        $notification->profile_to = $recipientId; 
+        $notification->profile_from = $sender->activeProfile->id;
+        $notification->title = $title;
+        $notification->body = $body;
+        $notification->save();
+    }
+
+    private function setMessage($project, $status, $type){
+        // $sender = Auth::user();
+        $body = '<p class="m-0">'; 
+        $title = '<strong> Workshop - '.$type.': '.$project->title.'</strong>';
+        if($status == 'For Review' || $status == 'For Approval'){
+            $body = $body.$project->title.' was sent '.$status;
+        }
+        else if($status == 'Approved'){
+            $body = $body.$project->title.' approved! ';
+        }
+        else if($status == 'Submitted'){
+            $body = $body.$project->title.' submitted! ';
+        }
+        
+        return ['title' => $title, 'body' => $body.'</p>'];
     }
 
     private function createHistory($item, $subject){

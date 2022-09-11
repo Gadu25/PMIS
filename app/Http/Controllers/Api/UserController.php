@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Profile;
 use App\Models\Title;
+use App\Models\Notification;
 use Auth;
 use DB;
 
@@ -26,7 +27,17 @@ class UserController extends Controller
 
     public function authUser(){
         $user = Auth::user();
-        $user->activeProfile->title;
+        $user->division;
+        $user->unit;
+        $user->subunit;
+        $profile = $user->activeProfile;
+        $profile->title;
+        foreach($profile->notifications as $notification){
+            $notification->from->user;
+            $notification->to->user;
+        }
+        // $profile->notifications->to;
+        // $user->activeProfile->notifications = Notification::where('profile_to', $profile->id)->get();
         return $user;
     }
 

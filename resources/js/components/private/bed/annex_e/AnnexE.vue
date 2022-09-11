@@ -1,15 +1,17 @@
 <template>
     <div class="px-3 py-4">
-        <button class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
-        <h2 class="text-center">Annex E</h2>
-        <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small><hr>
+        <div class="border-bottom mb-2">
+            <button class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
+            <h4 class="text-center">Annex E</h4>
+            <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small>
+        </div>
         <template v-if="!loading">
             <div class="d-flex justify-content-between mb-2">
                 <div>
                     <button v-if="!editmode" class="btn btn-sm shadow-none min-100" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
                     <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
                 </div>
-                <button v-if="annexes.length > 0" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
+                <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
             </div>
             <div class="row flex-row-reverse" v-if="!formshow && !detailshow">
                 <div class="col-sm-3" v-if="filtershow">
@@ -88,11 +90,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="mb-3 position-relative" :class="'col-sm-'+(filtershow ? '9': '12')">
+                <div class="position-relative" :class="'col-sm-'+(filtershow ? '9': '12')">
                     <button class="btn btn-sm btn-outline-secondary float-end ms-1" v-if="!filtershow" @click="filtershow = true"><i class="fas fa-arrow-left"></i></button>
                     <!-- Display View -->
                     <template v-if="!editmode">
-                        <div class="card shadow overflow-auto" :style="!printmode ? 'height: 72vh' : ''">
+                        <div class="card shadow overflow-auto" :style="!printmode ? 'height: 73vh' : ''">
                             <div class="card-body">
                                 <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
                                 <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" id="printMe"/>
@@ -115,7 +117,7 @@
                             <button class="btn btn-sm btn-success"><i class="fas fa-plus"></i> New</button>
                             </div>
                         </div>
-                        <div class="table-responsive" style="height: 68vh">
+                        <div class="table-responsive" style="height: 64vh">
                             <table class="table table-sm table-bordered table-hover">
                                 <thead class="text-center">
                                     <tr>
@@ -139,9 +141,11 @@
                                                         <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
                                                         <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                         <td class="text-center" :rowspan="item.subs.length + 1">
-                                                            <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                            <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                            <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                            <template v-if="checkUserDivision(item.project)">
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                            </template>
                                                         </td>
                                                     </tr>
                                                 </template>
@@ -168,9 +172,11 @@
                                                             <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
                                                             <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                             <td class="text-center" :rowspan="item.subs.length + 1">
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                <template v-if="checkUserDivision(item.project)">
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                </template>
                                                             </td>
                                                         </tr>
                                                         <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -199,9 +205,11 @@
                                                                 <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
                                                                 <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                                 <td class="text-center" :rowspan="item.subs.length+1">
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                    <template v-if="checkUserDivision(item.project)">
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                    </template>
                                                                 </td>
                                                             </tr>
                                                             <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -232,9 +240,9 @@
                     </div>
                 </div>
             </div>
-            <div v-if="detailshow && !detailsyncing">
+            <div style="height: 74vh; overflow: auto; overflow-x: hidden; padding: 10px;" v-if="detailshow && !detailsyncing">
                 <template v-if="!detailsyncing">
-                    <div class="d-flex justify-content-between mb-3">
+                    <div class="d-flex justify-content-between mb-3" v-if="!saving">
                         <button class="btn btn-sm btn-danger" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
                         <div v-if="!isForReview(form.status)">
                             <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
@@ -242,8 +250,8 @@
                             <button class="btn btn-sm btn-success"                @click="submitForm('For Review')"><i class="fas fa-search"></i> Submit "For Review"</button>
                         </div>
                         <div v-if="isForReview(form.status) && form.status != 'Submitted'">
-                            <button class="btn btn-sm btn-secondary min-100 me-1" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
-                            <button class="btn btn-sm btn-success min-100 me-1"   @click="submitForm('approve')"><i class="fas fa-check"></i> Approved</button>
+                            <button class="btn btn-sm btn-secondary min-100 me-1" v-if="checkUserTitle(form.status)" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
+                            <button class="btn btn-sm btn-success min-100 me-1"   v-if="checkUserTitle(form.status)" @click="submitForm('approve')"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submit to Planning Unit' : 'Approve'}}</button>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -684,7 +692,8 @@ export default {
                 masked: false /* doesn't work with directive */
             },
             indicatorshow: false,
-            prevstatus: ''
+            prevstatus: '',
+            saving: false
         }
     },
     methods: {
@@ -764,11 +773,16 @@ export default {
 
         // Form
         submitForm(status){
+            this.saving = true
             var validate = true
             this.prevstatus = this.form.status
             var stat = this.form.status
             if(status != 'approve' || status != 'reject'){
                 validate = this.formValidated()
+                if(!validate){
+                    status = this.prevstatus
+                    this.saving = false
+                }
             }
             if(status == 'approve'){
                 status = (stat == 'For Review') ? 'For Approval' : (stat == 'For Approval') ? 'Approved' : 'Submitted'
@@ -792,6 +806,7 @@ export default {
                         this.detailshow = false
                         this.formshow = false
                     }
+                    this.saving = false
                 })
             }
         },
@@ -1136,6 +1151,35 @@ export default {
             }
             return num == 1 ? 'first' : num == 2 ? 'second' : num == 3 ? 'third' : 'fourth'
         },
+        // Button-User Validation
+        checkUserTitle(status){
+            var result = false
+            var userTitle = this.authuser.active_profile.title.name
+            if(status == 'For Review' && userTitle == 'Unit Head'){
+                result = true
+            }
+            if((status == 'For Approval' || status == 'Approved') && userTitle == 'Division Chief'){
+                result = true
+            }
+            return result
+        },
+        checkUserDivision(project){
+            var user = this.authuser
+            var userObject = {
+                division_id: user.division_id,
+                unit_id:     user.unit_id,
+                subunit_id:  user.subunit_id
+            }
+            var projectObject = {
+                division_id: project.division_id,
+                unit_id:     user.unit_id === null   ? null : project.unit_id,
+                subunit_id:   user.subunit_id == null ? null : project.subunit_id
+            }
+            var userStr = JSON.stringify(userObject)
+            var projStr = JSON.stringify(projectObject)
+
+            return (userStr === projStr || user.active_profile.title.name == 'Superadmin')
+        },
         // Toast
         toastMsg(icon, msg){
             toast.fire({
@@ -1192,6 +1236,8 @@ export default {
         }
     },
     computed: {
+        ...mapGetters('user', ['getAuthUser']),
+        authuser(){ return this.getAuthUser },
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
         ...mapGetters('program', ['getPrograms']),

@@ -11,6 +11,7 @@ import AnnexF from './components/private/bed/annex_f/AnnexF.vue'
 import AnnexOne from './components/private/bed/annexone/AnnexOne.vue'
 import CommonIndicators from './components/private/bed/common/CommonIndicators.vue'
 import Users from './components/private/user/management/Users.vue'
+import Profile from './components/private/user/profile/Profile.vue'
 
 const routes = [
     { path: '/', name: 'Home', component: Home, meta: { requiresAuth: false, title: 'Home'} },
@@ -32,7 +33,8 @@ const routes = [
             { path: '/budget-executive-documents/common-indicators/:workshopId', name: 'CommonIndicators', component: CommonIndicators, meta: { requiresAuth: true, title: 'Common Performance Indicators' } },
         ]
     },
-    { path: '/users-management', name: 'Users', component: Users, meta: { requiresAuth: true, title: 'User Management' } }
+    { path: '/users-management', name: 'Users', component: Users, meta: { requiresAuth: true, title: 'User Management' } },
+    { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, title: 'Profile'} }
 ]
 
 const router = createRouter({

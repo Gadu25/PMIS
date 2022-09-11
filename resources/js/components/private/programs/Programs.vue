@@ -528,9 +528,7 @@ export default {
                 if(this.divisions.length == 0){
                     this.fetchDivisions()
                 }
-                if(this.users.length == 0){
-                    this.fetchUsers()
-                }
+                this.fetchUsers()
                 this.projects = res.program_group
                 this.loading = false
             })

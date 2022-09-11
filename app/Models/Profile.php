@@ -28,4 +28,8 @@ class Profile extends Model
     public function leaderOf(){
         return $this->hasMany(Staff::class)->where('type', 'leader');
     }
+
+    public function notifications(){
+        return $this->hasMany(Notification::class, 'profile_to')->orderBy('created_at', 'desc');
+    }
 }
