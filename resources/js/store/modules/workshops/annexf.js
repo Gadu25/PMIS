@@ -9,8 +9,8 @@ const getters = {
 }
 
 const actions = {
-    async fetchAnnexFs({commit}, workshopId){
-        const response = await axios.get('/api/workshop/annex-f/'+workshopId).then(res => {
+    async fetchAnnexFs({commit}, filter){
+        const response = await axios.post('/api/workshop/annex-f/display', filter).then(res => {
             commit('setAnnexFs', res.data)
             return res.data
         })

@@ -8,8 +8,8 @@
         <template v-if="!loading">
             <div class="d-flex justify-content-between mb-2">
                 <div>
-                    <button v-if="!editmode" class="btn btn-sm shadow-none min-100" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
-                    <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
+                    <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-2" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
+                    <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary"><i class="far fa-print"></i> Print</button>
                 </div>
                 <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
             </div>
@@ -197,7 +197,7 @@
                                                     </template>
                                                 </template>
                                                 <template v-for="cluster in subprogram.clusters" :key="'cluster_'+cluster.id">
-                                                    <tr v-if="cluster.items.length > 0 && tab == 'performace'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
+                                                    <tr v-if="cluster.items.length > 0 && tab == 'performance'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
                                                     <tr v-if="cluster.commonindicators.length > 0 && tab != 'performace'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
                                                     <template v-if="tab == 'performance'">
                                                         <template v-for="item in cluster.items" :key="'cluster-item_'+item.id">
@@ -245,9 +245,9 @@
                     <div class="d-flex justify-content-between mb-3" v-if="!saving">
                         <button class="btn btn-sm btn-danger" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
                         <div v-if="!isForReview(form.status)">
-                            <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
-                            <button class="btn btn-sm btn-secondary me-1"         @click="submitForm('Draft')"><i class="fas fa-edit"></i> Save as Draft</button>
-                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')"><i class="fas fa-search"></i> Submit "For Review"</button>
+                            <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1 && checkUserTitle(form.status)" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
+                            <button class="btn btn-sm btn-secondary me-1"         @click="submitForm('Draft')"      v-if="checkUserTitle(form.status)"><i class="fas fa-edit"></i> Save as Draft</button>
+                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')" v-if="checkUserTitle(form.status)"><i class="fas fa-search"></i> Submit "For Review"</button>
                         </div>
                         <div v-if="isForReview(form.status) && form.status != 'Submitted'">
                             <button class="btn btn-sm btn-secondary min-100 me-1" v-if="checkUserTitle(form.status)" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
@@ -823,7 +823,6 @@ export default {
                 }
                 if(!state){ state = this.checkIndicator(indicator) }
             }
-            // console.log(form.status)
 
             for(let i = 0; i < form.subs.length; i++){
                 withSubtotal = this.withSubtotal(form.subs[i].indicators)

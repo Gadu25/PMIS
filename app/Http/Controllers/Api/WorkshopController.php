@@ -193,29 +193,6 @@ class WorkshopController extends Controller
         }
     }
 
-    private function isLoaded($array, $comparator, $col, $array2 = null, $col2 = null){
-        if(!$array[$col]){
-            $array[$col] = (sizeof($comparator) > 0);
-            if($array2){
-                if(!$array2[$col2]){
-                    $array2[$col2] = (sizeof($comparator) > 0);
-                }
-            }
-        }
-    }
-
-    private function setItems($grouped, $progId, $subpId = '', $clusId = ''){
-        $items = [];
-        if($grouped->has($progId)){
-            if($grouped[$progId]->has($subpId)){
-                if($grouped[$progId][$subpId]->has($clusId)){
-                    $items = $grouped[$progId][$subpId][$clusId];
-                }
-            }
-        }
-        return $items;
-    }
-
     public function storeAnnexE(Request $request){
         DB::beginTransaction();
         try {
@@ -439,26 +416,51 @@ class WorkshopController extends Controller
     }
 
     // Annex F 
-    public function getAnnexF($workshopId){
-        $annexfs = AnnexF::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
-        foreach($annexfs as $annexf){
-            $annexf->activities;
-            $annexf->funds;
-            $project = $annexf->projects[0];
-            $annexf->title = (sizeof($annexf->projects) > 1) ? $project->subprogram->title : $project->title;
-            // $subpTitleType = $project->program->title == 'S&T Scholarship Program' ? 'title_short' : 'title';
-            // $headerAppend = (($project->cluster_id) ? ' - '.$project->cluster->title : (($project->subprogram_id) ? ' - '.$project->subprogram[$subpTitleType] : ''));
-            $annexf->program = $project->program->title;
-            $annexf->subprogram = ($project->subprogram_id) ? $project->subprogram->title_short : '';
-            $annexf->cluster = ($project->cluster_id) ? $project->cluster->title : '';
-            foreach($annexf->subs as $sub){
-                $sub->subproject;
-                $sub->activities;
-                $sub->funds;
+    public function getAnnexF(Request $request){
+        DB::beginTransaction();
+        try {
+            $query = AnnexF::query();
+            $query = $query->whereHas('projects', function($q) use($request){
+                if($request['type'] == 'Program'){
+                    if($request['program_id'])   { $q->where('program_id',    $request['program_id']);    }
+                    if($request['subprogram_id']){ $q->where('subprogram_id', $request['subprogram_id']); }
+                    if($request['clustser_id'])  { $q->where('clustser_id',   $request['clustser_id']);   }
+                }
+                else{
+                    if($request['division_id']){ $q->where('division_id', $request['division_id']); }
+                    if($request['unit_id'])    { $q->where('unit_id',     $request['unit_id']);     }
+                    if($request['subunit_id']) { $q->where('subunit_id',  $request['subunit_id']);  }
+                }
+            });
+            $annexfs = $query->with(['projects.subprogram', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
+                ->where('workshop_id', $request['workshopId'])
+                ->where('status', $request['status'])->get();
+            
+            $grouped = $annexfs->groupBy(['projects.*.program_id', 'projects.*.subprogram_id', 'projects.*.cluster_id']);
+
+            $programs = Program::with('subprograms.clusters')->get();
+            foreach($programs as $program){
+                $program->show = false;
+                $program->items = $this->setItems($grouped, $program->id);
+                foreach($program->subprograms as $subprogram){
+                    $subprogram->show = false;
+                    $subprogram->items = $this->setItems($grouped, $program->id, $subprogram->id);
+                    $this->isLoaded($program, $subprogram->items, 'show');
+                    foreach($subprogram->clusters as $cluster){
+                        $cluster->items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
+                        $this->isLoaded($subprogram, $cluster->items, 'show');
+                        $this->isLoaded($program, $cluster->items, 'show');
+                    }
+                }
             }
+
+            DB::commit();
+            return $programs;
         }
-        $grouped = $annexfs->groupBy(['program', 'subprogram', 'cluster']);
-        return $grouped;
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
+        }
     }
 
     public function storeAnnexF(Request $request){
@@ -1136,5 +1138,29 @@ class WorkshopController extends Controller
         $history->profile_id = $user->activeProfile->id;
 
         $item->histories()->save($history);
+    }
+    
+    // Annex E & F Item Setter
+    private function isLoaded($array, $comparator, $col, $array2 = null, $col2 = null){
+        if(!$array[$col]){
+            $array[$col] = (sizeof($comparator) > 0);
+            if($array2){
+                if(!$array2[$col2]){
+                    $array2[$col2] = (sizeof($comparator) > 0);
+                }
+            }
+        }
+    }
+
+    private function setItems($grouped, $progId, $subpId = '', $clusId = ''){
+        $items = [];
+        if($grouped->has($progId)){
+            if($grouped[$progId]->has($subpId)){
+                if($grouped[$progId][$subpId]->has($clusId)){
+                    $items = $grouped[$progId][$subpId][$clusId];
+                }
+            }
+        }
+        return $items;
     }
 }
