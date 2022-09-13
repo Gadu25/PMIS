@@ -3,7 +3,7 @@
         <div class="col-sm-4">
             <div class="card shadow">
                 <div class="card-body">
-                    <div class="text-center"><img src="/images/Logo.png" alt="Logo" width="150"></div>
+                    <div class="text-center"><img :src="'/images/Logo.png'" alt="Logo" width="150"></div>
                     <h2 class="text-center">Welcome to</h2>
                     <h1 class="text-center"><strong>DOST-SEI Project Management Information System</strong></h1>
                     <div class="d-flex justify-content-end mt-5">
@@ -16,7 +16,7 @@
 </template>
 <script>
 export default {
-    name: 'Home'
+    name: 'Home',
 }
 </script>
 <style scoped>

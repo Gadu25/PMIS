@@ -1,5 +1,5 @@
 <template>
-    <div class="px-5 py-4" v-if="!childSelected">
+    <div class="p-2 workshop" v-if="!childSelected">
         <h2 class="text-center">Budget Executive Documents</h2><hr>
         <div class="container" v-if="!loading">
             <form @submit.prevent="submitForm()" class="d-flex justify-content-center border-bottom mb-4" v-if="formshow">
@@ -27,7 +27,7 @@
             <template v-else>
             <button class="btn btn-sm btn-success float-end" @click="resetForm()"><i class="fas fa-plus"></i></button>
             <h4><strong>Planning Workshops</strong></h4><hr>
-            <div class="d-flex justify-content-center">
+            <div class="d-flex justify-content-center workshop-accordions">
                 <div class="col-sm-8">
                     <div class="accordion shadow-lg" id="accordionExample">
                         <div class="accordion-item" v-for="workshop in workshops" :key="workshop.id+'_workshop'">
@@ -38,14 +38,14 @@
                             </h2>
                             <div :id="'workshop'+workshop.id" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <div class="d-flex justify-content-between">
-                                        <ul class="items me-2">
+                                    <div class="according-items">
+                                        <ul class="items">
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexE', params: { workshopId: workshop.id } }"><li>Annex E</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Performance Indicators</li></router-link>
                                         </ul>
-                                        <div class="actions ms-2">
+                                        <div class="actions">
                                             <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
                                             <button style="min-width: 140.7px;" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
                                         </div>
@@ -158,8 +158,13 @@ export default {
 }
 </script>
 <style scoped>
+.according-items{
+    display: flex;
+    
+}
 ul.items{
-    width: 70%;
+    width: 75%;
+    padding: 0;
 }
 ul.items>a>li{
     list-style-type: none;
@@ -171,13 +176,33 @@ ul.items>a>li{
 ul.items>a>li:hover{
     background: rgba(0, 0, 0, 0.03);
     font-weight: bold;
+    /* width: 75%; */
 }
 a{
     text-decoration: none;
     color: black;
 }
 .actions{
+    width: 25%;
     align-self: flex-end;
-    margin-bottom: 16px;
+    margin: 0 0 16px 16px;
+}
+.workshop{
+    height: calc(100vh - 45px);
+}
+.workshop-accordions{
+    overflow: auto;
+    height: calc(100vh - 215px);
+}
+@media only screen and (max-width: 600px) {
+    .according-items{ flex-wrap: wrap; }
+    ul.items {width: 100%;}
+    .actions {
+        width: 100%;
+        margin: 0;
+    }
+    .actions>button{
+        width: 100%;
+    }
 }
 </style>

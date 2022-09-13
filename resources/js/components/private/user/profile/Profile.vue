@@ -3,8 +3,8 @@
         <div class="gen-info">
             <button class="btn-settings"><i class="far fa-cog"></i> Settings</button>
             <h4>{{authuser.firstname+' '+authuser.lastname}}, <small></small></h4>
-            
-            <small><strong><i class="far fa-building"></i> {{authuser.active_profile.title.name}}, {{authuser.division.name}}</strong> <span v-if="authuser.unit_id">, {{authuser.unit.name}}</span> <span v-if="authuser.sybunit_id"> - {{authuser.subunit.name}}</span> </small>
+            <small><i class="far fa-user-circle"></i> {{authuser.active_profile.title.name}}</small><br>
+            <small><i class="far fa-building"></i> <strong>{{authuser.division.name}}</strong> <span v-if="authuser.unit_id">, {{authuser.unit.name}}</span> <span v-if="authuser.sybunit_id"> - {{authuser.subunit.name}}</span> </small>
             <br><small><i class="far fa-envelope"></i> <i>{{authuser.email}}</i></small>
         </div>
         <div class="details">

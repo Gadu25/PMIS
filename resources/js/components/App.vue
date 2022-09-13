@@ -8,7 +8,7 @@
                 <div class="sidebar-header">
                     <router-link :to="{ name: 'Dashboard' }" class="sidebar-link">
                         <div class="d-flex justify-content-between">
-                            <img src="/images/Logo.png" alt="logo" width="60">
+                            <img :src="'/images/Logo.png'" alt="logo" width="60">
                             <span>Project Management Info System</span>
                         </div>
                     </router-link>

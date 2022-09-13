@@ -28,4 +28,8 @@ class AnnexF extends Model
     public function funds(){
         return $this->morphMany(AnnexFFund::class, 'fundable');
     }
+    
+    public function histories(){
+        return $this->morphMany(History::class, 'historiable')->orderBy('created_at', 'desc');
+    }
 }

@@ -193,17 +193,6 @@ class WorkshopController extends Controller
         }
     }
 
-    public function storeAnnexE(Request $request){
-        DB::beginTransaction();
-        try {
-            
-        }
-        catch(\Exception $e){
-            DB::rollback();
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
-        }
-    }
-    
     public function updateAnnexE(Request $request, $id){
         DB::beginTransaction();
         try {
@@ -492,99 +481,76 @@ class WorkshopController extends Controller
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
     }
-    
+
     public function updateAnnexF(Request $request, $id){
         DB::beginTransaction();
         try {
-            $project = $request['projects'][0];
             $annexf = AnnexF::findOrFail($id);
             $annexf->remarks = $request['remarks'];
+            $initialStatus = $annexf->status;
+            
+            $statchange = $initialStatus != $request['status'];
+            if($statchange && $request['status'] != 'same'){
+                $annexf->status = $request['status'];
+            }
             $annexf->save();
 
-            $projects = ($project['multiple']) ? $project['project_ids'] : [$project['project_id']];
-            $annexf->projects()->sync($projects);
+            $this->saveAnnnexFActivities($annexf, $request['activities']);
+            $this->saveAnnnexFFunds($annexf, $request['funds']);
 
-            foreach($request['activities'] as $key => $activityArray){
-                foreach($activityArray as $act){
-                    if($act['description'] != ''){
-                        $activity = $act['id'] ? AnnexFActivity::findOrFail($act['id']) : new AnnexFActivity;
-                        $activity->description = $act['description'];
-                        $activity->table_key = $key;
-                        $annexf->activities()->save($activity);
-                    }
-                    if($act['description'] == '' && $act['id']){
-                        $activity = AnnexFActivity::findOrFail($act['id']);
-                        $activity->delete();
-                    }
-                }
+            foreach($request['subs'] as $sub){
+                $annexfsub = AnnexFSub::findOrFail($sub['id']);
+                $this->saveAnnnexFActivities($annexfsub, $sub['activities']);
+                $this->saveAnnnexFFunds($annexfsub, $sub['funds']);
             }
-
-            foreach($request['funds'] as $key => $value){
-                $amount = $this->formatAmount($value['amount']);
-                if($amount > 0){
-                    $fund = $value['id'] ? AnnexFFund::findOrFail($value['id']) : new AnnexFFund;
-                    $fund->amount = $amount;
-                    $fund->table_key = $key;
-                    $annexf->funds()->save($fund);
-                }
-                else if($value['id']){
-                    $fund = AnnexFFund::findOrFail($value['id']);
-                    $fund->delete();
-                }
-            }
-            
-            foreach($project['subprojects'] as $subproject){
-                $annexfsub = $subproject['id'] ? AnnexFSub::findOrFail($subproject['id']) : new AnnexFSub;
-                if($subproject['state']){
-                    $annexfsub->annex_f_id = $annexf->id;
-                    $annexfsub->subproject_id = $subproject['subproject_id'];
-                    $annexfsub->remarks = $subproject['remarks'];
-                    $annexfsub->save();
-
-                    foreach($subproject['activities'] as $key => $activityArray){
-                        foreach($activityArray as $act){
-                            if($act['description'] != ''){
-                                $activity = $act['id'] ? AnnexFActivity::findOrFail($act['id']) : new AnnexFActivity;
-                                $activity->description = $act['description'];
-                                $activity->table_key = $key;
-                                $annexfsub->activities()->save($activity);
-                            }
-                            else if($act['id']){
-                                $activity = AnnexFActivity::findOrFail($act['id']);
-                                $activity->delete();
-                            }
-                        }
-                    }
-
-                    foreach($subproject['funds'] as $key => $value){
-                        $amount = $this->formatAmount($value['amount']);
-                        if($amount > 0){
-                            $fund = $value['id'] ? AnnexFFund::findOrFail($value['id']) : new AnnexFFund;
-                            $fund->amount = $amount;
-                            $fund->table_key = $key;
-                            $annexfsub->funds()->save($fund);
-                        }
-                        else if($value['id']){
-                            $fund = AnnexFFund::findOrFail($value['id']);
-                            $fund->delete();
-                        }
-                    }
-                }
-                else{
-                    $annexfsub->activities()->delete();
-                    $annexfsub->funds()->delete();
-                    $annexfsub->delete();
-                }
-            }
-
-            AnnexFActivity::whereIn('id', $request['activityIds'])->delete();
 
             DB::commit();
-            return ['message' => 'Successfully saved!', 'annexfs' => $this->getAnnexF($request['workshop_id'])];
+            return ['message' => 'Saved!', 'status' => $annexf->status];
         }
-        catch(\Exception $e){
+        catch (\Exception $e){
             DB::rollback();
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'test' => $request['activityIds']];
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    private function saveAnnnexFActivities($parent, $array){
+        $ids = []; 
+        $initialActivities = $parent->activities;
+        foreach($array as $key => $activityArray){
+            foreach($activityArray as $act){
+                if($act['description'] != ''){
+                    $activity = $act['id'] ? AnnexFActivity::findOrFail($act['id']) : new AnnexFActivity;
+                    $activity->description = $act['description'];
+                    $activity->table_key = $key;
+                    $parent->activities()->save($activity);
+                    array_push($ids, $activity->id);
+                }
+                if($act['description'] == '' && $act['id']){
+                    $activity = AnnexFActivity::findOrFail($act['id']);
+                    $activity->delete();
+                }
+            }
+        }
+        foreach($initialActivities as $activity){ // compare item original activities from request activities
+            if(!in_array($activity->id, $ids)){
+                $activity->delete();
+            }
+        }
+    }
+
+    private function saveAnnnexFFunds($parent, $array){
+        foreach($array as $key => $value){
+            $amount = $this->formatAmount($value['amount']);
+            if($amount > 0){
+                $fund = $value['id'] ? AnnexFFund::findOrFail($value['id']) : new AnnexFFund;
+                $fund->amount = $amount;
+                $fund->table_key = $key;
+                $parent->funds()->save($fund);
+            }
+            else if($value['id']){
+                $fund = AnnexFFund::findOrFail($value['id']);
+                $fund->delete();
+            }
         }
     }
     

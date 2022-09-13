@@ -1172,7 +1172,7 @@ export default {
             var projectObject = {
                 division_id: project.division_id,
                 unit_id:     user.unit_id === null   ? null : project.unit_id,
-                subunit_id:   user.subunit_id == null ? null : project.subunit_id
+                subunit_id:  user.subunit_id == null ? null : project.subunit_id
             }
             var userStr = JSON.stringify(userObject)
             var projStr = JSON.stringify(projectObject)
