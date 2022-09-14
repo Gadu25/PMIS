@@ -198,7 +198,8 @@ class WorkshopController extends Controller
         try {
             $annexe = AnnexE::findOrFail($id);
             $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
-            $statchange = ($annexe->status != $request['status']);
+            $status = $request['status'];
+            $statchange = ($annexe->status != $status);
             $initialIndicators = $annexe->indicators;
             $initialStatus = $annexe->status;
             $subject = '';
@@ -210,20 +211,19 @@ class WorkshopController extends Controller
                 $this->saveIndicators($request, $annexesub, $initialIndicators, $sub['indicators'], true);
             }
 
-            $subject = $subject.(($request['status'] == 'New' || $request['status'] == 'Draft' || $request['status'] == 'For Review' || $request['status'] == 'same') ? $action : '<p class="m-0">Action: Change Status </p>');
-            $subject = $subject.((!$statchange || $request['status'] == 'same') ? '<p class="m-0">Status: Unchanged</p>' : '');
+            $subject = $subject.(($status == 'New' || $status == 'Draft' || $status == 'For Review' || $status == 'same') ? $action : '<p class="m-0">Action: Change Status </p>');
+            $subject = $subject.((!$statchange || $status == 'same') ? '<p class="m-0">Status: Unchanged</p>' : '');
 
-            if($statchange && $request['status'] != 'same'){
+            if($statchange && $status != 'same'){
                 $prevstatus = $annexe->status;
-                $annexe->status = $request['status'];
+                $annexe->status = $status;
                 $annexe->remarks = ($request['remarks'] != '') ? $request['remarks'] : null;
                 $annexe->save();
                 $subject = $subject.'<p class="m-0">Status: '.$prevstatus.' => '.$annexe->status.'</p>';
                 $remarks = ($request['remarks'] != '') ? '<p>Remarks: '.$request['remarks'].'</p>' : '';
                 $subject = $subject.$remarks;
             }
-            $message = '';
-            $status = $request['status'];
+
             if($statchange){
                 if($initialStatus != 'New' || $status == 'For Review'){
                     $message = $this->sendNotification($annexe->project, $status, 'Annex E');
@@ -235,7 +235,7 @@ class WorkshopController extends Controller
             $this->createHistory($annexe, $subject);
 
             DB::commit();
-            return ['message' => 'Successfully saved!', 'status' => $annexe->status, 'recipients' => $message];
+            return ['message' => 'Successfully saved!', 'status' => $annexe->status];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -421,7 +421,7 @@ class WorkshopController extends Controller
                     if($request['subunit_id']) { $q->where('subunit_id',  $request['subunit_id']);  }
                 }
             });
-            $annexfs = $query->with(['projects.subprogram', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
+            $annexfs = $query->with(['projects.subprogram', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
                 ->where('workshop_id', $request['workshopId'])
                 ->where('status', $request['status'])->get();
             
@@ -452,48 +452,15 @@ class WorkshopController extends Controller
         }
     }
 
-    public function storeAnnexF(Request $request){
-        DB::beginTransaction();
-        try {
-            foreach($request['projects'] as $project){
-                $annexf = new AnnexF;
-                $annexf->workshop_id = $request['workshop_id'];
-                $annexf->save();
-
-                $projects = ($project['multiple']) ? $project['project_ids'] : [$project['project_id']];
-                $annexf->projects()->sync($projects);
-
-                foreach($project['subprojects'] as $subproject){
-                    if($subproject['state']){
-                        $annexfsub = new AnnexFSub;
-                        $annexfsub->annex_f_id = $annexf->id;
-                        $annexfsub->subproject_id = $subproject['subproject_id'];
-                        $annexfsub->save();
-                    }
-                }
-            }
-
-            DB::commit();
-            return ['message' => 'Successfully added!', 'annexfs' => $this->getAnnexF($request['workshop_id'])];
-        }
-        catch(\Exception $e){
-            DB::rollback();
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
-        }
-    }
-
     public function updateAnnexF(Request $request, $id){
         DB::beginTransaction();
         try {
             $annexf = AnnexF::findOrFail($id);
             $annexf->remarks = $request['remarks'];
             $initialStatus = $annexf->status;
-            
-            $statchange = $initialStatus != $request['status'];
-            if($statchange && $request['status'] != 'same'){
-                $annexf->status = $request['status'];
-            }
-            $annexf->save();
+            $status = $request['status'];
+            $subject = '';
+            $statchange = $initialStatus != $status;
 
             $this->saveAnnnexFActivities($annexf, $request['activities']);
             $this->saveAnnnexFFunds($annexf, $request['funds']);
@@ -503,6 +470,27 @@ class WorkshopController extends Controller
                 $this->saveAnnnexFActivities($annexfsub, $sub['activities']);
                 $this->saveAnnnexFFunds($annexfsub, $sub['funds']);
             }
+
+            $subject = $subject.(($status == 'New' || $status == 'Draft' || $status == 'For Review' || $status == 'same') ? '<p class="m-0">Action: Update details </p>' : '<p class="m-0">Action: Change Status </p>');
+            $subject = $subject.((!$statchange || $status == 'same') ? '<p class="m-0">Status: Unchanged</p>' : '');
+
+            if($statchange && $status != 'same'){
+                $annexf->status = $status;
+                $subject = $subject.'<p class="m-0">Status: '.$initialStatus.' => '.$annexf->status.'</p>';
+            }
+
+            if($statchange){
+                if($initialStatus != 'New' || $status == 'For Review'){
+                    $linkstatus = $status == 'For Review' ? 'For%20Review' : ($status == 'For Approval' ? 'For%20Approval' : ($status == 'Approved' ? 'Approved' : 'Submitted'));
+                    $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?status='.$linkstatus.'&id='.$annexf->id;
+                    $message = $this->sendNotification($annexf->projects, $status, 'Annex F', $link);
+                    $subject = $subject.$message;
+                }
+            }
+            
+            $annexf->save();
+
+            $this->createHistory($annexf, $subject, $request['comment']);
 
             DB::commit();
             return ['message' => 'Saved!', 'status' => $annexf->status];
@@ -1016,15 +1004,20 @@ class WorkshopController extends Controller
         return (int)$str[0];
     }
 
-    private function sendNotification($project, $status, $type){
+    private function sendNotification($project, $status, $type, $link = ''){
         $sender = Auth::user();
+        $projects = []; $length = 1;
+        if($type == 'Annex F'){
+            $length = sizeof($project);
+            $project = $project[0];
+        }
         $projectleader = $project->leader->profile;
         // $projectleader->user;
-        $message = $this->setMessage($project, $status, $type);
+        $message = $this->setMessage($project, $status, $type, $length);
         $results = '<p class="m-0">Notified: <br>';
         // notify project leader unless status is for review
         if($status != 'For Review'){
-            $this->sendMessage($sender, $projectleader->id, $message['title'], $message['body']);
+            $this->sendMessage($sender, $projectleader->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$projectleader->user->firstname.' '.$projectleader->user->lastname.'</li>';
         }
         $query = Profile::query();
@@ -1059,7 +1052,7 @@ class WorkshopController extends Controller
 
         $recipient = $query->first();
         if($recipient->id != $projectleader->id){
-            $this->sendMessage($sender, $recipient->id, $message['title'], $message['body']);
+            $this->sendMessage($sender, $recipient->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$recipient->user->firstname.' '.$recipient->user->lastname.'</li>';
         }
         return $results.'</p>';
@@ -1070,19 +1063,20 @@ class WorkshopController extends Controller
         // 5 = Project Leader
     }
 
-    private function sendMessage($sender, $recipientId, $title, $body){
+    private function sendMessage($sender, $recipientId, $title, $body, $link){
         $notification = new Notification;
         $notification->profile_to = $recipientId; 
         $notification->profile_from = $sender->activeProfile->id;
         $notification->title = $title;
         $notification->body = $body;
+        $notification->link = $link;
         $notification->save();
     }
 
-    private function setMessage($project, $status, $type){
-        // $sender = Auth::user();
-        $body = '<p class="m-0">'; 
-        $title = '<strong> Workshop - '.$type.': '.$project->title.'</strong>';
+    private function setMessage($project, $status, $type, $length){
+        $body = '<p class="m-0">';
+        $projectTitle = $length > 1 ? $project->subprogram->title : $project->title;
+        $title = '<strong> Workshop - '.$type.': '.$projectTitle.'</strong>';
         if($status == 'For Review' || $status == 'For Approval'){
             $body = $body.$project->title.' was sent '.$status;
         }
@@ -1096,11 +1090,12 @@ class WorkshopController extends Controller
         return ['title' => $title, 'body' => $body.'</p>'];
     }
 
-    private function createHistory($item, $subject){
+    private function createHistory($item, $subject, $comment = ''){
         $user = Auth::user();
 
         $history = new History;
         $history->subject = $subject;
+        $history->comment = $comment;
         $history->profile_id = $user->activeProfile->id;
 
         $item->histories()->save($history);

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->bigInteger('historiable_id');
             $table->string('historiable_type');
             $table->mediumText('subject');
+            $table->mediumText('comment')->nullable();
             $table->foreignId('profile_id')->constrained('profiles')->cascadeOnDelete();
             $table->timestamps();
         });

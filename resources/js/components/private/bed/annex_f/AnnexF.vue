@@ -6,7 +6,7 @@
             <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small>
         </div>
         <div class="d-flex justify-content-between mb-2 ">
-            <div>
+            <div> <!-- div needed for flex space between  -->
                 <template v-if="!editmode">
                     <button class="btn btn-sm shadow-none min-100 me-2" :class="!printmode ? 'btn-secondary' : 'btn-success'" @click="printmode = !printmode">{{!printmode ? 'Print' : 'Display'}} View</button>
                     <button class="btn btn-sm btn-outline-secondary" v-if="printmode"><i class="far fa-print"></i> Print</button>
@@ -102,8 +102,8 @@
                             <div class="d-flex justify-content-between"><small>Department of Science and Technology</small> <small class="fw-bold">Annex F</small></div>
                             <h6 class="mb-2 fw-bold"><small>SCIENCE EDUCATION INSITITUTE</small></h6>
                             <h6 class="mb-3 fw-bold" style="background: yellow;"><small>Schedule of FY {{parseInt(workshop.year)+1}} Project Implementation</small></h6>
-                            <div class="table-responsive display">
-                                <EmptyTable :workshopYear="workshop.year" />
+                            <div class="table-responsive display" v-dragscroll>
+                                <Display :printmode="printmode" />
                             </div>
                         </template>
                         <template v-else>
@@ -116,7 +116,7 @@
                                         <thead class="text-center">
                                             <tr>
                                                 <th>Project Name/Activity</th>
-                                                <th style="min-width: 100px;">Action</th>
+                                                <th class="min-100">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -124,44 +124,17 @@
                                                 <tr class="bg-success text-white fw-bold" v-if="program.items.length > 0 || program.show">
                                                     <td class="fw-bold" colspan="2">{{program.title}}</td>
                                                 </tr>
-                                                <template v-for="item in program.items" :key="item.id+'_program-item'">
-                                                    <tr>
-                                                        <td :colspan="checkUserDivision(item.projects) ? '1' : '2'"><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
-                                                        <td class="text-center" v-if="checkUserDivision(item.projects)">
-                                                            <button class="btn btn-sm btn-outline-secondary mb-1" @click="editForm(item, setItemTitle(item.projects))"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
-                                                            <button class="btn btn-sm btn-danger mb-1 ms-1" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i></button>
-                                                        </td>
-                                                    </tr>
-                                                </template>
+                                                <FormItem @clicked="childClick" :items="program.items" :saving="saving"/>
                                                 <template v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
                                                     <tr v-if="subprogram.items.length > 0 || subprogram.show">
                                                         <td class="fw-bold" colspan="2">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</td>
                                                     </tr>
-                                                    <template v-for="item in subprogram.items" :key="item.id+'_subprogram-item'">
-                                                        <tr>
-                                                            <td :colspan="checkUserDivision(item.projects) ? '1' : '2'"><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
-                                                            <td class="text-center" v-if="checkUserDivision(item.projects)">
-                                                                <button class="btn btn-sm btn-outline-secondary mb-1" @click="editForm(item, setItemTitle(item.projects))"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
-                                                                <button class="btn btn-sm btn-danger mb-1 ms-1" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i></button>
-                                                            </td>
-                                                        </tr>
-                                                    </template>
+                                                    <FormItem @clicked="childClick" :items="subprogram.items" :saving="saving"/>
                                                     <template v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
                                                         <tr v-if="cluster.items.length > 0">
                                                             <td colspan="2"><div class="fw-bold ms-2">{{cluster.title}}</div></td>
                                                         </tr>
-                                                        <template v-for="item in cluster.items" :key="item.id+'_cluster-item'">
-                                                            <tr>
-                                                                <td :colspan="checkUserDivision(item.projects) ? '1' : '2'"><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
-                                                                <td class="text-center" v-if="checkUserDivision(item.projects)">
-                                                                    <button class="btn btn-sm btn-outline-secondary mb-1" @click="editForm(item, setItemTitle(item.projects))"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
-                                                                    <button class="btn btn-sm btn-danger mb-1 ms-1" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i></button>
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-for="sub in item.subs" :key="sub.id+'_cluster-sub-item'">
-                                                                <td colspan="2"><div class="fs-14 fst-italic ms-4">{{sub.subproject.title}}</div></td>
-                                                            </tr>
-                                                        </template>
+                                                        <FormItem @clicked="childClick" :items="cluster.items" :saving="saving"/>
                                                     </template>
                                                 </template>
                                             </template>
@@ -169,44 +142,32 @@
                                     </table>
                                 </div>
                             </template>
-                            <div class="p-2" v-else>
+                            <div class="p-2" v-else> <!-- Form -->
                                 <div class="d-flex justify-content-between mb-3">
-                                    <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-danger" @click="!saving ? formshow = false : null"><i class="far fa-times"></i> Cancel</button>
+                                    <div>
+                                        <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-danger me-1" @click="!saving ? hideForm() : null"><i class="far fa-times"></i> Cancel</button>
+                                        <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-outline-secondary" v-if="histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                    </div>
                                     <span v-if="saving">Saving <i class="fas fa-spinner fa-spin"></i></span>
                                     <div v-if="statusNewDraft(form.status)">
                                         <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="!saving ? submitForm('Draft') : null"><i class="fas fa-edit"></i> Draft</button>
                                         <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('For Review') : null"><i class="fas fa-search"></i> For Review</button>
                                     </div>
                                     <div v-if="!statusNewDraft(form.status) && form.status != 'Submitted'">
-                                        <button v-if="checkUserTitle(form.status)" style="min-width: 100px;" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="submitForm('reject')"><i class="fas fa-times"></i> Reject</button>
-                                        <button v-if="checkUserTitle(form.status)" style="min-width: 100px;" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('approve') : null"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submitted' : 'Approve'}}</button>
+                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-secondary me-1" @click="submitForm('reject')"><i class="fas fa-times"></i> Reject</button>
+                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-success" @click="!saving ? submitForm('approve') : null"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submitted' : 'Approve'}}</button>
                                     </div>
                                 </div>
                                 <div class="table-responsive form-details pb-2" v-dragscroll>
                                     <table class="table table-sm table-bordered" style="width: 3000px">
-                                        <thead class="align-middle text-center">
-                                            <tr>
-                                                <th style="width: 8%" rowspan="3"><span class="text-nowrap">Project Name/Activity</span></th>
-                                                <th style="width: 1%" rowspan="3">Total <br> Target <br> (P'000)</th>
-                                                <th colspan="3">{{workshop.year}}</th>
-                                                <th colspan="12">{{parseInt(workshop.year)+1}}</th>
-                                                <th style="width: 6%" rowspan="3">Total</th>
-                                                <th style="width: 5%" rowspan="3">Remarks</th>
-                                            </tr>
-                                            <tr>
-                                                <th v-for="num in 5" :key="num+'_quarter'" :colspan="3"><span class="text-nowrap">{{setQtr(num)}} Qtr</span></th>
-                                            </tr>
-                                            <tr>
-                                                <th style="width: 5.33%" v-for="month, key in months" :key="key+'month'">{{month}}</th>
-                                            </tr>
-                                        </thead>
+                                        <TableHead />
                                         <tbody>
                                             <tr>
                                                 <td>{{form.title}}</td>
                                                 <td></td>
                                                 <td :class="statusNewDraft(form.status) ? 'p-0' : ''" v-for="activity, key in form.activities" :key="key+'month-form-activities'">
                                                     <div class="position-relative" v-for="act, akey in activity" :key="key+'mf-act-desc'+akey">
-                                                        <button v-if="statusNewDraft(form.status)" @click="removeActivity(key, act)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
+                                                        <button   v-if="statusNewDraft(form.status)" @click="removeActivity(key, act)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
                                                         <textarea v-if="statusNewDraft(form.status)" class="form-control act-input" rows="8" v-model="act.description"></textarea>
                                                         <p v-else>{{act.description}}</p>
                                                     </div>
@@ -223,7 +184,7 @@
                                                 <td></td>
                                                 <td :class="statusNewDraft(form.status) ? 'p-0' : 'text-end'" v-for="fund, key in form.funds" :key="key+'month-form-fund'">
                                                     <input v-if="statusNewDraft(form.status)" type="text" class="form-control fund-input" @change="numChange(fund.amount, key)" v-model="fund.amount" v-money="money">
-                                                    <span v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span>
+                                                    <span  v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span>
                                                 </td>
                                                 <td class="text-end"> {{formatAmount(getTotalAmount())}} <input type="text" class="d-none" v-money="money" @change="numChange(0, 15)"></td>
                                                 <td></td>
@@ -234,7 +195,7 @@
                                                     <td></td>
                                                     <td :class="statusNewDraft(form.status) ? 'p-0' : ''" v-for="activity, skey in sub.activities" :key="skey+'month-form-activities-sub'">
                                                         <div class="position-relative" v-for="act, akey in activity" :key="key+'mf-act-desc'+akey">
-                                                            <button v-if="statusNewDraft(form.status)" @click="removeActivity(skey, act, key)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
+                                                            <button   v-if="statusNewDraft(form.status)" @click="removeActivity(skey, act, key)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
                                                             <textarea v-if="statusNewDraft(form.status)" class="form-control act-input" rows="8" v-model="act.description"></textarea>
                                                             <p v-else>{{act.description}}</p>
                                                         </div>
@@ -251,7 +212,7 @@
                                                     <td></td>
                                                     <td :class="statusNewDraft(form.status) ? 'p-0' : 'text-end'" v-for="fund, fkey in sub.funds" :key="fkey+'month-form-fund-sub'">
                                                         <input v-if="statusNewDraft(form.status)" type="text" class="form-control fund-input" @change="numChange(fund.amount, fkey, key)" v-model="fund.amount" v-money="money">
-                                                        <span v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span>
+                                                        <span  v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span>
                                                     </td>
                                                     <td class="text-end"> {{formatAmount(getTotalAmount(sub.funds))}} <input type="text" class="d-none" v-money="money" @change="numChange(0, 15)"></td>
                                                     <td></td>
@@ -261,6 +222,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <Logs :histories="histories" :title="historyfor"/>
                         </template>
                     </div>
                 </div>
@@ -271,7 +233,10 @@
 <script>
 import { dragscroll } from 'vue-dragscroll'
 import { VMoney } from 'v-money'
-import EmptyTable from './EmptyTable.vue'
+import TableHead from './TableHead.vue'
+import FormItem from './FormItem.vue'
+import Display from './Display.vue'
+import Logs from './Logs.vue'
 import { mapGetters, mapActions } from 'vuex'
 export default {
     name: 'AnnexF',
@@ -280,7 +245,7 @@ export default {
         money: VMoney
     },
     components: {
-        EmptyTable
+        Display, TableHead, FormItem, Logs
     },
     data(){
         return {
@@ -303,14 +268,17 @@ export default {
             clusters:    [],
             units:       [],
             subunits:    [],
+            histories:   [],
+            historyfor:  '',
             form: {
-                id: '',
-                status: '',
-                title: '',
+                id:      '',
+                status:  '',
+                title:   '',
                 remarks: '',
+                comment: '',
                 activities: [],
-                funds: [],
-                subs: []
+                funds:      [],
+                subs:       []
             },
             months: [
                 'Oct', 'Nov', 'Dec',
@@ -379,14 +347,33 @@ export default {
             this.subunits          = unitId ? unit.subunits : []
             this.filter.subunit_id = ''
         },
-        syncRecords(){
+        async syncRecords(){
             this.syncing = true
-            this.fetchAnnexFs(this.filter).then(res => {
-                this.syncing = false
-                this.syncedstatus = this.filter.status
+            const promise = await new Promise((resolve, reject) => {
+                var time = 0
+                setTimeout(async () => {
+                    var start = new Date().getTime();
+                    const items = await this.fetchAnnexFs(this.filter).then(res => {
+                        this.syncing = false
+                        this.syncedstatus = this.filter.status
+                        return res
+                    })
+                    var end = new Date().getTime();
+                    time = end - start;
+                    resolve(items)
+                }, time)
             })
+            return promise
         },
         // Form
+        childClick(item, title){
+            this.editForm(item, title)
+        },
+        hideForm(){
+            this.formshow = false
+            this.histories = []
+            this.historyfor = ''
+        },
         submitForm(status){
             this.saving = true
             var form = this.form
@@ -394,7 +381,7 @@ export default {
             this.saveAnnexF(form).then(res => {
                 var icon = res.errors ? 'error' : 'success'
                 if(!res.errors){
-                    this.formshow = false
+                    this.hideForm()
                     this.filter.status = res.status
                     this.syncRecords()
                 }
@@ -403,6 +390,8 @@ export default {
             })
         },
         editForm(item, title){
+            this.histories  = item.histories
+            this.historyfor = title
             this.formshow = true
             var form = this.form
             form.id     = item.id
@@ -496,14 +485,6 @@ export default {
             }
         },
         // Display
-        setItemTitle(projects){
-            var project = projects[0]
-            var title = project.title
-            if(projects.length > 1){
-                title = project.subprogram.title
-            }
-            return title
-        },
         setStatusIcon(status){
             return status == 'New' ? 'fa-sparkles text-warning' : 
             status == 'Draft' ? 'fa-edit' :
@@ -554,30 +535,16 @@ export default {
             }
             return result
         },
-        checkUserDivision(projects){
-            var user = this.authuser
-            var project = projects[0]
-            var userObject = {
-                division_id: user.division_id,
-                unit_id:     user.unit_id,
-                subunit_id:  user.subunit_id
-            }
-            var projectObject = {
-                division_id: project.division_id,
-                unit_id:     user.unit_id === null   ? null : project.unit_id,
-                subunit_id:  user.subunit_id == null ? null : project.subunit_id
-            }
-            var userStr = JSON.stringify(userObject)
-            var projStr = JSON.stringify(projectObject)
-
-            return (userStr === projStr || user.active_profile.title.name == 'Superadmin')
-        },
-        // Form Display
-        setQtr(num){
-            return num == 2 ? '1st' : num == 3 ? '2nd' : num == 4 ? '3rd' : '4th'
-        },
         statusNewDraft(status){
             return (status == 'New' || status == 'Draft') && !this.saving
+        },
+        setItemTitle(projects){
+            var project = projects[0]
+            var title = project.title
+            if(projects.length > 1){
+                title = project.subprogram.title
+            }
+            return title
         },
         // Formats
         numChange: _.debounce(function(e, key, sub = null){
@@ -620,6 +587,57 @@ export default {
                 title: msg
             })
         },
+        // Watcher
+        async checkQueryStr(){
+            const response = await this.syncRecords().then(res => {
+                this.editmode = true
+                return res
+            })
+            this.locateItem(response).then(res =>{
+                var title = this.setItemTitle(res.projects)
+                this.editForm(res, title)
+            })
+        },
+        async locateItem(programs){
+            const promise = await new Promise((resolve, reject) => {
+                var time = 0
+                setTimeout(async () => {
+                    var start = new Date().getTime();
+                    var id = this.$route.query.id
+                    var item = undefined
+                    for(let i = 0; i < programs.length; i++){
+                        var program = programs[i]
+                        if(program.show){
+                            if(this.checkItem(item)){
+                                item = program.items.find(elem => elem.id == id)
+                            }
+                            for(let j = 0; j < program.subprograms.length; j++){
+                                var subprogram = program.subprograms[j]
+                                if(subprogram.show || subprogram.items.length > 0){
+                                    if(this.checkItem(item)){
+                                        item = subprogram.items.find(elem => elem.id == id)
+                                    }
+                                }
+
+                                for(let k = 0; k < subprogram.clusters; k++){
+                                    var cluster = subprogram.clusters[k]
+                                    if(this.checkItem(item)){
+                                        item = cluster.items.find(elem => elem.id == id)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    var end = new Date().getTime();
+                    time = end - start;
+                    resolve(item)
+                }, time)
+            })
+            return promise
+        },
+        checkItem(item){
+            return item === undefined
+        }
     },
     computed: {
         ...mapGetters('annexf', ['getAnnexFs']),
@@ -643,8 +661,22 @@ export default {
         if(this.divisions.length == 0){
             this.fetchDivisions()
         }
-        this.checkStatus()
-    }
+        if(!this.$route.query.status){
+            this.checkStatus()
+        }
+    },
+    watch: {
+        $route: {
+            immediate: true,
+            handler (to, from) {
+                var status = this.$route.query.status
+                if(status){
+                    this.filter.status = status
+                    this.checkQueryStr()
+                }
+            }
+        },
+    },
 }
 </script>
 <style>

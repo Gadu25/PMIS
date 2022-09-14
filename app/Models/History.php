@@ -11,7 +11,7 @@ class History extends Model
     use HasFactory;
 
     protected $fillables = [
-        'historiable_id','historiable_type','subject','profile_id'
+        'historiable_id', 'historiable_type', 'subject', 'profile_id', 'comment'
     ];
 
     protected $dates = ['created_at','updated_at'];
