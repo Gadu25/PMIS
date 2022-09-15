@@ -27,8 +27,9 @@
                 <div class="topbar">
                     <div class=""><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
                     <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
-                    <div class=" p-1">
-                        <router-link class="text-white" :to="{ name: 'Profile' }"><i class="far fa-user-circle fa-2x"></i></router-link>
+                    <div class="p-1 position-relative">
+                        <router-link class="text-white" :to="{ name: 'Profile' }"><i class="far fa-user-circle fa-2x"></i> </router-link>
+                        <span v-if="auth.active_profile.unread > 0" class="red-dot"></span>
                     </div>
                 </div>
                 <div class="content">
@@ -70,7 +71,8 @@ export default {
         },
     },
     computed: {
-        ...mapGetters('user', ['getAuthUser'])
+        ...mapGetters('user', ['getAuthUser']),
+        auth(){ return this.getAuthUser }
     },
     created(){
         this.getAuthenticatedUser()
@@ -164,6 +166,16 @@ export default {
     background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: space-between;
+}
+.red-dot{
+    width: 11px;
+    height: 11px;
+    display: block;
+    border-radius: 50%;
+    background: red;
+    position: absolute;
+    bottom: 0;
+    right: 0;
 }
 .content{
     background: white;

@@ -26,18 +26,13 @@ class UserController extends Controller
     }
 
     public function authUser(){
-        $user = Auth::user();
-        $user->division;
-        $user->unit;
-        $user->subunit;
+        $auth = Auth::user();
+        $user = $auth->with(['division', 'unit', 'subunit', 
+        'activeProfile.notifications.from.user', 
+        'activeProfile.notifications.to.user', 
+        'activeProfile.title'])->where('id', $auth->id)->first();
         $profile = $user->activeProfile;
-        $profile->title;
-        foreach($profile->notifications as $notification){
-            $notification->from->user;
-            $notification->to->user;
-        }
-        // $profile->notifications->to;
-        // $user->activeProfile->notifications = Notification::where('profile_to', $profile->id)->get();
+        $profile->unread = $profile->notifications->where('is_read', false)->count();
         return $user;
     }
 
@@ -141,4 +136,13 @@ class UserController extends Controller
         return $grouped;
     }
 
+    // Notification
+    public function updateNotification($id){
+        $notification = Notification::findOrFail($id);
+        if(!$notification->is_read){
+            $notification->is_read = true;
+            $notification->save();
+        }
+        return ['message' => 'Saved!'];
+    }
 }

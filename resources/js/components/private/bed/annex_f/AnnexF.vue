@@ -1,7 +1,7 @@
 <template>
     <div class="px-3 py-4">
         <div class="border-bottom mb-2">
-            <button class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
+            <button v-if="!formshow" class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
             <h4 class="text-center">Annex F</h4>
             <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small>
         </div>
@@ -9,7 +9,7 @@
             <div> <!-- div needed for flex space between  -->
                 <template v-if="!editmode">
                     <button class="btn btn-sm shadow-none min-100 me-2" :class="!printmode ? 'btn-secondary' : 'btn-success'" @click="printmode = !printmode">{{!printmode ? 'Print' : 'Display'}} View</button>
-                    <button class="btn btn-sm btn-outline-secondary" v-if="printmode"><i class="far fa-print"></i> Print</button>
+                    <button class="btn btn-sm btn-outline-secondary" v-print="'#printMe'" v-if="printmode"><i class="far fa-print"></i> Print</button>
                 </template>
             </div>
             <button class="btn btn-sm shadow-none" v-if="annexfs.length > 0 && !formshow" @click="editmode = !editmode, printmode = false" :class="!editmode? 'btn-success' : 'btn-primary'">{{editmode ? 'View' : 'Edit'}} mode</button>
@@ -99,11 +99,14 @@
                     </div>
                     <div class="card-body" :class="editmode ? 'p-0' : ''">
                         <template v-if="!editmode">
-                            <div class="d-flex justify-content-between"><small>Department of Science and Technology</small> <small class="fw-bold">Annex F</small></div>
-                            <h6 class="mb-2 fw-bold"><small>SCIENCE EDUCATION INSITITUTE</small></h6>
-                            <h6 class="mb-3 fw-bold" style="background: yellow;"><small>Schedule of FY {{parseInt(workshop.year)+1}} Project Implementation</small></h6>
-                            <div class="table-responsive display" v-dragscroll>
-                                <Display :printmode="printmode" />
+                            <div class="position-relative" id="printMe">
+                                <div class="d-flex justify-content-between"><small>Department of Science and Technology</small> <small class="fw-bold">Annex F</small></div>
+                                <h6 class="mb-2 fw-bold"><small>SCIENCE EDUCATION INSITITUTE</small></h6>
+                                <h6 class="mb-3 fw-bold" style="background: yellow;"><small>Schedule of FY {{parseInt(workshop.year)+1}} Project Implementation</small></h6>
+                                <div class="table-responsive " :class="printmode ? '' : 'display'" v-dragscroll>
+                                    <Display :printmode="printmode" />
+                                </div>
+                                <span v-if="printmode">Annex F {{syncedstatus}} Projects as of {{this.getDateToday()}}</span>
                             </div>
                         </template>
                         <template v-else>
@@ -116,7 +119,7 @@
                                         <thead class="text-center">
                                             <tr>
                                                 <th>Project Name/Activity</th>
-                                                <th class="min-100">Action</th>
+                                                <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -150,8 +153,8 @@
                                     </div>
                                     <span v-if="saving">Saving <i class="fas fa-spinner fa-spin"></i></span>
                                     <div v-if="statusNewDraft(form.status)">
-                                        <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="!saving ? submitForm('Draft') : null"><i class="fas fa-edit"></i> Draft</button>
-                                        <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('For Review') : null"><i class="fas fa-search"></i> For Review</button>
+                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="!saving ? submitForm('Draft') : null"><i class="fas fa-edit"></i> Draft</button>
+                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('For Review') : null"><i class="fas fa-search"></i> For Review</button>
                                     </div>
                                     <div v-if="!statusNewDraft(form.status) && form.status != 'Submitted'">
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-secondary me-1" @click="submitForm('reject')"><i class="fas fa-times"></i> Reject</button>
@@ -231,6 +234,7 @@
     </div>
 </template>
 <script>
+import moment from 'moment'
 import { dragscroll } from 'vue-dragscroll'
 import { VMoney } from 'v-money'
 import TableHead from './TableHead.vue'
@@ -298,7 +302,7 @@ export default {
         }
     },
     methods: {
-        ...mapActions('annexf', ['fetchAnnexFs', 'saveAnnexF']),
+        ...mapActions('annexf', ['fetchAnnexFs', 'saveAnnexF', 'fetchAnnexF']),
         ...mapActions('workshop', ['fetchWorkshop']),
         ...mapActions('program', ['fetchPrograms']),
         ...mapActions('division', ['fetchDivisions']),
@@ -366,8 +370,14 @@ export default {
             return promise
         },
         // Form
-        childClick(item, title){
-            this.editForm(item, title)
+        childClick(item, title, type){
+            if(type == 'editform'){
+                this.editForm(item, title)
+            }
+            if(type == 'history'){
+                this.histories  = item.histories
+                this.historyfor = title
+            }
         },
         hideForm(){
             this.formshow = false
@@ -527,6 +537,9 @@ export default {
         checkUserTitle(status){
             var result = false
             var userTitle = this.authuser.active_profile.title.name
+            if((status == 'New' || status == 'Draft') && (userTitle == 'Unit Head' || userTitle == 'Project Leader')){
+                result = true
+            }
             if(status == 'For Review' && userTitle == 'Unit Head'){
                 result = true
             }
@@ -545,6 +558,9 @@ export default {
                 title = project.subprogram.title
             }
             return title
+        },
+        getDateToday(){
+            return moment().format("LLL");
         },
         // Formats
         numChange: _.debounce(function(e, key, sub = null){
@@ -588,56 +604,16 @@ export default {
             })
         },
         // Watcher
-        async checkQueryStr(){
-            const response = await this.syncRecords().then(res => {
-                this.editmode = true
-                return res
-            })
-            this.locateItem(response).then(res =>{
+        checkQueryStr(){
+            this.fetchAnnexF(this.$route.query.id).then(res => {
+                this.filter.status = res.status
                 var title = this.setItemTitle(res.projects)
-                this.editForm(res, title)
+                this.syncRecords().then(r => {
+                    this.editForm(res, title)
+                    this.editmode = true
+                })
             })
         },
-        async locateItem(programs){
-            const promise = await new Promise((resolve, reject) => {
-                var time = 0
-                setTimeout(async () => {
-                    var start = new Date().getTime();
-                    var id = this.$route.query.id
-                    var item = undefined
-                    for(let i = 0; i < programs.length; i++){
-                        var program = programs[i]
-                        if(program.show){
-                            if(this.checkItem(item)){
-                                item = program.items.find(elem => elem.id == id)
-                            }
-                            for(let j = 0; j < program.subprograms.length; j++){
-                                var subprogram = program.subprograms[j]
-                                if(subprogram.show || subprogram.items.length > 0){
-                                    if(this.checkItem(item)){
-                                        item = subprogram.items.find(elem => elem.id == id)
-                                    }
-                                }
-
-                                for(let k = 0; k < subprogram.clusters; k++){
-                                    var cluster = subprogram.clusters[k]
-                                    if(this.checkItem(item)){
-                                        item = cluster.items.find(elem => elem.id == id)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    var end = new Date().getTime();
-                    time = end - start;
-                    resolve(item)
-                }, time)
-            })
-            return promise
-        },
-        checkItem(item){
-            return item === undefined
-        }
     },
     computed: {
         ...mapGetters('annexf', ['getAnnexFs']),
@@ -661,7 +637,7 @@ export default {
         if(this.divisions.length == 0){
             this.fetchDivisions()
         }
-        if(!this.$route.query.status){
+        if(!this.$route.query.id){
             this.checkStatus()
         }
     },
@@ -669,9 +645,7 @@ export default {
         $route: {
             immediate: true,
             handler (to, from) {
-                var status = this.$route.query.status
-                if(status){
-                    this.filter.status = status
+                if(this.$route.query.id){
                     this.checkQueryStr()
                 }
             }
@@ -701,13 +675,16 @@ export default {
     margin: 0;
 }
 .table-responsive.display{
-    max-height: calc(100vh - 320px);
+    max-height: calc(100vh - 350px);
     padding: 0 10px 10px 0;
 }
-.table-responsive.form-details,
+.table-responsive.form-details{
+    height: calc(100vh - 236px);
+    padding: 10px;
+}
 .table-responsive.form-display{
-    max-height: calc(100vh - 248px);
-    padding: 10px 10px 10px 10px;
+    max-height: calc(100vh - 247px);
+    padding: 10px;
 }
 
 .overlay{

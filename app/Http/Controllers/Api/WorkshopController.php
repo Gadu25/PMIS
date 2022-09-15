@@ -481,8 +481,8 @@ class WorkshopController extends Controller
 
             if($statchange){
                 if($initialStatus != 'New' || $status == 'For Review'){
-                    $linkstatus = $status == 'For Review' ? 'For%20Review' : ($status == 'For Approval' ? 'For%20Approval' : ($status == 'Approved' ? 'Approved' : 'Submitted'));
-                    $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?status='.$linkstatus.'&id='.$annexf->id;
+                    // $linkstatus = $status == 'For Review' ? 'For%20Review' : ($status == 'For Approval' ? 'For%20Approval' : ($status == 'Approved' ? 'Approved' : 'Submitted'));
+                    $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?id='.$annexf->id;
                     $message = $this->sendNotification($annexf->projects, $status, 'Annex F', $link);
                     $subject = $subject.$message;
                 }
@@ -499,6 +499,13 @@ class WorkshopController extends Controller
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
+    }
+
+    public function showAnnexF($id){
+        $annexf = AnnexF::with(['projects.subprogram', 'histories.profile.user',
+        'funds', 'activities', 'subs.activities', 
+        'subs.funds', 'subs.subproject'])->where('id', $id)->first();
+        return $annexf;
     }
 
     private function saveAnnnexFActivities($parent, $array){
@@ -1076,7 +1083,7 @@ class WorkshopController extends Controller
     private function setMessage($project, $status, $type, $length){
         $body = '<p class="m-0">';
         $projectTitle = $length > 1 ? $project->subprogram->title : $project->title;
-        $title = '<strong> Workshop - '.$type.': '.$projectTitle.'</strong>';
+        $title = '<strong> Workshop - '.$type.'</strong>';
         if($status == 'For Review' || $status == 'For Approval'){
             $body = $body.$project->title.' was sent '.$status;
         }

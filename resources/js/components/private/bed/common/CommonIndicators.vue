@@ -45,7 +45,7 @@
                                                         <td v-if="selectedTab == 'Other'">{{commonindicator.type}}</td>
                                                         <td><span class="badge bg-info text-dark me-1" v-for="tag in commonindicator.tags" :key="tag.id+'_indtag'">{{tag.name}}</span></td>
                                                         <td>
-                                                            <button class="btn btn-sm btn-primary me-1 mb-1" @click="editForm(commonindicator)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i></button>
+                                                            <button class="btn btn-sm btn-primary me-1" @click="editForm(commonindicator)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i></button>
                                                             <button class="btn btn-sm btn-danger" @click="removeCommonIndicator(commonindicator.id)"><i class="far fa-trash-alt"></i></button>
                                                         </td>
                                                     </tr>
@@ -66,7 +66,7 @@
                     <div class="col-sm-3 px-2 ">
                         <div class="card shadow mb-3">
                             <div class="card-body">
-                                <strong>{{tag.id ? 'Update' : 'New'}} Tag</strong>
+                                <div class="mb-1"><strong>{{tag.id ? 'Update' : 'New'}} Tag</strong></div>
                                 <form @submit.prevent="submitTag()" class="form-floating mb-1">
                                     <input type="text" class="form-control" id="tagname" placeholder="tag" v-model="tag.name">
                                     <label for="tagname">Tag Name</label>
@@ -85,9 +85,13 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card">
+                        <div class="card" v-if="form.program_id == 1">
                             <div class="card-body">
                                 <strong>With Total <i style="cursor: pointer" class="far fa-question-circle"></i></strong>
+                                <div class="form-check form-switch" v-for="subprogram in program.subprograms" :key="subprogram.id+'-subprogram'">
+                                    <input class="form-check-input" type="checkbox" :id="setSubprogramTitle(subprogram)">
+                                    <label class="form-check-label" :for="setSubprogramTitle(subprogram)">{{setSubprogramTitle(subprogram)}}</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -398,6 +402,10 @@ export default {
                 }
             })
             return res
+        },
+        // With Total
+        setSubprogramTitle(subp){
+            return this.form.program_id == 1 ? subp.title_short : subp.title
         }
     },
     computed: {

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->mediumText('title');
             $table->mediumText('body');
             $table->string('link');
+            $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
     }

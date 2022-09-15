@@ -104,18 +104,15 @@
                     </template>
                     <!-- Edit View -->
                     <div v-else>
-                        <div class="btn-group btn-group-sm mb-2 shadow">
-                            <button class="btn btn-sm shadow-none rounded-0" :class="tab == 'performance' ? 'btn-primary' : 'btn-outline-primary'" @click="tab = 'performance'">Performance</button>
-                            <button class="btn btn-sm shadow-none rounded-0" :class="tab != 'performance' ? 'btn-primary' : 'btn-outline-primary'" @click="tab = 'other'">Outcome & Output</button>
+                        <div class="text-center">
+                            <button class="btn mb-2 shadow-none bg-gradient me-1" :class="tab == 'performance' ? 'btn-primary' : 'btn-outline-primary'" @click="tab = 'performance'">Performance</button>
+                            <button class="btn mb-2 shadow-none bg-gradient" :class="tab != 'performance' ? 'btn-primary' : 'btn-outline-primary'" @click="tab = 'other'">Outcome & Output</button>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-2" v-if="tab == 'performance'">
                             <span class="fw-bold  px-4 py-1 rounded">
                                 <i class="fas" :class="setStatusIcon(displaysyncstatus)"></i>  
                                 {{(displaysyncstatus == 'New') ? 'Newly Added Projects!' : (displaysyncstatus == 'Draft' ? 'Drafts' : displaysyncstatus)}}
                             </span>
-                            <div>
-                            <button class="btn btn-sm btn-success"><i class="fas fa-plus"></i> New</button>
-                            </div>
                         </div>
                         <div class="table-responsive" style="height: 64vh">
                             <table class="table table-sm table-bordered table-hover">
@@ -256,27 +253,7 @@
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered">
-                            <thead class="align-middle text-center">
-                                <tr>
-                                    <th rowspan="3">Program / Project</th>
-                                    <th rowspan="3">Performance Indicators (PIs)</th>
-                                    <th colspan="2">Previous Year Acccomplishments <br> CY {{parseInt(workshop.year)}}</th>
-                                    <th rowspan="3">CY {{parseInt(workshop.year) + 1}} <br> Physical Targets</th>
-                                    <th colspan="4">CY {{parseInt(workshop.year) + 1}} Quarterly Physical Targets</th>
-                                </tr>
-                                <tr>
-                                    <th>Actual</th>
-                                    <th>Estimate</th>
-                                    <th rowspan="2">1st</th>
-                                    <th rowspan="2">2nd</th>
-                                    <th rowspan="2">3rd</th>
-                                    <th rowspan="2">4th</th>
-                                </tr>
-                                <tr>
-                                    <th>Jan 1 - Sep 30</th>
-                                    <th>Oct 1 - Dec 30</th>
-                                </tr>
-                            </thead>
+                            <TableHead :syncing="true" :printmode="true" />
                             <tbody>
                                 <tr><td :rowspan="form.indicators.length + 1">{{form.project_title}}</td></tr>
                                 <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
@@ -616,11 +593,11 @@
 <script>
 import EmptyTable from './EmptyTable.vue'
 import Display from './Display.vue'
-import Form from './Form.vue'
+import TableHead from './TableHead.vue'
 import { mapActions, mapGetters } from 'vuex'
 export default {
     name: 'AnnexE',
-    components: { EmptyTable, Display, Form },
+    components: { EmptyTable, Display, TableHead },
     data(){
         return {
             filtershow: true,
@@ -1154,6 +1131,10 @@ export default {
         checkUserTitle(status){
             var result = false
             var userTitle = this.authuser.active_profile.title.name
+            
+            if((status == 'New' || status == 'Draft') && (userTitle == 'Unit Head' || userTitle == 'Project Leader')){
+                result = true
+            }
             if(status == 'For Review' && userTitle == 'Unit Head'){
                 result = true
             }

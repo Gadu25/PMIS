@@ -1,5 +1,5 @@
 <template>
-    <thead class="align-middle text-center">
+    <thead class="align-middle text-center" :class="sticky ? 'position-sticky top-0 bg-warning shadow' : ''">
         <tr>
             <th style="width: 8%" rowspan="3"><span class="text-nowrap">Project Name/Activity</span></th>
             <th style="width: 1%" rowspan="3">Total <br> Target <br> (P'000)</th>
@@ -39,6 +39,9 @@ export default {
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
+    },
+    props: {
+        sticky: Boolean
     }
 }
 </script>

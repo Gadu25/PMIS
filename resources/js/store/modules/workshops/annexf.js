@@ -18,9 +18,6 @@ const actions = {
     },
     async saveAnnexF({commit}, form){
         const response = form.id ? await axios.put('/api/workshop/annex-f/'+form.id, form) : await axios.post('/api/workshop/annex-f', form)
-        // if(!response.data.errors){
-        //     commit('setAnnexFs', response.data.annexfs)
-        // }
         return response.data
     },
     async deleteAnnexF({commit}, id){
@@ -28,6 +25,12 @@ const actions = {
             if(!res.data.errors){
                 commit('setAnnexFs', res.data.annexfs)
             }
+            return res.data
+        })
+        return response
+    },
+    async fetchAnnexF({commit}, id){
+        const response = await axios.get('/api/workshop/annex-f/'+id).then(res => {
             return res.data
         })
         return response

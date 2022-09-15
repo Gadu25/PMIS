@@ -1,8 +1,8 @@
 <template>
     <table class="table table-sm table-bordered" :style="!printmode ? 'width: 2000px' : '' ">
-        <TableHead />
+        <TableHead :sticky="!printmode" />
         <tbody v-if="annexfs.length == 0">
-            <tr v-for="row in 15" :key="row+'row'">
+            <tr v-for="row in 10" :key="row+'row'">
                 <td v-for="col in 19" :key="row+'row_'+col+'col'"><span class="text-white">-empty-</span></td>
             </tr>
         </tbody>

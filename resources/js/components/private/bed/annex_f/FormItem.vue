@@ -2,9 +2,10 @@
     <template v-for="item in items" :key="item.id+'-item'">
         <tr>
             <td :colspan="checkUserDivision(item.projects) ? '1' : '2'"><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
-            <td class="text-center" v-if="checkUserDivision(item.projects)">
-                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects))"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
-                <button class="btn btn-sm btn-danger mb-1 ms-1" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i></button>
+            <td class="btns" v-if="checkUserDivision(item.projects)">
+                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
+                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')" v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
             </td>
         </tr>
         <tr v-for="sub in item.subs" :key="sub.id+'sub-item'">
@@ -19,8 +20,8 @@ export default {
     emits: ['clicked'],
     setup({emit}){},
     methods: {
-        childClick(item, title){
-            this.$emit('clicked', item, title)
+        childClick(item, title, type){
+            this.$emit('clicked', item, title, type)
         },
         checkUserDivision(projects){
             var user = this.authuser
@@ -65,7 +66,19 @@ export default {
     },
     props: {
         items: Object,
-        saving: Boolean
+        saving: Boolean,
     }
 }
 </script>
+<style scoped>
+.btns{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
+.btns>button{
+    width: 90px;
+}
+</style>

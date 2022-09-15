@@ -45,6 +45,12 @@ const actions = {
         return response.data
     },
     // User functions
+    async updateNotification({commit}, id){
+        const response = await axios.put('/api/user/notification/'+id).then(res => {
+            return res.data
+        })
+        return response
+    },
 
     // Auth functions
     async fetchAuthUser({commit}){

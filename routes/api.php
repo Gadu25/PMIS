@@ -22,6 +22,10 @@ Route::prefix('/user')->group(function(){
     Route::middleware('auth:sanctum')->get('/title', [UserController::class, 'getTitles']);
     Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'update']);
     Route::middleware('auth:sanctum')->get('/division/{id}', [UserController::class, 'getByDivision']);
+
+    Route::prefix('/notification')->group(function(){
+        Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'updateNotification']);
+    });
 });
 
 Route::prefix('/division')->group(function(){
@@ -54,7 +58,7 @@ Route::prefix('/workshop')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexF']);
         Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexF']);
         Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyAnnexF']);
-        // Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getAnnexF']);
+        Route::middleware('auth:sanctum')->get('/{id}', [WorkshopController::class, 'showAnnexF']);
     });
 
     Route::prefix('/annex-one')->group(function(){

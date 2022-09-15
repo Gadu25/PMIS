@@ -11,7 +11,7 @@ class Notification extends Model
     use HasFactory;
 
     protected $fillables = [
-        'profile_to', 'profile_from', 'title', 'body', 'link'
+        'profile_to', 'profile_from', 'title', 'body', 'link', 'is_read'
     ];
 
     protected function serializeDate(\DateTimeInterface $dates)
