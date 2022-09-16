@@ -5,7 +5,7 @@
             <td class="btns" v-if="checkUserDivision(item.projects)">
                 <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
                 <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')" v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
-                <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                <!-- <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
             </td>
         </tr>
         <tr v-for="sub in item.subs" :key="sub.id+'sub-item'">

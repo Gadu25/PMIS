@@ -30,7 +30,8 @@ class UserController extends Controller
         $user = $auth->with(['division', 'unit', 'subunit', 
         'activeProfile.notifications.from.user', 
         'activeProfile.notifications.to.user', 
-        'activeProfile.title'])->where('id', $auth->id)->first();
+        'activeProfile.title',
+        'activeProfile.leaderOf.project.subprojects'])->where('id', $auth->id)->first();
         $profile = $user->activeProfile;
         $profile->unread = $profile->notifications->where('is_read', false)->count();
         return $user;

@@ -27,6 +27,11 @@
 <script>
 export default {
     name: 'Items',
+    data(){
+        return {
+            details: ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'],
+        }
+    },
     methods: {
         getRowspan(indicators){
             var length = 1

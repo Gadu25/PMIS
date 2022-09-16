@@ -217,22 +217,22 @@ class WorkshopController extends Controller
             if($statchange && $status != 'same'){
                 $prevstatus = $annexe->status;
                 $annexe->status = $status;
-                $annexe->remarks = ($request['remarks'] != '') ? $request['remarks'] : null;
                 $annexe->save();
                 $subject = $subject.'<p class="m-0">Status: '.$prevstatus.' => '.$annexe->status.'</p>';
-                $remarks = ($request['remarks'] != '') ? '<p>Remarks: '.$request['remarks'].'</p>' : '';
-                $subject = $subject.$remarks;
             }
+
+            $subject = $request['comment'] != '' ? $subject.'<p class="m-0">Comment: <i>'.$request['comment'].'</i></p>' : $subject;
 
             if($statchange){
                 if($initialStatus != 'New' || $status == 'For Review'){
-                    $message = $this->sendNotification($annexe->project, $status, 'Annex E');
+                    $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id;
+                    $message = $this->sendNotification($annexe->project, $status, 'Annex E', $link);
                     $subject = $subject.$message;
                 }
             }
             
 
-            $this->createHistory($annexe, $subject);
+            $this->createHistory($annexe, $subject, $request['comment']);
 
             DB::commit();
             return ['message' => 'Successfully saved!', 'status' => $annexe->status];
@@ -241,6 +241,14 @@ class WorkshopController extends Controller
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
         }
+    }
+
+    public function showAnnexE($id){
+        $annexe = AnnexE::with(
+            ['project.leader', 'histories.profile.user', 'subs.subproject', 
+            'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
+            'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns'])->where('id', $id)->first();
+        return $annexe;
     }
 
     // Other Indicator = Outcome or Output Indicators
@@ -421,7 +429,7 @@ class WorkshopController extends Controller
                     if($request['subunit_id']) { $q->where('subunit_id',  $request['subunit_id']);  }
                 }
             });
-            $annexfs = $query->with(['projects.subprogram', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
+            $annexfs = $query->with(['projects.subprogram', 'projects.leader', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
                 ->where('workshop_id', $request['workshopId'])
                 ->where('status', $request['status'])->get();
             
@@ -1012,25 +1020,25 @@ class WorkshopController extends Controller
     }
 
     private function sendNotification($project, $status, $type, $link = ''){
-        $sender = Auth::user();
+        $sender = Auth::user(); $notified = 0;
         $projects = []; $length = 1;
         if($type == 'Annex F'){
             $length = sizeof($project);
             $project = $project[0];
         }
         $projectleader = $project->leader->profile;
-        // $projectleader->user;
         $message = $this->setMessage($project, $status, $type, $length);
         $results = '<p class="m-0">Notified: <br>';
         // notify project leader unless status is for review
-        if($status != 'For Review'){
+        if($status != 'For Review' && $projectleader->id != $sender->activeProfile->id){
             $this->sendMessage($sender, $projectleader->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$projectleader->user->firstname.' '.$projectleader->user->lastname.'</li>';
+            $notified++;
         }
         $query = Profile::query();
         $query = $query->with('user')->where('active', true);
-        // notify unit head if status is for review or approved
-        if($status == 'For Review' || $status == 'Approved'){
+        // notify unit head if status is for review, approved or back to draft
+        if($status == 'For Review' || $status == 'Approved' || $status == 'Draft'){
             $query = $query->where('title_id', 4)
                     ->whereHas('user', function($q) use($project){
                         $q->where('division_id', $project->division_id)
@@ -1058,11 +1066,13 @@ class WorkshopController extends Controller
         }
 
         $recipient = $query->first();
-        if($recipient->id != $projectleader->id){
+        if($recipient->id != $sender->activeProfile->id && $recipient->title_id != 7){
             $this->sendMessage($sender, $recipient->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$recipient->user->firstname.' '.$recipient->user->lastname.'</li>';
+            $notified++;
         }
-        return $results.'</p>';
+        
+        return $notified > 0 ? $results.'</p>' : '';
 
         // Titles
         // 3 = Division Chief
@@ -1084,14 +1094,17 @@ class WorkshopController extends Controller
         $body = '<p class="m-0">';
         $projectTitle = $length > 1 ? $project->subprogram->title : $project->title;
         $title = '<strong> Workshop - '.$type.'</strong>';
+        if($status == 'Draft'){
+            $body = $body.$projectTitle.' was sent back to <b>Drafts</b>. <br><small><i>View Project Logs to see what happen</i></small>';
+        }
         if($status == 'For Review' || $status == 'For Approval'){
-            $body = $body.$project->title.' was sent '.$status;
+            $body = $body.$projectTitle.' was sent '.$status;
         }
         else if($status == 'Approved'){
-            $body = $body.$project->title.' approved! ';
+            $body = $body.$projectTitle.' approved! ';
         }
         else if($status == 'Submitted'){
-            $body = $body.$project->title.' submitted! ';
+            $body = $body.$projectTitle.' submitted! ';
         }
         
         return ['title' => $title, 'body' => $body.'</p>'];

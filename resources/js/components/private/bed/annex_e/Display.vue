@@ -2,8 +2,8 @@
     <div>
         <h6 class="text-end fw-bold">Annex E</h6>
         <h6 class="text-center mb-3 fw-bold">CY {{workshop.year}} PHYSICAL PLAN </h6>
-        <div class="table-responsive" :style="!printmode ? 'height: 60vh; padding: 4px; font-size: 14px;' : 'font-size: 12px;'" v-dragscroll>
-            <table class="table table-sm table-bordered">
+        <div class="table-responsive display" :style="!printmode ? 'font-size: 14px;' : 'font-size: 12px;'" v-dragscroll>
+            <table class="table table-sm table-bordered" :style="!printmode ? 'width: 1500px' : ''">
                 <TableHead :syncing="syncing" :printmode="printmode" />
                 <tbody>
                     <template v-for="program in annexes" :key="'program_'+program.id">
@@ -94,3 +94,9 @@ export default {
     }
 }
 </script>
+<style scoped>
+.table-responsive.display{
+    height: 100%; 
+    padding: 0 4px 4px 4px; 
+}
+</style>

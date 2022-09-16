@@ -22,11 +22,11 @@ class Profile extends Model
     }
 
     public function encoderOf(){
-        return $this->hasMany(Staff::class)->where('type', 'encoder');
+        return $this->hasMany(Staff::class)->where('type', 'Encoder');
     }
 
     public function leaderOf(){
-        return $this->hasMany(Staff::class)->where('type', 'leader');
+        return $this->hasMany(Staff::class, 'profile_id')->where('type', 'Leader');
     }
 
     public function notifications(){

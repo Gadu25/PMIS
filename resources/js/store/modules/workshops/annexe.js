@@ -34,6 +34,12 @@ const actions = {
             return res.data
         })
         return response
+    },
+    async fetchAnnexE({commit}, id){
+        const response = await axios.get('/api/workshop/annex-e/'+id).then(res =>{
+            return res.data
+        })
+        return response
     }
 }
 

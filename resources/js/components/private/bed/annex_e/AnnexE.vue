@@ -1,7 +1,7 @@
 <template>
-    <div class="px-3 py-4">
+    <div class="px-3 py-4" style="calc(100vh - 45px)">
         <div class="border-bottom mb-2">
-            <button class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn btn-sm btn-light float-start" @click="this.$router.push('/budget-executive-documents')"><i class="fas fa-arrow-left"></i> Back</button>
             <h4 class="text-center">Annex E</h4>
             <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small>
         </div>
@@ -94,7 +94,7 @@
                     <button class="btn btn-sm btn-outline-secondary float-end ms-1" v-if="!filtershow" @click="filtershow = true"><i class="fas fa-arrow-left"></i></button>
                     <!-- Display View -->
                     <template v-if="!editmode">
-                        <div class="card shadow overflow-auto" :style="!printmode ? 'height: 73vh' : ''">
+                        <div class="card shadow overflow-auto" :style="!printmode ? 'height: calc(100vh - 210px)' : ''">
                             <div class="card-body">
                                 <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
                                 <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" id="printMe"/>
@@ -141,7 +141,8 @@
                                                             <template v-if="checkUserDivision(item.project)">
                                                                 <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
                                                                 <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                             </template>
                                                         </td>
                                                     </tr>
@@ -172,7 +173,8 @@
                                                                 <template v-if="checkUserDivision(item.project)">
                                                                     <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
                                                                     <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                    <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                 </template>
                                                             </td>
                                                         </tr>
@@ -205,7 +207,8 @@
                                                                     <template v-if="checkUserDivision(item.project)">
                                                                         <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
                                                                         <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                        <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                     </template>
                                                                 </td>
                                                             </tr>
@@ -237,21 +240,24 @@
                     </div>
                 </div>
             </div>
-            <div style="height: 74vh; overflow: auto; overflow-x: hidden; padding: 10px;" v-if="detailshow && !detailsyncing">
+            <div v-if="detailshow && !detailsyncing">
                 <template v-if="!detailsyncing">
                     <div class="d-flex justify-content-between mb-3" v-if="!saving">
-                        <button class="btn btn-sm btn-danger" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
+                        <div>
+                            <button class="btn btn-sm btn-danger me-1" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
+                            <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-outline-secondary" v-if="histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                        </div>
                         <div v-if="!isForReview(form.status)">
-                            <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1 && checkUserTitle(form.status)" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
-                            <button class="btn btn-sm btn-secondary me-1"         @click="submitForm('Draft')"      v-if="checkUserTitle(form.status)"><i class="fas fa-edit"></i> Save as Draft</button>
-                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')" v-if="checkUserTitle(form.status)"><i class="fas fa-search"></i> Submit "For Review"</button>
+                            <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1 && checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
+                            <button class="btn btn-sm btn-secondary me-1"         @click="submitForm('Draft')"      v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-edit"></i> Draft</button>
+                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')" v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-search"></i> For Review</button>
                         </div>
                         <div v-if="isForReview(form.status) && form.status != 'Submitted'">
                             <button class="btn btn-sm btn-secondary min-100 me-1" v-if="checkUserTitle(form.status)" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
                             <button class="btn btn-sm btn-success min-100 me-1"   v-if="checkUserTitle(form.status)" @click="submitForm('approve')"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submit to Planning Unit' : 'Approve'}}</button>
                         </div>
                     </div>
-                    <div class="table-responsive">
+                    <div class="table-responsive" style="height: calc(100vh - 218px);" v-dragscroll>
                         <table class="table table-sm table-bordered">
                             <TableHead :syncing="true" :printmode="true" />
                             <tbody>
@@ -268,7 +274,7 @@
                                                         <input v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                     </template>
                                                     <template v-else>
-                                                        <p class="px-2 py-1 m-0 text-end fw-bold">{{formatNumber(subtotalIndicator(col))}}</p>
+                                                        <p class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = formatNumber(subtotalIndicator(col))}}</p>
                                                     </template>
                                                 </template>
                                             </template>
@@ -296,7 +302,7 @@
                                                             <input v-else type="text" v-model="indicator[col]" v-money="money" class="form-control indicator-input">
                                                         </template>
                                                         <template v-else>
-                                                            <p class="px-2 py-1 m-0 text-end fw-bold">{{formatNumber(subtotalIndicator(col, sub.id))}}</p>
+                                                            <p class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = formatNumber(subtotalIndicator(col, sub.id))}}</p>
                                                         </template>
                                                     </template>
                                                 </template>
@@ -314,38 +320,13 @@
                             </tbody>
                         </table>
                     </div>
-                    <template v-if="form.histories.length > 0">
-                        <hr>
-                        <div class="row">
-                            <div class="col-sm-8">
-                                <h6><strong>Timeline</strong></h6>
-                                <div class="card shadow mb-3 minmax-2040">
-                                    <div class="card-body">
-                                        Coming soon...
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-4">
-                                <h6><strong>History</strong></h6>
-                                <div class="minmax-2040 overflow-auto p-2">
-                                    <div class="card mb-3 shadow" v-for="history in form.histories" :key="'history_'+history.id">
-                                        <div class="card-body position-relative mx-2 mb-2">
-                                            <div class="pb-4" v-html="history.subject"></div>
-                                            <small>
-                                            <p class="m-0 position-absolute bottom-0 start-0 fw-bold"><i class="far fa-user-circle"></i> {{history.profile.user.firstname + ' ' + history.profile.user.lastname }}</p>
-                                            <p class="m-0 position-absolute bottom-0 end-0">{{history.created_at}}</p></small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
                 </template>
                 <h1 class="text-center p-5" v-else> <i class="fas fa-spinner fa-spin"></i> Loading Resources </h1>
             </div>
         </template>
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
     </div>
+    <Logs :histories="histories" :title="historyfor"/>
     <!-- Modal -->
     <div class="modal fade" id="detailform" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" :class="!breakdownform ? 'modal-lg' : ''">
@@ -452,7 +433,7 @@
             <div class="modal-content" v-if="indicatorshow">
                 <div class="modal-header">
                     <h5 class="modal-title"> <span>Performance Indicators</span></h5>
-                    <button type="button" ref="Close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" ref="closebtn" class="btn-close"  data-bs-dismiss="modal" aria-label="close"></button>
                 </div>
                 <div class="modal-body p-0 overflow-auto" style="height: 50vh;">
                     <table class="table table-sm table-bordered m-0">
@@ -531,11 +512,11 @@
             <div class="modal-content" v-else>
                 <div class="modal-body">
                     <div class="d-flex justify-content-end mb-3">
-                        <button type="button" ref="Close" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" ref="closebtn" class="btn-close" style="display: none" data-bs-dismiss="modal" aria-label="close"></button>
                     </div>
                     <div class="form-floating mb-3">
-                        <textarea class="form-control" placeholder="Leave a comment here" v-model="form.remarks" id="Remarks" style="height: 200px"></textarea>
-                        <label for="Remarks">Remarks</label>
+                        <textarea class="form-control" placeholder="Leave a comment here" v-model="form.comment" id="Comment" style="height: 200px"></textarea>
+                        <label for="Comment">Please add comment <span class="text-danger">*</span></label>
                     </div>
                     <div class="d-flex justify-content-end">
                         <button class="btn btn-sm btn-success rounded-pill min-100" @click="submitForm('reject')">Submit</button>
@@ -594,10 +575,15 @@
 import EmptyTable from './EmptyTable.vue'
 import Display from './Display.vue'
 import TableHead from './TableHead.vue'
+import Logs from './Logs.vue'
 import { mapActions, mapGetters } from 'vuex'
+import { dragscroll } from 'vue-dragscroll'
 export default {
     name: 'AnnexE',
-    components: { EmptyTable, Display, TableHead },
+    directives: {
+        dragscroll: dragscroll,
+    },
+    components: { EmptyTable, Display, TableHead, Logs },
     data(){
         return {
             filtershow: true,
@@ -637,8 +623,8 @@ export default {
                 subs: [],
                 formtype: '',
                 status: 'Draft',
-                remarks: '',
-                histories: []
+                comment: '',
+                leaderId: ''
             },
             // outcome & output form
             form2: {
@@ -670,12 +656,15 @@ export default {
             },
             indicatorshow: false,
             prevstatus: '',
-            saving: false
+            saving: false,
+            // logs
+            histories: [],
+            historyfor: ''
         }
     },
     methods: {
         ...mapActions('workshop', ['fetchWorkshop']),
-        ...mapActions('annexe', ['fetchAnnexEs', 'saveAnnexE', 'updateAnnexEOther']),
+        ...mapActions('annexe', ['fetchAnnexEs', 'fetchAnnexE', 'saveAnnexE', 'updateAnnexEOther']),
         ...mapActions('program', ['fetchPrograms']),
         ...mapActions('division', ['fetchDivisions']),
         displaytypeChange(){
@@ -747,7 +736,6 @@ export default {
                 this.displaysyncstatus = options.status
             })
         },
-
         // Form
         submitForm(status){
             this.saving = true
@@ -765,8 +753,8 @@ export default {
                 status = (stat == 'For Review') ? 'For Approval' : (stat == 'For Approval') ? 'Approved' : 'Submitted'
             }
             if(status == 'reject'){
-                if(this.form.remarks == ''){
-                    this.toastMsg('warning', 'Remarks required')
+                if(this.form.comment == ''){
+                    this.toastMsg('warning', 'Comment required')
                     return false
                 }
                 status = 'Draft'
@@ -779,7 +767,7 @@ export default {
                     this.toastMsg(icon, res.message)
                     if(!res.errors){
                         this.syncRecords(res.status)
-                        this.$refs.Close.click()
+                        this.$refs.closebtn.click()
                         this.detailshow = false
                         this.formshow = false
                     }
@@ -848,8 +836,10 @@ export default {
             this.form.project_id = item.project_id
             this.form.project_title = item.project.title
             this.form.status = item.status
-            this.form.histories = item.histories
-            this.form.remarks = ''
+            this.histories = item.histories
+            this.historyfor = item.project.title
+            this.form.leaderId = item.project.leader.profile_id
+            this.form.comment = ''
             this.form.subs = []
             for(let i = 0; i < item.subs.length; i++){
                 var sub = item.subs[i]
@@ -1160,6 +1150,9 @@ export default {
 
             return (userStr === projStr || user.active_profile.title.name == 'Superadmin')
         },
+        isUserProjectLeader(id){
+            return id == this.authuser.active_profile.id
+        },
         // Toast
         toastMsg(icon, msg){
             toast.fire({
@@ -1213,6 +1206,20 @@ export default {
         },
         isForReview(status){
             return status != 'Draft' && status != 'New'
+        },
+        // history
+        setHistory(item){
+            this.histories = item.histories
+            this.historyfor = item.project.title
+        },
+        // Watcher
+        checkQueryStr(){
+            this.fetchAnnexE(this.$route.query.id).then(res => {
+                this.syncRecords(res.status)
+                // console.log(res)
+                this.editForm(res, 'details')
+                this.editmode = true
+            })
         }
     },
     computed: {
@@ -1237,8 +1244,20 @@ export default {
         if(this.divisions.length == 0){
             this.fetchDivisions()
         }
-        this.checkStatus()
-    }
+        if(!this.$route.query.id){
+            this.checkStatus()
+        }
+    },
+    watch: {
+        $route: {
+            immediate: true,
+            handler (to, from) {
+                if(this.$route.query.id){
+                    this.checkQueryStr()
+                }
+            }
+        },
+    },
 }
 </script>
 <style scoped>
