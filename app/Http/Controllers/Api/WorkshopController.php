@@ -221,7 +221,7 @@ class WorkshopController extends Controller
                 $subject = $subject.'<p class="m-0">Status: '.$prevstatus.' => '.$annexe->status.'</p>';
             }
 
-            $subject = $request['comment'] != '' ? $subject.'<p class="m-0">Comment: <i>'.$request['comment'].'</i></p>' : $subject;
+            // $subject = $request['comment'] != '' ? $subject.'<p class="m-0">Comment: <i>'.$request['comment'].'</i></p>' : $subject;
 
             if($statchange){
                 if($initialStatus != 'New' || $status == 'For Review'){
@@ -510,7 +510,7 @@ class WorkshopController extends Controller
     }
 
     public function showAnnexF($id){
-        $annexf = AnnexF::with(['projects.subprogram', 'histories.profile.user',
+        $annexf = AnnexF::with(['projects.subprogram', 'projects.leader', 'histories.profile.user',
         'funds', 'activities', 'subs.activities', 
         'subs.funds', 'subs.subproject'])->where('id', $id)->first();
         return $annexf;
@@ -1033,7 +1033,7 @@ class WorkshopController extends Controller
         if($status != 'For Review' && $projectleader->id != $sender->activeProfile->id){
             $this->sendMessage($sender, $projectleader->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$projectleader->user->firstname.' '.$projectleader->user->lastname.'</li>';
-            $notified++;
+            $notified = $notified++;
         }
         $query = Profile::query();
         $query = $query->with('user')->where('active', true);
@@ -1069,7 +1069,7 @@ class WorkshopController extends Controller
         if($recipient->id != $sender->activeProfile->id && $recipient->title_id != 7){
             $this->sendMessage($sender, $recipient->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$recipient->user->firstname.' '.$recipient->user->lastname.'</li>';
-            $notified++;
+            $notified = $notified++;
         }
         
         return $notified > 0 ? $results.'</p>' : '';
@@ -1095,7 +1095,7 @@ class WorkshopController extends Controller
         $projectTitle = $length > 1 ? $project->subprogram->title : $project->title;
         $title = '<strong> Workshop - '.$type.'</strong>';
         if($status == 'Draft'){
-            $body = $body.$projectTitle.' was sent back to <b>Drafts</b>. <br><small><i>View Project Logs to see what happen</i></small>';
+            $body = $body.$projectTitle.' was sent back to <b>Drafts</b>. <br><small><i>Click here to view project logs and see what happen</i></small>';
         }
         if($status == 'For Review' || $status == 'For Approval'){
             $body = $body.$projectTitle.' was sent '.$status;

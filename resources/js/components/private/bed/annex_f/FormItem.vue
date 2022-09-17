@@ -1,9 +1,9 @@
 <template>
     <template v-for="item in items" :key="item.id+'-item'">
         <tr>
-            <td :colspan="checkUserDivision(item.projects) ? '1' : '2'"><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
-            <td class="btns" v-if="checkUserDivision(item.projects)">
-                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
+            <td><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
+            <td :class="checkUserDivision(item.projects) ? 'btns' : ''">
+                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" v-if="checkUserDivision(item.projects)"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
                 <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')" v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                 <!-- <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
             </td>
@@ -39,7 +39,7 @@ export default {
             var userStr = JSON.stringify(userObject)
             var projStr = JSON.stringify(projectObject)
 
-            return (userStr === projStr || user.active_profile.title.name == 'Superadmin')
+            return (userStr === projStr || user.active_profile.title.name == 'Superadmin') && this.isUserProjectLeader(project.leader.profile_id)
         },
         setStatusIcon(status){
             return status == 'New' ? 'fa-sparkles text-warning' : 
@@ -58,6 +58,9 @@ export default {
         },
         statusNewDraft(status){
             return (status == 'New' || status == 'Draft') && !this.saving
+        },
+        isUserProjectLeader(id){
+            return this.authuser.active_profile.id == id
         },
     },
     computed: {

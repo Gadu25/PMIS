@@ -16,7 +16,7 @@
         </div>
         <div class="row flex-row-reverse">
             <div class="col-sm-3" v-if="filtershow && !formshow">
-                <div class="card shadow mb-3">
+                <div class="card shadow border-0 mb-3">
                     <div class="card-body">
                         <div class="d-flex justify-content-end mb-2">
                             <button @click="filtershow = false" class="btn btn-sm btn-outline-secondary"><i class="far fa-arrow-right"></i></button>
@@ -93,7 +93,7 @@
             </div>
             <div class="position-relative" :class="'col-sm-'+(filtershow && !formshow ? 9 : 12) ">
                 <button @click="filtershow = true" v-if="!filtershow" class="btn btn-sm btn-secondary show-filter"><i class="far fa-arrow-left"></i> <span>Show Filter</span></button>
-                <div class="card shadow position-relative">
+                <div class="card border-0 shadow position-relative">
                     <div class="overlay" v-if="syncing">
                         <h1 class="text-white">Syncing Records <i class="far fa-spinner fa-spin"></i></h1>
                     </div>
@@ -152,12 +152,12 @@
                                         <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-outline-secondary" v-if="histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                     </div>
                                     <span v-if="saving">Saving <i class="fas fa-spinner fa-spin"></i></span>
-                                    <div v-if="statusNewDraft(form.status)">
+                                    <div v-if="statusNewDraft(form.status) && isUserProjectLeader(form.leaderId)">
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="!saving ? submitForm('Draft') : null"><i class="fas fa-edit"></i> Draft</button>
-                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('For Review') : null"><i class="fas fa-search"></i> For Review</button>
+                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('For Review') : null"><i class="fas fa-search"></i> {{authuser.active_profile.title.name == 'Unit Header' ? 'For Approval' : 'For Review'}}</button>
                                     </div>
                                     <div v-if="!statusNewDraft(form.status) && form.status != 'Submitted'">
-                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-secondary me-1" @click="submitForm('reject')"><i class="fas fa-times"></i> Reject</button>
+                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-secondary me-1" data-bs-toggle="modal" data-bs-target="#comment"><i class="fas fa-times"></i> Reject</button>
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-success" @click="!saving ? submitForm('approve') : null"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submitted' : 'Approve'}}</button>
                                     </div>
                                 </div>
@@ -226,6 +226,24 @@
                                 </div>
                             </div>
                             <Logs :histories="histories" :title="historyfor"/>
+                            <div class="modal fade" id="comment" tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-body">
+                                            <div class="d-flex mb-2 justify-content-end">
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
+                                            </div>
+                                            <div class="form-floating mb-3">
+                                                <textarea class="form-control" placeholder="Leave a comment here" v-model="form.comment" id="Comment" style="height: 200px"></textarea>
+                                                <label for="Comment">Please add comment <span class="text-danger">*</span></label>
+                                            </div>
+                                            <div class="d-flex justify-content-end">
+                                                <button type="button" class="btn btn-success rounded-pill" @click="submitForm('reject')">Submit</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </template>
                     </div>
                 </div>
@@ -275,11 +293,12 @@ export default {
             histories:   [],
             historyfor:  '',
             form: {
-                id:      '',
-                status:  '',
-                title:   '',
-                remarks: '',
-                comment: '',
+                id:       '',
+                status:   '',
+                title:    '',
+                remarks:  '',
+                comment:  '',
+                leaderId: '',
                 activities: [],
                 funds:      [],
                 subs:       []
@@ -385,8 +404,15 @@ export default {
             this.historyfor = ''
         },
         submitForm(status){
-            this.saving = true
             var form = this.form
+            if(status == 'reject'){
+                if(form.comment == ''){
+                    this.toastMsg('warning', 'Please add a comment')
+                    return false
+                }
+            }
+
+            this.saving = true
             form.status = this.setFormStatus(status)
             this.saveAnnexF(form).then(res => {
                 var icon = res.errors ? 'error' : 'success'
@@ -394,6 +420,7 @@ export default {
                     this.hideForm()
                     this.filter.status = res.status
                     this.syncRecords()
+                    this.$refs.Close.click()
                 }
                 this.saving = false
                 this.toastMsg(icon, res.message)
@@ -404,9 +431,10 @@ export default {
             this.historyfor = title
             this.formshow = true
             var form = this.form
-            form.id     = item.id
-            form.status = item.status
-            form.title  = title
+            form.id       = item.id
+            form.status   = item.status
+            form.title    = title
+            form.leaderId = item.projects[0].leader.profile_id
             form.activities = []
             form.funds      = []
             form.subs       = []
@@ -426,6 +454,9 @@ export default {
             }
             if(status == 'approve'){
                 status = formstatus == 'For Review' ? 'For Approval' : formstatus == 'For Approval' ? 'Approved' : 'Submitted'
+            }
+            if(status == 'For Review'){
+                status = this.authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'
             }
             return status
         },
@@ -493,6 +524,9 @@ export default {
                     this.form.subs[sub].activities[key].remove(activity)
                 }
             }
+        },
+        isUserProjectLeader(id){
+            return this.authuser.active_profile.id == id
         },
         // Display
         setStatusIcon(status){

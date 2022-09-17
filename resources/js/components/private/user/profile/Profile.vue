@@ -26,6 +26,9 @@
                             <div class="date-created"><small>{{notification.created_at}}</small></div>
                         </div>
                     </div>
+                    <div class="text-center p-4" v-if="authuser.active_profile.notifications.length == 0">
+                        <i>No notifications</i>
+                    </div>
                 </div>
                 <button class="notification-btn" @click="shownotification = true">
                     <i class="far fa-bell"></i>

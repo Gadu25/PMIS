@@ -15,7 +15,7 @@
             </div>
             <div class="row flex-row-reverse" v-if="!formshow && !detailshow">
                 <div class="col-sm-3" v-if="filtershow">
-                    <div class="card shadow mb-3">
+                    <div class="card border-0 shadow mb-3">
                         <div class="card-body">
                             <div class="d-flex justify-content-end mb-2">
                                 <button class="btn btn-sm btn-outline-secondary" @click="filtershow = false"><i class="fas fa-arrow-right"></i></button>
@@ -94,7 +94,7 @@
                     <button class="btn btn-sm btn-outline-secondary float-end ms-1" v-if="!filtershow" @click="filtershow = true"><i class="fas fa-arrow-left"></i></button>
                     <!-- Display View -->
                     <template v-if="!editmode">
-                        <div class="card shadow overflow-auto" :style="!printmode ? 'height: calc(100vh - 210px)' : ''">
+                        <div class="card border-0 shadow overflow-auto" :style="!printmode ? 'height: calc(100vh - 210px)' : ''">
                             <div class="card-body">
                                 <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
                                 <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" id="printMe"/>
@@ -250,7 +250,7 @@
                         <div v-if="!isForReview(form.status)">
                             <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1 && checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
                             <button class="btn btn-sm btn-secondary me-1"         @click="submitForm('Draft')"      v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-edit"></i> Draft</button>
-                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')" v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-search"></i> For Review</button>
+                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')" v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-search"></i> {{authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'}}</button>
                         </div>
                         <div v-if="isForReview(form.status) && form.status != 'Submitted'">
                             <button class="btn btn-sm btn-secondary min-100 me-1" v-if="checkUserTitle(form.status)" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
@@ -758,6 +758,9 @@ export default {
                     return false
                 }
                 status = 'Draft'
+            }
+            if(status == 'For Review'){
+                status = this.authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'
             }
             this.form.status = status
             
