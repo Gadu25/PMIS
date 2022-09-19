@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Profile;
 use App\Models\Title;
 use App\Models\Notification;
+use App\Models\SidebarItem;
+use App\Models\SidebarRole;
 use Auth;
 use DB;
 
@@ -30,10 +32,10 @@ class UserController extends Controller
         $user = $auth->with(['division', 'unit', 'subunit', 
         'activeProfile.notifications.from.user', 
         'activeProfile.notifications.to.user', 
-        'activeProfile.title',
-        'activeProfile.leaderOf.project.subprojects'])->where('id', $auth->id)->first();
+        'activeProfile.title', 'activeProfile.leaderOf.project.subprojects'])->where('id', $auth->id)->first();
         $profile = $user->activeProfile;
         $profile->unread = $profile->notifications->where('is_read', false)->count();
+        $profile->groupedroles = $profile->roles->groupBy('sidebar.name');
         return $user;
     }
 
@@ -58,6 +60,8 @@ class UserController extends Controller
                 $profile->isOIC = $value['isOIC'];
                 $profile->active = $value['active'];
                 $profile->save();
+
+                $profile->roles()->sync($value['roles']);
             }
 
             $id = ($request['isSynced']) ? $user->division_id : null;
@@ -96,6 +100,8 @@ class UserController extends Controller
                 $profile->isOIC = $value['isOIC'];
                 $profile->active = $value['active'];
                 $profile->save();
+
+                $profile->roles()->sync($value['roles']);
                 array_push($tempIds, $profile->id);
             }
 
@@ -128,6 +134,7 @@ class UserController extends Controller
         foreach($users as $user){
             foreach($user->profiles as $profile){
                 $profile->title;
+                $profile->roles;
             }
             $user->titleSortOrder = $user->profiles[0]->title_id;
             $user->header = ($user->subunit_id) ? $user->subunit->name : (($user->unit_id) ? $user->unit->name : '');
@@ -145,5 +152,50 @@ class UserController extends Controller
             $notification->save();
         }
         return ['message' => 'Saved!'];
+    }
+
+    // Roles 
+    public function getSidebarItems(){
+        return SidebarItem::with('roles')->get();
+    }
+
+    public function storeSidebarRole(Request $request){
+        DB::beginTransaction();
+        try {
+            foreach($request['roles'] as $role){
+                $sbrole = new SidebarRole;
+                $sbrole->title = $role['title'];
+                $sbrole->code = $role['code'];
+                $sbrole->description = $role['description'];
+                $sbrole->sidebar_item_id = $request['tab'];
+                $sbrole->save();
+            }
+            DB::commit();
+            return ['message' => 'Sidebar Roles saved!', 'roles' => $this->getSidebarItems()];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function updateSidebarRole(Request $request, $id){
+        $sbrole = SidebarRole::findOrFail($id);
+        $role = $request['roles'][0];
+
+        $sbrole->title = $role['title'];
+        $sbrole->code = $role['code'];
+        $sbrole->description = $role['description'];
+        $sbrole->sidebar_item_id = $request['tab'];
+        $sbrole->save();
+
+        return ['message' => 'Sidebar Item saved!', 'roles' => $this->getSidebarItems()];
+    }
+
+    public function destroySidebarRole($id){
+        $sbrole = SidebarRole::findOrFail($id);
+        $sbrole->delete();
+
+        return ['message' => 'Sidebar Item deleted!', 'roles' => $this->getSidebarItems()];
     }
 }

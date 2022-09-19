@@ -26,6 +26,13 @@ Route::prefix('/user')->group(function(){
     Route::prefix('/notification')->group(function(){
         Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'updateNotification']);
     });
+
+    Route::prefix('/role')->group(function(){
+        Route::middleware('auth:sanctum')->get('/sidebaritems', [UserController::class, 'getSidebarItems']);
+        Route::middleware('auth:sanctum')->post('/', [UserController::class, 'storeSidebarRole']);
+        Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'updateSidebarRole']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [UserController::class, 'destroySidebarRole']);
+    });
 });
 
 Route::prefix('/division')->group(function(){

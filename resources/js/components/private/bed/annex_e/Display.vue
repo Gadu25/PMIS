@@ -2,7 +2,7 @@
     <div>
         <h6 class="text-end fw-bold">Annex E</h6>
         <h6 class="text-center mb-3 fw-bold">CY {{workshop.year}} PHYSICAL PLAN </h6>
-        <div class="table-responsive display" :style="!printmode ? 'font-size: 14px;' : 'font-size: 12px;'" v-dragscroll>
+        <div class="table-responsive" :class="!printmode ? 'display' : ''" :style="!printmode ? 'font-size: 14px;' : 'font-size: 12px;'" v-dragscroll>
             <table class="table table-sm table-bordered" :style="!printmode ? 'width: 1500px' : ''">
                 <TableHead :syncing="syncing" :printmode="printmode" />
                 <tbody>
@@ -16,6 +16,7 @@
                                     <tr> <td colspan="9" class="fw-bold">{{subprogram.title}}</td> </tr>
                                     <OtherItems :commonindicators="subprogram.commonindicators" />
                                     <Items :items="subprogram.items" />
+                                    <TotalItem v-if="program.id == 1" :item="subprogram.totalitems" />
                                     <template v-for="cluster in subprogram.clusters" :key="'cluster_'+cluster.id">
                                         <template v-if="cluster.items.length > 0 || cluster.commonindicators.length > 0">
                                             <tr> <td colspan="9" style="background: lightgreen;"><div class="ms-2 fw-bold">{{cluster.title}}</div></td> </tr>
@@ -40,13 +41,14 @@ import { dragscroll } from 'vue-dragscroll'
 import Items from './Items.vue'
 import OtherItems from './OtherItems.vue'
 import TableHead from './TableHead.vue'
+import TotalItem from './TotalItem.vue'
 export default {
     name: 'Display',
     directives: {
         dragscroll: dragscroll,
     },
     components: {
-        Items, OtherItems, TableHead
+        Items, OtherItems, TableHead, TotalItem
     },
     data(){
         return {

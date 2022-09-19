@@ -85,7 +85,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card" v-if="form.program_id == 1">
+                        <!-- <div class="card" v-if="form.program_id == 1">
                             <div class="card-body">
                                 <strong>With Total <i style="cursor: pointer" class="far fa-question-circle"></i></strong>
                                 <div class="form-check form-switch" v-for="subprogram in program.subprograms" :key="subprogram.id+'-subprogram'">
@@ -93,7 +93,7 @@
                                     <label class="form-check-label" :for="setSubprogramTitle(subprogram)">{{setSubprogramTitle(subprogram)}}</label>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
 

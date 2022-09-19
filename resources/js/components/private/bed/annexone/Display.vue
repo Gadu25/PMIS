@@ -16,7 +16,7 @@
             <button class="btn btn-sm btn-success shadow-none" v-if="loading || workshop.published" disabled><i v-if="loading" class="fas fa-spinner fa-spin"></i> {{workshop.published ? 'Projects Published' : 'Publish Projects'}} </button>
             <button class="btn btn-sm btn-success shadow-none" v-if="!loading && !workshop.published" data-bs-target="#publishable" data-bs-toggle="modal">Publish Projects</button>
         </div>
-        <div :class="printmode? '' : 'overflow-auto'" :style="'max-height: '+ (printmode ? '100vh' : '64vh')" v-if="!loading" id="printMe">
+        <div :class="printmode? '' : 'overflow-auto'" :style="'max-height: '+ (printmode ? '' : 'calc(100vh - 348px)')" v-if="!loading" id="printMe">
             <template v-if="printmode">
                 <h6 class="text-end">Annex 1</h6>
                 <h6 class="text-center">SEI Annual Planning Workshop <br> {{workshop.date}} <br> Data as of {{dateToday()}}</h6>

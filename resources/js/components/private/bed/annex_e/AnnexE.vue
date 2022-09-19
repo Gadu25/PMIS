@@ -1151,7 +1151,7 @@ export default {
             var userStr = JSON.stringify(userObject)
             var projStr = JSON.stringify(projectObject)
 
-            return (userStr === projStr || user.active_profile.title.name == 'Superadmin')
+            return (userStr === projStr || user.active_profile.title.name == 'Superadmin') && this.isUserProjectLeader(project.leader.profile_id)
         },
         isUserProjectLeader(id){
             return id == this.authuser.active_profile.id

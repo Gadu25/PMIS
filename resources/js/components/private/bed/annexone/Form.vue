@@ -155,23 +155,23 @@
                     <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
                 </div>
                 <div class="d-flex justify-content-center flex-wrap">
-                    <div class="col-sm-4 px-3 mb-4">
+                    <div class="col-sm-3 px-2 mb-3">
                         <div class="card shadow">
-                            <div class="card-body">
+                            <div class="card-body overflow-auto" style="max-height: calc(100vh - 300px)">
                                 <h4><strong><i class="far fa-filter"></i> Filters</strong></h4><hr>
                                 <div class="form-floating my-3">
                                     <input type="search" class="form-control" id="Search" placeholder="Search" v-model="keyword">
                                     <label for="Search"><i class="far fa-search"></i> Search</label>
-                                </div><hr>
-                                <h5 class="text-center">Divisions</h5><hr>
+                                </div>
+                                <h5 class="text-center pb-1 border-bottom">Divisions</h5>
                                 <div class="form-check form-switch mb-1 pb-1 border-bottom" v-for="division in divisions" :key="division.id+'_division'">
                                     <input style="cursor: pointer" class="form-check-input shadow-none" type="checkbox" :id="division.name" :value="division.code" v-model="filters">
-                                    <label style="cursor: pointer" class="form-check-label fw-bold text-center w-100" :for="division.name">{{division.name}}</label>
+                                    <label style="cursor: pointer" class="form-check-label fw-bold w-100" :for="division.name">{{division.name}}</label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-8 overflow-auto px-2 py-4" style="max-height: 68vh">
+                    <div class="col-sm-9 overflow-auto px-2 py-4" style="max-height: calc(100vh - 280px)">
                         <div class="table-responsive-xl">
                             <table class="table table-sm table-bordered align-middle shadow">
                                 <thead>
@@ -576,7 +576,7 @@ export default {
 </script>
 <style scoped>
 .form-container{
-    max-height: 62vh;
+    max-height: calc(100vh - 328px);
     overflow: auto;
     overflow-x: hidden;
     margin-bottom: 15px;

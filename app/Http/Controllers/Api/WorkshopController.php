@@ -176,6 +176,10 @@ class WorkshopController extends Controller
                     $this->isLoaded($program, $subprogram->commonindicators, 'subpwithci');
                     $subprogram->cluswithitems = false;
                     $subprogram->cluswithci = false;
+                    if($program->id == 1){
+                        // add total using items
+                        $subprogram->totalitems = $this->setTotal($subprogram->items);
+                    }
                     foreach($subprogram->clusters as $cluster){
                         $cluster->commonindicators = $this->setItems($cigrouped, $program->id, $subprogram->id, $cluster->id);
                         $cluster->items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
@@ -251,6 +255,86 @@ class WorkshopController extends Controller
         return $annexe;
     }
 
+    private function setTotal($items){
+        $total = new AnnexE;
+        $total->title = 'Total';
+        $total->indicators; $total->subs;
+        foreach($items as $item){
+            $this->setIndicators($total, $item->indicators);
+            foreach($item->subs as $sub){
+                if(!$this->inSubs($total->subs, $sub)){
+                    $annexesub = new AnnexESub;
+                    $annexesub->temp_title = $sub->temp_title;
+                    $annexesub->subproject_id = $sub->subproject_id;
+                    $annexesub->subproject; $annexesub->indicators;
+                    $this->setIndicators($annexesub, $sub->indicators);
+                    $total->subs->push($annexesub);
+                }
+                else{
+                    $annexesub = $this->getSub($total->subs, $sub);
+                    $this->setIndicators($annexesub, $sub->indicators);
+                }
+            }
+        }
+        return $total;
+    }
+
+    private function setIndicators($parent, $indicators){
+        $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
+        foreach($indicators as $indicator){
+            if(!$this->inIndicators($parent->indicators, $indicator->description)){
+                $performanceindicator = new PerformanceIndicator;
+                $performanceindicator->description = $indicator->description;
+                $details = new IndicatorDetail;
+                foreach($columns as $column){
+                    $details[$column] = $indicator->details !== null ? $indicator->details[$column] : 0;
+                }
+                $performanceindicator->details = $details;
+                $parent->indicators->push($performanceindicator);
+            }
+            else{
+                $performanceindicator = $this->getIndicator($parent->indicators, $indicator->description);
+                foreach($columns as $column){
+                    $performanceindicator->details[$column] = $performanceindicator->details[$column] + ($indicator->details !== null ? $indicator->details[$column] : 0);
+                }
+            }
+        }
+    }
+
+    private function inSubs($subs, $subitem){
+        foreach($subs as $sub){
+            if($sub->subproject_id == $subitem->subproject_id && $sub->temp_title == $subitem->temp_title){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function getSub($subs, $subitem){
+        foreach($subs as $sub){
+            if($sub->subproject_id == $subitem->subproject_id && $sub->temp_title == $subitem->temp_title){
+                return $sub;
+            }
+        }
+    }
+
+    private function inIndicators($indicators, $description){
+        foreach($indicators as $indicator){
+            if($indicator->description == $description){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function getIndicator($indicators, $description){
+        foreach($indicators as $indicator){
+            if($indicator->description == $description){
+                return $indicator;
+            }
+        }
+    }
+
     // Other Indicator = Outcome or Output Indicators
     public function updateOtherIndicatorDetails(Request $request, $id){
         DB::beginTransaction();
@@ -268,10 +352,6 @@ class WorkshopController extends Controller
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
         }
-    }
-    
-    public function destroyAnnexE($id){
-
     }
 
     private function saveIndicatorDetails($indicator, $form){

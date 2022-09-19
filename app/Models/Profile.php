@@ -32,4 +32,8 @@ class Profile extends Model
     public function notifications(){
         return $this->hasMany(Notification::class, 'profile_to')->orderBy('created_at', 'desc');
     }
+
+    public function roles(){
+        return $this->belongsToMany(SidebarRole::class, 'profile_role', 'profile_id');
+    }
 }

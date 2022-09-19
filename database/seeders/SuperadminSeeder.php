@@ -32,7 +32,7 @@ class SuperadminSeeder extends Seeder
         $user->unit_id = $unit->id;
         $user->save();
 
-        $title = Title::where('name', 'Superadmin Profile')->first();
+        $title = Title::where('name', 'ilike' ,'%Super%')->first();
 
         $profile = new Profile;
         $profile->user_id = $user->id;

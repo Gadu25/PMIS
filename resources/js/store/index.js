@@ -9,13 +9,14 @@ import annexf from './modules/workshops/annexf'
 import annexone from './modules/workshops/annexone'
 import common from './modules/workshops/common'
 import tag from './modules/tags/tag'
+import roles from './modules/roles'
 const store = createStore({
     modules: {
-        user,
+        user, roles,
         division,
         program, project,
         workshop, annexe, annexf, annexone, common,
-        tag
+        tag,
     }
 })
 
