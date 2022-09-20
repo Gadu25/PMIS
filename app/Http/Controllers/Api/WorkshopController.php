@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Workshop;
 use App\Models\Program;
+use App\Models\Subprogram;
 use App\Models\Division;
 use App\Models\Unit;
 use App\Models\Project;
@@ -513,7 +514,7 @@ class WorkshopController extends Controller
                 ->where('workshop_id', $request['workshopId'])
                 ->where('status', $request['status'])->get();
             
-            $grouped = $annexfs->groupBy(['projects.*.program_id', 'projects.*.subprogram_id', 'projects.*.cluster_id']);
+            $grouped = $annexfs->groupBy(['projects.0.program_id', 'projects.0.subprogram_id', 'projects.0.cluster_id']);
 
             $programs = Program::with('subprograms.clusters')->get();
             foreach($programs as $program){
@@ -532,6 +533,7 @@ class WorkshopController extends Controller
             }
 
             DB::commit();
+
             return $programs;
         }
         catch(\Exception $e){
@@ -778,10 +780,11 @@ class WorkshopController extends Controller
     public function publishAnnexOneProjects($workshopId){
         DB::beginTransaction();
         try {
-            $annexones = AnnexOne::where('workshop_id', $workshopId)->get();
+            $annexones = AnnexOne::with('project')->where('workshop_id', $workshopId)->get();
             $commonindicators = CommonIndicator::with(['tags'])
                 ->where('workshop_id', $workshopId)
                 ->where('type', 'Performance')->get();
+            $ctr = 0;
             foreach($annexones as $annexone){
                 $annexe = new AnnexE;
                 $annexe->workshop_id = $workshopId;
@@ -813,11 +816,30 @@ class WorkshopController extends Controller
                     }
                 }
 
-                $annexf = new AnnexF;
-                $annexf->workshop_id = $workshopId;
-                $annexf->status = 'New';
-                $annexf->save();
-                $annexf->projects()->sync([$annexone->project_id]);
+                // check if undergraduate
+                $undergrad = Subprogram::where('title_short', 'Undergraduate')->first();
+                if($annexone->project->subprogram_id === $undergrad->id){
+                    if($ctr === 0){
+                        $annexf = new AnnexF;
+                        $annexf->workshop_id = $workshopId;
+                        $annexf->status = 'New';
+                        $annexf->save();
+                        $tempIds = [];
+                        foreach($undergrad->projects as $project){
+                            array_push($tempIds, $project->id);
+                        }
+                        $annexf->projects()->sync($tempIds);
+                        $ctr = 1;
+                    }
+                }
+                else{
+                    $annexf = new AnnexF;
+                    $annexf->workshop_id = $workshopId;
+                    $annexf->status = 'New';
+                    $annexf->save();
+                    $annexf->projects()->sync([$annexone->project_id]);
+                }
+
 
                 foreach($annexone->subs as $annexonesub){
                     $annexesub = new AnnexESub;
@@ -1030,19 +1052,9 @@ class WorkshopController extends Controller
     public function getOptions($workshopId, $annex){
         // Fetch Programs and Divisions for select options
         // Projects of Annex E and F depends on Annex One
-        $programs = Program::orderBy('id', 'asc')->get();
-        foreach($programs as $program){
-            foreach($program->subprograms as $subprogram){
-                $subprogram->clusters;
-            }
-        }
+        $programs = Program::with(['subprograms', 'subprograms.clusters'])->orderBy('id', 'asc')->get();
 
-        $divisions = Division::orderBy('id', 'asc')->get();
-        foreach($divisions as $division){
-            foreach($division->units as $unit){
-                $unit->subunits;
-            }
-        }
+        $divisions = Division::with(['units.subunits'])->orderBy('id', 'asc')->get();
         
         $projects = [];
         $ids = []; $projectsIds = [];

@@ -13,8 +13,10 @@
                 </div>
                 <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
             </div>
-            <button class="btn btn-sm btn-success shadow-none" v-if="loading || workshop.published" disabled><i v-if="loading" class="fas fa-spinner fa-spin"></i> {{workshop.published ? 'Projects Published' : 'Publish Projects'}} </button>
-            <button class="btn btn-sm btn-success shadow-none" v-if="!loading && !workshop.published" data-bs-target="#publishable" data-bs-toggle="modal">Publish Projects</button>
+            <template v-if="inUserRole('annex_one_publish_projects')">
+                <button class="btn btn-sm btn-success shadow-none" v-if="loading || workshop.published" disabled><i v-if="loading" class="fas fa-spinner fa-spin"></i> {{workshop.published ? 'Projects Published' : 'Publish Projects'}} </button>
+                <button class="btn btn-sm btn-success shadow-none" v-if="!loading && !workshop.published" data-bs-target="#publishable" data-bs-toggle="modal">Publish Projects</button>
+            </template>
         </div>
         <div :class="printmode? '' : 'overflow-auto'" :style="'max-height: '+ (printmode ? '' : 'calc(100vh - 348px)')" v-if="!loading" id="printMe">
             <template v-if="printmode">
@@ -340,10 +342,17 @@ export default {
                 title: msg
             })
         },
+        // Roles
+        inUserRole(code){
+            var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
+            return (role)
+        }
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
+        ...mapGetters('user', ['getAuthUser']),
+        authuser(){ return this.getAuthUser },
         ...mapGetters('annexone', ['getAnnexOnes']),
         annexones(){ 
             var keyword = this.keyword.toLowerCase()

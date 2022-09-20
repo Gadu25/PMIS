@@ -152,7 +152,7 @@
         <template v-else>
             <template v-if="!loading">
                 <div class="d-flex justify-content-end mb-2">
-                    <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
+                    <button class="btn btn-sm btn-success" v-if="inUserRole('annex_one_add')" @click="resetForm()"><i class="fas fa-plus"></i></button>
                 </div>
                 <div class="d-flex justify-content-center flex-wrap">
                     <div class="col-sm-3 px-2 mb-3">
@@ -190,8 +190,8 @@
                                                         <tr>
                                                             <td><div class="ms-3 fw-bold"><Highlighter highlightClassName="bg-warning bg-gradient fst-italic px-2 rounded" :searchWords="[keyword]" :textToHighlight="item.project.title"/></div></td>
                                                             <td>
-                                                                <button class="btn btn-sm btn-primary me-1" @click="editForm(item)"><i class="far fa-pencil-alt"></i></button>
-                                                                <button class="btn btn-sm btn-danger" @click="removeForm(item.id)"><i class="far fa-trash-alt"></i></button>
+                                                                <button v-if="inUserRole('annex_one_edit')" class="btn btn-sm btn-primary me-1" @click="editForm(item)"><i class="far fa-pencil-alt"></i></button>
+                                                                <button v-if="inUserRole('annex_one_delete')" class="btn btn-sm btn-danger" @click="removeForm(item.id)"><i class="far fa-trash-alt"></i></button>
                                                             </td>
                                                         </tr>
                                                         <tr v-for="sub in item.subs" :key="sub.id+'_sub'"><td colspan="2"><div class="ms-5"><Highlighter highlightClassName="bg-warning bg-gradient fst-italic px-2 rounded" :searchWords="[keyword]" :textToHighlight="sub.subproject.title"/></div></td></tr>
@@ -552,6 +552,11 @@ export default {
             this.fetchOptions({workshopId: this.$route.params.workshopId, annex: 'one'}).then(res => {
                 this.loading = false
             })
+        },
+        // Roles
+        inUserRole(code){
+            var role = this.user.active_profile.roles.find(elem => elem.code == code)
+            return (role)
         }
     },
     computed: {

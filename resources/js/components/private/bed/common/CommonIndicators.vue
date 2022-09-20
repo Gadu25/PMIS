@@ -22,9 +22,9 @@
                             <button class="btn shadow-none" @click="changeTab('Other')" :class="selectedTab == 'Other' ? 'btn-dark' : 'btn-outline-dark'">Outcome & Output Indicators</button>
                         </div>
                         <div class="d-flex justify-content-end mb-2">
-                            <button type="button" class="btn btn-success btn-sm shadow-none" data-bs-toggle="modal" data-bs-target="#form" @click="resetForm()"><i class="fas fa-plus"></i></button>
+                            <button type="button" class="btn btn-success btn-sm shadow-none" v-if="inUserRole('common_indicator_add')" data-bs-toggle="modal" data-bs-target="#form" @click="resetForm()"><i class="fas fa-plus"></i></button>
                         </div>
-                        <div class="px-3 py-2 table-responsive" style="max-height: 60vh;">
+                        <div class="px-3 py-2 table-responsive" style="max-height: calc(100vh - 365px);">
                             <table class="table table-sm table-bordered table-hover shadow">
                                 <thead>
                                     <tr>
@@ -45,8 +45,8 @@
                                                         <td v-if="selectedTab == 'Other'">{{commonindicator.type}}</td>
                                                         <td><span class="badge bg-info text-dark me-1" v-for="tag in commonindicator.tags" :key="tag.id+'_indtag'">{{tag.name}}</span></td>
                                                         <td>
-                                                            <button class="btn btn-sm btn-primary me-1" @click="editForm(commonindicator)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i></button>
-                                                            <button class="btn btn-sm btn-danger" @click="removeCommonIndicator(commonindicator.id)"><i class="far fa-trash-alt"></i></button>
+                                                            <button v-if="inUserRole('common_indicator_edit')" class="btn btn-sm btn-primary me-1" @click="editForm(commonindicator)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i></button>
+                                                            <button v-if="inUserRole('common_indicator_delete')" class="btn btn-sm btn-danger" @click="removeCommonIndicator(commonindicator.id)"><i class="far fa-trash-alt"></i></button>
                                                         </td>
                                                     </tr>
                                                     <tr v-for="subindicator in commonindicator.subindicators" :key="subindicator.id+'_subindicator'">
@@ -66,21 +66,23 @@
                     <div class="col-sm-3 px-2 ">
                         <div class="card shadow mb-3">
                             <div class="card-body">
+                                <template v-if="inUserRole('workshop_tag_add')">
                                 <div class="mb-1"><strong>{{tag.id ? 'Update' : 'New'}} Tag</strong></div>
-                                <form @submit.prevent="submitTag()" class="form-floating mb-1">
-                                    <input type="text" class="form-control" id="tagname" placeholder="tag" v-model="tag.name">
-                                    <label for="tagname">Tag Name</label>
-                                </form>
-                                <div class="d-flex justify-content-end mb-3 pb-2 border-bottom">
-                                    <button tabindex="-1" class="btn shadow-none btn-outline-secondary btn-sm me-1" @click="tag.name = '', tag.id = ''">Clear Field</button>
-                                    <button tabindex="-1" class="btn shadow-none btn-sm" :class="tag.id ? 'btn-primary' : 'btn-success'" @click="submitTag()">{{tag.id ? 'Save changes' : 'Submit'}}</button>
-                                </div>
+                                    <form @submit.prevent="submitTag()" class="form-floating mb-1">
+                                        <input type="text" class="form-control" id="tagname" placeholder="tag" v-model="tag.name">
+                                        <label for="tagname">Tag Name</label>
+                                    </form>
+                                    <div class="d-flex justify-content-end mb-3 pb-2 border-bottom">
+                                        <button tabindex="-1" class="btn shadow-none btn-outline-secondary btn-sm me-1" @click="tag.name = '', tag.id = ''">Clear Field</button>
+                                        <button tabindex="-1" class="btn shadow-none btn-sm" :class="tag.id ? 'btn-primary' : 'btn-success'" @click="submitTag()">{{tag.id ? 'Save changes' : 'Submit'}}</button>
+                                    </div>
+                                </template>
                                 <strong>Tags</strong>
                                 <div class="d-flex justify-content-between p-2 border-bottom tag-wrap" v-for="tag in tags[form.program_id]" :key="tag.id+'_tag'">
                                     <div class="w-75">{{tag.name}}</div>
                                     <div class="w-25 text-nowrap">
-                                        <i class="far fa-pencil-alt" @click="editTag(tag)"></i> |
-                                        <i class="far fa-trash-alt" @click="removeTag(tag.id)"></i>
+                                        <i v-if="inUserRole('workshop_tag_edit')" class="far fa-pencil-alt me-2" @click="editTag(tag)"></i> 
+                                        <i v-if="inUserRole('workshop_tag_delete')" class="far fa-trash-alt" @click="removeTag(tag.id)"></i>
                                     </div>
                                 </div>
                             </div>
@@ -406,9 +408,16 @@ export default {
         // With Total
         setSubprogramTitle(subp){
             return this.form.program_id == 1 ? subp.title_short : subp.title
+        },
+        // Roles
+        inUserRole(code){
+            var role = this.user.active_profile.roles.find(elem => elem.code == code)
+            return (role)
         }
     },
     computed: {
+        ...mapGetters('user', ['getAuthUser']),
+        user(){ return this.getAuthUser },
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
         ...mapGetters('common', ['getCommonIndicators']),

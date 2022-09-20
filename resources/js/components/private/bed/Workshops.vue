@@ -25,7 +25,7 @@
                 </div>
             </form>
             <template v-else>
-            <button class="btn btn-sm btn-success float-end" @click="resetForm()"><i class="fas fa-plus"></i></button>
+            <button v-if="inUserRole('workshop_add')" class="btn btn-sm btn-success float-end" @click="resetForm()"><i class="fas fa-plus"></i></button>
             <h4><strong>Planning Workshops</strong></h4><hr>
             <div class="d-flex justify-content-center workshop-accordions">
                 <div class="col-sm-8">
@@ -46,8 +46,8 @@
                                             <router-link @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Performance Indicators</li></router-link>
                                         </ul>
                                         <div class="actions">
-                                            <button style="min-width: 140.7px;" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
-                                            <button style="min-width: 140.7px;" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
+                                            <button style="min-width: 140.7px;" v-if="inUserRole('workshop_edit')" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
+                                            <button style="min-width: 140.7px;" v-if="inUserRole('workshop_delete')" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
                                         </div>
                                     </div>
                                 </div>
@@ -136,11 +136,18 @@ export default {
                 icon: icon,
                 title: msg
             })
+        },
+        // Roles
+        inUserRole(code){
+            var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
+            return (role)
         }
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshops']),
-        workshops(){ return this.getWorkshops }
+        workshops(){ return this.getWorkshops },
+        ...mapGetters('user', ['getAuthUser']),
+        authuser(){ return this.getAuthUser }
     },
     created(){
         this.fetchWorkshops().then(res => {

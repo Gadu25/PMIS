@@ -86,7 +86,7 @@
                             </div>
                         </template>
                         <div class="d-flex justify-content-end">
-                            <button class="btn btn-sm btn-primary" @click="syncRecords()"><i class="far fa-sync" :class="syncing ? 'fa-spin' : ''"></i> Sync</button>
+                            <button class="btn btn-sm btn-primary" v-if="inUserRole('annex_f_sync')" @click="syncRecords()"><i class="far fa-sync" :class="syncing ? 'fa-spin' : ''"></i> Sync</button>
                         </div>
                     </div>
                 </div>
@@ -648,6 +648,11 @@ export default {
                 })
             })
         },
+        // Roles
+        inUserRole(code){
+            var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
+            return (role)
+        }
     },
     computed: {
         ...mapGetters('annexf', ['getAnnexFs']),

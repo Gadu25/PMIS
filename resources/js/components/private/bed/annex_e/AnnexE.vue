@@ -29,7 +29,7 @@
                                     <option value="Approved">Approved</option>
                                     <option value="Submitted">Submitted</option>
                                 </select>
-                                <label for="Status">PI Status</label>
+                                <label for="Status">Status</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <select class="form-control" id="displayType" v-model="displaytype" @change="displaytypeChange()">
@@ -85,7 +85,7 @@
                                 </div>
                             </template>
                             <div class="d-flex justify-content-end">
-                                <button class="btn btn-sm btn-primary shadow-none" @click="syncRecords()">{{syncing ? 'Syncing...' : 'Sync'}} <i class="far fa-sync-alt" :class="syncing ? 'fa-spin' : ''"></i></button>
+                                <button class="btn btn-sm btn-primary shadow-none" v-if="inUserRole('annex_e_sync')" @click="syncRecords()">{{syncing ? 'Syncing...' : 'Sync'}} <i class="far fa-sync-alt" :class="syncing ? 'fa-spin' : ''"></i></button>
                             </div>
                         </div>
                     </div>
@@ -114,7 +114,7 @@
                                 {{(displaysyncstatus == 'New') ? 'Newly Added Projects!' : (displaysyncstatus == 'Draft' ? 'Drafts' : displaysyncstatus)}}
                             </span>
                         </div>
-                        <div class="table-responsive" style="height: 64vh">
+                        <div class="table-responsive" style="height: calc(100vh - 290px)">
                             <table class="table table-sm table-bordered table-hover">
                                 <thead class="text-center">
                                     <tr>
@@ -139,8 +139,8 @@
                                                         <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                         <td class="text-center" :rowspan="item.subs.length + 1">
                                                             <template v-if="checkUserDivision(item.project)">
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details')" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
                                                                 <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                 <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                             </template>
@@ -151,9 +151,9 @@
                                             <template v-else>
                                                 <template v-for="indicator in program.commonindicators" :key="'program_commonindicator_'+indicator.id">
                                                     <tr>
-                                                        <td>{{indicator.description}} </td>
+                                                        <td>{{indicator.description}}</td>
                                                         <td :rowspan="indicator.subindicators.length+1" class="text-center">
-                                                            <button class="btn btn-sm btn-outline-secondary min-100" v-if="indicator.tags.length == 0" @click="editFormTwo(indicator)" data-bs-target="#form2" data-bs-toggle="modal"><i class="far fa-pencil-alt"></i> Edit</button>
+                                                            <button class="btn btn-sm btn-outline-secondary min-100" v-if="indicator.tags.length == 0 && inUserRole('annex_e_edit_other_indicators')" @click="editFormTwo(indicator)" data-bs-target="#form2" data-bs-toggle="modal"><i class="far fa-pencil-alt"></i> Edit</button>
                                                         </td>
                                                     </tr>
                                                     <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
@@ -171,8 +171,8 @@
                                                             <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                             <td class="text-center" :rowspan="item.subs.length + 1">
                                                                 <template v-if="checkUserDivision(item.project)">
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details')" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
                                                                     <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                     <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                 </template>
@@ -187,8 +187,10 @@
                                                 <template v-else>
                                                     <template v-for="indicator in subprogram.commonindicators" :key="'program_commonindicator_'+indicator.id">
                                                         <tr>
-                                                            <td>{{indicator.description}} </td>
-                                                            <td :rowspan="indicator.subindicators.length+1"></td>
+                                                            <td>{{indicator.description}}</td>
+                                                            <td :rowspan="indicator.subindicators.length+1" class="text-center">
+                                                                <button class="btn btn-sm btn-outline-secondary min-100" v-if="indicator.tags.length == 0 && inUserRole('annex_e_edit_other_indicators')" @click="editFormTwo(indicator)" data-bs-target="#form2" data-bs-toggle="modal"><i class="far fa-pencil-alt"></i> Edit</button>
+                                                            </td>
                                                         </tr>
                                                         <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
                                                             <td><div class="ms-2">{{sub.description}}</div></td>
@@ -205,8 +207,8 @@
                                                                 <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                                 <td class="text-center" :rowspan="item.subs.length+1">
                                                                     <template v-if="checkUserDivision(item.project)">
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'indicator')"  v-if="!isForReview(item.status)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && !isForReview(item.status)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
                                                                         <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                         <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                     </template>
@@ -219,10 +221,12 @@
                                                         </template>
                                                     </template>
                                                     <template v-else>
-                                                        <template v-for="indicator in subprogram.commonindicators" :key="'program_commonindicator_'+indicator.id">
+                                                        <template v-for="indicator in cluster.commonindicators" :key="'program_commonindicator_'+indicator.id">
                                                             <tr>
-                                                                <td>{{indicator.description}} </td>
-                                                                <td :rowspan="indicator.subindicators.length+1"></td>
+                                                                <td>{{indicator.description}}</td>
+                                                                <td :rowspan="indicator.subindicators.length+1" class="text-center">
+                                                                    <button class="btn btn-sm btn-outline-secondary min-100" v-if="indicator.tags.length == 0 && inUserRole('annex_e_edit_other_indicators')" @click="editFormTwo(indicator)" data-bs-target="#form2" data-bs-toggle="modal"><i class="far fa-pencil-alt"></i> Edit</button>
+                                                                </td>
                                                             </tr>
                                                             <tr v-for="sub in indicator.subindicators" :key="'program_commonindicator_sub_'+sub.id">
                                                                 <td><div class="ms-2">{{sub.description}}</div></td>
@@ -1223,6 +1227,11 @@ export default {
                 this.editForm(res, 'details')
                 this.editmode = true
             })
+        },
+        // Roles
+        inUserRole(code){
+            var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
+            return (role)
         }
     },
     computed: {

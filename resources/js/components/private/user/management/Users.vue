@@ -468,7 +468,6 @@ export default {
 #tooltip {
   position: relative;
   display: inline-block;
-  cursor: help;
 }
 #tooltip #tooltiptext {
   visibility: hidden;
@@ -478,16 +477,19 @@ export default {
   text-align: center;
   padding: 8px;
   border-radius: 6px;
+  display: none;
  
   /* Position the tooltip text - see examples below! */
   position: absolute;
   z-index: 1;
   left: -160px;
+  top: -20px; 
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
 #tooltip:hover #tooltiptext {
   visibility: visible;
+  display: block;
 }
 .roles-container{
     overflow: auto;

@@ -2,7 +2,7 @@
     <h6 class="text-end fw-bold">Annex E</h6>
     <h6 class="text-center mb-3 fw-bold">CY {{workshop.year}} PHYSICAL PLAN </h6>
     <table class="table table-sm table-bordered">
-        <thead class="align-middle text-center">
+        <thead class="align-middle text-center bg-warning">
             <tr>
                 <th rowspan="3">Program / Project</th>
                 <th rowspan="3">Performance Indicators (PIs)</th>

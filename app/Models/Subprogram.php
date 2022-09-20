@@ -20,4 +20,8 @@ class Subprogram extends Model
     public function clusters(){
         return $this->hasMany(Cluster::class);
     }
+
+    public function projects(){
+        return $this->hasMany(Project::class);
+    }
 }
