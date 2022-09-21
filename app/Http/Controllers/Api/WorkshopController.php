@@ -38,6 +38,8 @@ use App\Models\Profile;
 use Auth;
 use DB;
 
+use Shuchkin\SimpleXLSXGen;
+
 class WorkshopController extends Controller
 {
     // Workshop
@@ -1235,5 +1237,298 @@ class WorkshopController extends Controller
             }
         }
         return $items;
+    }
+
+    // Export
+    public function exportxlsx($workshopId, $annex, $status, $filter, $id1, $id2, $id3){ // $annex = E or F
+        $workshop = Workshop::findOrFail($workshopId);
+        $this->formatWorkshop($workshop);
+        $year = (int) $workshop['year'];
+
+
+        $data = [];
+        $xlsxheader = $this->xlsxheader($annex, $year);
+        foreach($xlsxheader['header'] as $head){
+            array_push($data, $head);
+        }
+
+        $xlsxbody = $this->xlsxbody($annex, $workshopId, $status, $filter, $id1, $id2, $id3);
+
+        foreach($xlsxbody['body'] as $body){
+            array_push($data, $body);
+        }
+        
+        $filename = 'CY_'.$year.'_'.$annex.'_'.$status.'.xlsx';
+        $xlsx = SimpleXLSXGen::fromArray( $data );
+        foreach($xlsxheader['mergedcells'] as $merge){
+            $xlsx->mergeCells($merge);
+        }
+        foreach($xlsxbody['mergedcells'] as $merge){
+            $xlsx->mergeCells($merge);
+        }
+        $xlsx->downloadAs($filename); 
+    }
+
+    private function xlsxheader($annex, $year){
+        if($annex == 'annex-e'){
+            $header = [
+                ['<middle><center>Program/Project</center></middle>', 
+                 '<middle><center>Performance Indicators</center></middle>', 
+                 '<middle><center>Previous Year Accomplishments<br> CY '.$year.'</center></middle>', null , 
+                 '<middle><center>CY '.($year+1).'<br> Physical Targets</center></middle>',
+                 '<middle><center>CY '.($year+1).' Quarterly Physical Targets</center></middle>'],
+                [null, null,
+                '<middle><center>Actual</center></middle>',
+                '<middle><center>Estimate</center></middle>', null,
+                '<middle><center>1st</center></middle>',
+                '<middle><center>2nd</center></middle>',
+                '<middle><center>3rd</center></middle>',
+                '<middle><center>4th</center></middle>'],
+                [null, null, '<middle><center>Jan 1 - Sep 30</center></middle>', '<middle><center>Oct 1 - Dec 30</center></middle>']
+            ];
+            $mergedcells = [
+                'A1:A3',
+                'B1:B3',
+                'E1:E3',
+                'F2:F3',
+                'G2:G3',
+                'H2:H3',
+                'I2:I3',
+                'C1:D1',
+                'F1:I1',
+            ];
+            return ['header' => $header, 'mergedcells' => $mergedcells];
+        }
+        else{
+
+        }
+    }
+
+    private function xlsxbody($annex, $workshopId, $status, $filter, $id1, $id2, $id3){
+        $body = []; $mergedcells = [];
+        $programs = Program::with('subprograms.clusters')->get();
+        $query = $annex == 'annex-e' ? AnnexE::query() : AnnexF::query();
+
+        if($filter != 'none'){
+            $query = $annex == 'annex-e' ? 
+                $query->whereHas('project', function($q) use($filter, $id1, $id2, $id3){
+                    $this->filterquery($q, $filter, $id1, $id2, $id3);
+                }) : 
+                $query->whereHas('projects', function($q) use($filter, $id1, $id2, $id3){
+                    $this->filterquery($q, $filter, $id1, $id2, $id3);
+                });
+        }
+
+        $query = $annex == 'annex-e' ? 
+            $query->with(['project.leader', 'histories.profile.user', 'subs.subproject', 
+                'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
+                'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns']) :
+            $query->with(['projects.subprogram', 'projects.leader',
+                'histories.profile.user', 'funds', 'activities', 
+                'subs.activities', 'subs.funds', 'subs.subproject']);
+
+        $items = $query->where('workshop_id', $workshopId)->where('status', $status)->get();
+        $grouped = $annex == 'annex-e' ? 
+            $items->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']) :
+            $items->groupBy(['projects.0.program_id', 'projects.0.subprogram_id', 'projects.0.cluster_id']);
+
+        $ctr = 0; $defaultrow = 3;
+        foreach($programs as $program){
+            $programTitle = $this->appendBgColor($program->title, '#08f26e');
+            $items = $this->setItems($grouped, $program->id);
+            if(sizeof($items) > 0 || $this->childWithItem($program, $grouped, 'program')){
+                array_push($body, [$programTitle]); $ctr = $ctr+1;
+                array_push($mergedcells, $this->setMerge($defaultrow, $ctr));
+            }
+
+            $xlsxitems = $this->xlsxItems($items, $annex);
+            foreach($xlsxitems as $item){
+                array_push($body, $item);
+                $ctr = $ctr+1;
+            }
+            foreach($program->subprograms as $subprogram){
+                $items = $this->setItems($grouped, $program->id, $subprogram->id);
+                if(sizeof($items) > 0 || $this->childWithItem($subprogram, $grouped, $program->id)){
+                    array_push($body, ['<b>'.$subprogram->title.'</b>']); $ctr = $ctr+1;
+                    array_push($mergedcells, $this->setMerge($defaultrow, $ctr));
+                }
+                $xlsxitems = $this->xlsxItems($items, $annex);
+                foreach($xlsxitems as $item){
+                    array_push($body, $item);
+                    $ctr = $ctr+1;
+                }
+                if($program->id == 1 && $annex == 'annex-e'){
+                    $totalitems = $this->setTotal($items);
+                    $xlsxtotemitems = $this->xlsxTotalItems($totalitems);
+                    foreach($xlsxtotemitems as $item){
+                        array_push($body, $item);
+                        $ctr = $ctr+1;
+                    }
+                }
+                foreach($subprogram->clusters as $cluster){
+                    $items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
+                    if(sizeof($items) > 0){
+                        $clusterTitle = $this->appendBgColor($cluster->title, '#52B2BF');
+                        array_push($body, [$clusterTitle]); $ctr = $ctr+1;
+                        array_push($mergedcells, $this->setMerge($defaultrow, $ctr));
+                    }
+
+                    $xlsxitems = $this->xlsxItems($items, $annex);
+                    foreach($xlsxitems as $item){
+                        array_push($body, $item);
+                        $ctr = $ctr+1;
+                    }
+                }
+            }
+        }
+            
+        return ['body' => $body, 'mergedcells' => $mergedcells];
+    }
+
+    private function xlsxItems($items, $annex){
+        $results = [];
+        if($annex == 'annex-e'){
+            foreach($items as $item){
+                foreach($item->indicators as $key => $indicator){
+                    $title = $key == 0 ? $item->project->title : null;
+                    $array = [
+                        '<wraptext>'.$title.'</wraptext>',
+                        $indicator->description
+                    ];
+                    $details = $this->xlsxDetails($indicator->details);
+                    foreach($details as $detail){
+                        array_push($array, $detail);
+                    }
+                    array_push($results, $array);
+                }
+                foreach($item->subs as $sub){
+                    foreach($sub->indicators as $key => $indicator){
+                        $title = $key != 0 ? null : ($sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title));
+                        $array = [
+                            '<wraptext>'.$title.'</wraptext>',
+                            $indicator->description
+                        ];
+                        $details = $this->xlsxDetails($indicator->details);
+                        foreach($details as $detail){
+                            array_push($array, $detail);
+                        }
+                        array_push($results, $array);
+                    }
+                    if(sizeof($sub->indicators) == 0){
+                        $title = $sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title);
+                        $array = [
+                            '<wraptext>'.$title.'</wraptext>',
+                        ];
+                        array_push($results, $array);
+                    }
+                }
+            }
+        }
+        return $results;
+    }
+
+    private function xlsxDetails($details, $isTotal = false){
+        $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
+        $array = [];
+        foreach($columns as $column){
+            $num = null;
+            if($details !== null){
+                $num = $details[$column] == 0 ? null : $details[$column];
+            }
+            $num = $isTotal ? '<b>'.$num.'</b>' : $num;
+            array_push($array, $num);
+        }
+        return $array;
+    }
+
+    private function xlsxTotalItems($item){
+        $results = [];
+        foreach($item->indicators as $key => $indicator){
+            $title = $key == 0 ? $item->title : null;
+            $array = [
+                '<center><b>'.$title.'</b></center>',
+                '<b>'.$indicator->description.'</b>'
+            ];
+            $details = $this->xlsxDetails($indicator->details, true);
+            foreach($details as $detail){
+                array_push($array, $detail);
+            }
+            array_push($results, $array);
+        }
+        foreach($item->subs as $sub){
+            foreach($sub->indicators as $key => $indicator){
+                $title = $key != 0 ? null : ($sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title));
+                $array = [
+                    '<b>'.$title.'</b>',
+                    '<b>'.$indicator->description
+                ];
+                $details = $this->xlsxDetails($indicator->details, true);
+                foreach($details as $detail){
+                    array_push($array, $detail);
+                }
+                array_push($results, $array);
+            }
+            if(sizeof($sub->indicators) == 0){
+                $title = $sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title);
+                $array = [
+                    '<b>'.$title.'</b>',
+                ];
+                array_push($results, $array);
+            }
+        }
+        return $results;
+    }
+
+    private function childWithItem($parent, $grouped, $type){
+        if($type == 'program'){
+            foreach($parent->subprograms as $subprogram){
+                $items = $this->setItems($grouped, $parent->id, $subprogram->id);
+                if(sizeof($items) > 0){
+                    return true;
+                }
+                foreach($subprogram->clusters as $cluster){
+                    $items = $this->setItems($grouped, $parent->id, $subprogram->id, $cluster->id);
+                    if(sizeof($items) > 0){
+                        return true;
+                    }
+                }
+            }
+        }
+        else{
+            // Tried to replace $type with $id = '' for conditions, but its not working
+            foreach($parent->clusters as $cluster){
+                $items = $this->setItems($grouped, $type, $parent->id, $cluster->id);
+                if(sizeof($items) > 0){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private function formatTempTitle($title){
+        return $title == 'ms' ? 'MS' : ($title == 'phd' ? 'PhD' : $title);
+    }
+
+    private function filterquery($q, $filter, $id1, $id2, $id3){
+        if($filter == 'Program'){
+            if($id1 != 0){$q->where('program_id',     $id1);}
+            if($id2 != 0){$q->where('subprogram_id',  $id2);}
+            if($id3 != 0){$q->where('cluster_id',     $id3);}
+        }
+        else{
+            if($id1 != 0){$q->where('division_id', $id1);}
+            if($id2 != 0){$q->where('unit_id',     $id2);}
+            if($id3 != 0){$q->where('subunit_id',  $id3);}
+        }
+    }
+
+    private function appendBgColor($cell, $color){
+        return '<style bgcolor="'.$color.'">'.$cell.'</style>';
+    }
+
+    private function setMerge($defaultrow, $ctr){
+        $mergecellrow = $defaultrow+$ctr;
+        return 'A'.$mergecellrow.':I'.$mergecellrow;
     }
 }

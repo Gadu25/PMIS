@@ -63,6 +63,7 @@
     <div v-else>
         <router-view></router-view>
     </div>
+
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex'

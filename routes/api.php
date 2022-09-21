@@ -99,3 +99,5 @@ Route::prefix('/tag')->group(function(){
     Route::middleware('auth:sanctum')->put('/{id}', [TagController::class, 'update']);
     Route::middleware('auth:sanctum')->delete('/{id}', [TagController::class, 'destroy']);
 });
+
+Route::get('/export/{workshopId}/{annex}/{status}/{type}/{id1}/{id2}/{id}', [WorkshopController::class, 'exportxlsx']);

@@ -17,6 +17,7 @@
                 <div class="col-sm-3" v-if="filtershow">
                     <div class="card border-0 shadow mb-3">
                         <div class="card-body">
+                            <a :href="'/api/export/1/annex-e/'+displaysyncstatus+'/Program/1/0/0'" target="_blank" class="btn btn-sm btn-primary bg-gradient">Export</a>
                             <div class="d-flex justify-content-end mb-2">
                                 <button class="btn btn-sm btn-outline-secondary" @click="filtershow = false"><i class="fas fa-arrow-right"></i></button>
                             </div>
