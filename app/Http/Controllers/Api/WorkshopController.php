@@ -1127,7 +1127,7 @@ class WorkshopController extends Controller
         if($status != 'For Review' && $projectleader->id != $sender->activeProfile->id){
             $this->sendMessage($sender, $projectleader->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$projectleader->user->firstname.' '.$projectleader->user->lastname.'</li>';
-            $notified = $notified++;
+            $notified = $notified+1;
         }
         $query = Profile::query();
         $query = $query->with('user')->where('active', true);
@@ -1163,7 +1163,7 @@ class WorkshopController extends Controller
         if($recipient->id != $sender->activeProfile->id && $recipient->title_id != 7){
             $this->sendMessage($sender, $recipient->id, $message['title'], $message['body'], $link);
             $results = $results.'<li>'.$recipient->user->firstname.' '.$recipient->user->lastname.'</li>';
-            $notified = $notified++;
+            $notified = $notified+1;
         }
         
         return $notified > 0 ? $results.'</p>' : '';
@@ -1266,25 +1266,34 @@ class WorkshopController extends Controller
         foreach($xlsxbody['mergedcells'] as $merge){
             $xlsx->mergeCells($merge);
         }
+        $length = ($annex == 'annex-e') ? 8 : 19;
+        for ($x = 0; $x <= $length; $x++) {
+            if($annex == 'annex-e'){
+                $num = $x+1;
+                $width = $x > 1 ? 20 : 40;
+                $xlsx->setColWidth($num, $width);
+            }
+        }
+        // return $xlsxbody['body'];
         $xlsx->downloadAs($filename); 
     }
 
     private function xlsxheader($annex, $year){
         if($annex == 'annex-e'){
             $header = [
-                ['<middle><center>Program/Project</center></middle>', 
-                 '<middle><center>Performance Indicators</center></middle>', 
-                 '<middle><center>Previous Year Accomplishments<br> CY '.$year.'</center></middle>', null , 
-                 '<middle><center>CY '.($year+1).'<br> Physical Targets</center></middle>',
-                 '<middle><center>CY '.($year+1).' Quarterly Physical Targets</center></middle>'],
+                ['<middle><center><b>Program/Project</b></center></middle>', 
+                 '<middle><center><b>Performance Indicators</b></center></middle>', 
+                 '<middle><center><b>Previous Year Accomplishments<br> CY '.$year.'</b></center></middle>', null , 
+                 '<middle><center><b><wraptext>CY '.($year+1).'<br> Physical Targets</wraptext></b></center></middle>',
+                 '<middle><center><b>CY '.($year+1).' Quarterly Physical Targets</b></center></middle>'],
                 [null, null,
-                '<middle><center>Actual</center></middle>',
-                '<middle><center>Estimate</center></middle>', null,
-                '<middle><center>1st</center></middle>',
-                '<middle><center>2nd</center></middle>',
-                '<middle><center>3rd</center></middle>',
-                '<middle><center>4th</center></middle>'],
-                [null, null, '<middle><center>Jan 1 - Sep 30</center></middle>', '<middle><center>Oct 1 - Dec 30</center></middle>']
+                '<middle><center><b>Actual</b></center></middle>',
+                '<middle><center><b>Estimate</b></center></middle>', null,
+                '<middle><center><b>1st</b></center></middle>',
+                '<middle><center><b>2nd</b></center></middle>',
+                '<middle><center><b>3rd</b></center></middle>',
+                '<middle><center><b>4th</b></center></middle>'],
+                [null, null, '<middle><center><b>Jan 1 - Sep 30</b></center></middle>', '<middle><center><b>Oct 1 - Dec 30</b></center></middle>']
             ];
             $mergedcells = [
                 'A1:A3',
@@ -1309,15 +1318,13 @@ class WorkshopController extends Controller
         $programs = Program::with('subprograms.clusters')->get();
         $query = $annex == 'annex-e' ? AnnexE::query() : AnnexF::query();
 
-        if($filter != 'none'){
-            $query = $annex == 'annex-e' ? 
-                $query->whereHas('project', function($q) use($filter, $id1, $id2, $id3){
-                    $this->filterquery($q, $filter, $id1, $id2, $id3);
-                }) : 
-                $query->whereHas('projects', function($q) use($filter, $id1, $id2, $id3){
-                    $this->filterquery($q, $filter, $id1, $id2, $id3);
-                });
-        }
+        $query = $annex == 'annex-e' ? 
+            $query->whereHas('project', function($q) use($filter, $id1, $id2, $id3){
+                $this->filterquery($q, $filter, $id1, $id2, $id3);
+            }) : 
+            $query->whereHas('projects', function($q) use($filter, $id1, $id2, $id3){
+                $this->filterquery($q, $filter, $id1, $id2, $id3);
+            });
 
         $query = $annex == 'annex-e' ? 
             $query->with(['project.leader', 'histories.profile.user', 'subs.subproject', 
@@ -1332,15 +1339,41 @@ class WorkshopController extends Controller
             $items->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']) :
             $items->groupBy(['projects.0.program_id', 'projects.0.subprogram_id', 'projects.0.cluster_id']);
 
+        $cigrouped = [];
+        if($annex == 'annex-e'){
+            // get outcome and output
+            $query = CommonIndicator::query();
+            if($filter == 'Program'){
+                if($id1 != 0){$query = $query->where('program_id',    $id1);}
+                if($id2 != 0){$query = $query->where('subprogram_id', $id2);}
+                if($id3 != 0){$query = $query->where('cluster_id',    $id3);}
+            }
+            $commonindicators = $query->with(['details', 'tags', 'subindicators.details'])
+                ->whereNot('type', 'Performance')
+                ->where('workshop_id', $workshopId)
+                ->get();
+            $cigrouped = $commonindicators->groupBy(['program_id', 'subprogram_id', 'cluster_id']);
+        }
+
+
         $ctr = 0; $defaultrow = 3;
         foreach($programs as $program){
-            $programTitle = $this->appendBgColor($program->title, '#08f26e');
             $items = $this->setItems($grouped, $program->id);
             if(sizeof($items) > 0 || $this->childWithItem($program, $grouped, 'program')){
+                $programTitle = $this->appendBgColor('<b>'.$program->title.'</b>', '#08f26e');
                 array_push($body, [$programTitle]); $ctr = $ctr+1;
-                array_push($mergedcells, $this->setMerge($defaultrow, $ctr));
+                array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
             }
 
+            if($annex == 'annex-e'){
+                $otheritems = $this->setItems($cigrouped, $program->id);
+                $xlsxotheritems = $this->xlsxOtherItems($otheritems);
+                // return ['body' => $xlsxotheritems, 'mergedcells' => []];
+                foreach($xlsxotheritems as $item){
+                    array_push($body, $item); $ctr = $ctr+1;
+                    array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'B'));
+                }
+            }
             $xlsxitems = $this->xlsxItems($items, $annex);
             foreach($xlsxitems as $item){
                 array_push($body, $item);
@@ -1350,7 +1383,7 @@ class WorkshopController extends Controller
                 $items = $this->setItems($grouped, $program->id, $subprogram->id);
                 if(sizeof($items) > 0 || $this->childWithItem($subprogram, $grouped, $program->id)){
                     array_push($body, ['<b>'.$subprogram->title.'</b>']); $ctr = $ctr+1;
-                    array_push($mergedcells, $this->setMerge($defaultrow, $ctr));
+                    array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
                 }
                 $xlsxitems = $this->xlsxItems($items, $annex);
                 foreach($xlsxitems as $item){
@@ -1368,9 +1401,9 @@ class WorkshopController extends Controller
                 foreach($subprogram->clusters as $cluster){
                     $items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
                     if(sizeof($items) > 0){
-                        $clusterTitle = $this->appendBgColor($cluster->title, '#52B2BF');
+                        $clusterTitle = $this->appendBgColor('<b>'.$cluster->title.'</b>', '#52B2BF');
                         array_push($body, [$clusterTitle]); $ctr = $ctr+1;
-                        array_push($mergedcells, $this->setMerge($defaultrow, $ctr));
+                        array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
                     }
 
                     $xlsxitems = $this->xlsxItems($items, $annex);
@@ -1393,7 +1426,7 @@ class WorkshopController extends Controller
                     $title = $key == 0 ? $item->project->title : null;
                     $array = [
                         '<wraptext>'.$title.'</wraptext>',
-                        $indicator->description
+                        '<wraptext>'.$indicator->description.'</wraptext>'
                     ];
                     $details = $this->xlsxDetails($indicator->details);
                     foreach($details as $detail){
@@ -1406,7 +1439,7 @@ class WorkshopController extends Controller
                         $title = $key != 0 ? null : ($sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title));
                         $array = [
                             '<wraptext>'.$title.'</wraptext>',
-                            $indicator->description
+                            '<wraptext>'.$indicator->description.'</wraptext>'
                         ];
                         $details = $this->xlsxDetails($indicator->details);
                         foreach($details as $detail){
@@ -1427,7 +1460,7 @@ class WorkshopController extends Controller
         return $results;
     }
 
-    private function xlsxDetails($details, $isTotal = false){
+    private function xlsxDetails($details, $bold = false, $blue = false){
         $columns = ['actual', 'estimate', 'physical_targets', 'first', 'second', 'third', 'fourth'];
         $array = [];
         foreach($columns as $column){
@@ -1435,7 +1468,8 @@ class WorkshopController extends Controller
             if($details !== null){
                 $num = $details[$column] == 0 ? null : $details[$column];
             }
-            $num = $isTotal ? '<b>'.$num.'</b>' : $num;
+            $num = $bold ? '<b>'.$num.'</b>' : $num;
+            $num = $blue ? '<style color="#0000FF">'.$num.'</style>' : $num;
             array_push($array, $num);
         }
         return $array;
@@ -1447,7 +1481,7 @@ class WorkshopController extends Controller
             $title = $key == 0 ? $item->title : null;
             $array = [
                 '<center><b>'.$title.'</b></center>',
-                '<b>'.$indicator->description.'</b>'
+                '<b><wraptext>'.$indicator->description.'</wraptext></b>'
             ];
             $details = $this->xlsxDetails($indicator->details, true);
             foreach($details as $detail){
@@ -1459,8 +1493,8 @@ class WorkshopController extends Controller
             foreach($sub->indicators as $key => $indicator){
                 $title = $key != 0 ? null : ($sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title));
                 $array = [
-                    '<b>'.$title.'</b>',
-                    '<b>'.$indicator->description
+                    '<b><wraptext>'.$title.'</wraptext></b>',
+                    '<b><wraptext>'.$indicator->description.'</wraptext></b>'
                 ];
                 $details = $this->xlsxDetails($indicator->details, true);
                 foreach($details as $detail){
@@ -1471,8 +1505,35 @@ class WorkshopController extends Controller
             if(sizeof($sub->indicators) == 0){
                 $title = $sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title);
                 $array = [
-                    '<b>'.$title.'</b>',
+                    '<b><wraptext>'.$title.'</wraptext></b>',
                 ];
+                array_push($results, $array);
+            }
+        }
+        return $results;
+    }
+
+    private function xlsxOtherItems($indicators){
+        $results = [];
+        foreach($indicators as $key=>$indicator){
+            $title = '<style color="#0000FF"><b><wraptext>'.$indicator->description.'</wraptext></b></style>';
+            $array = [
+                $title, null
+            ];
+            $details = $this->xlsxDetails($indicator->details, true, true);
+            foreach($details as $detail){
+                array_push($array, $detail);
+            }
+            array_push($results, $array);
+            foreach($indicator->subindicators as $sub){
+                $title = '<style color="#0000FF"><wraptext>'.$sub->description.'</wraptext></style>';
+                $array = [
+                    $title, null
+                ];
+                $details = $this->xlsxDetails($sub->details, false, true);
+                foreach($details as $detail){
+                    array_push($array, $detail);
+                }
                 array_push($results, $array);
             }
         }
@@ -1527,8 +1588,10 @@ class WorkshopController extends Controller
         return '<style bgcolor="'.$color.'">'.$cell.'</style>';
     }
 
-    private function setMerge($defaultrow, $ctr){
-        $mergecellrow = $defaultrow+$ctr;
-        return 'A'.$mergecellrow.':I'.$mergecellrow;
+    private function setRowMerge($defaultrow, $ctr, $col1, $col2){
+        $row = $defaultrow+$ctr;
+        return $col1.$row.':'.$col2.$row;
     }
+
+    
 }

@@ -10,6 +10,8 @@
                 <div>
                     <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-2" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
                     <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary"><i class="far fa-print"></i> Print</button>
+                    <a v-if="!editmode && exportlink != ''" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient">Export XSLX</a>
+
                 </div>
                 <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
             </div>
@@ -17,7 +19,6 @@
                 <div class="col-sm-3" v-if="filtershow">
                     <div class="card border-0 shadow mb-3">
                         <div class="card-body">
-                            <a :href="'/api/export/1/annex-e/'+displaysyncstatus+'/Program/1/0/0'" target="_blank" class="btn btn-sm btn-primary bg-gradient">Export</a>
                             <div class="d-flex justify-content-end mb-2">
                                 <button class="btn btn-sm btn-outline-secondary" @click="filtershow = false"><i class="fas fa-arrow-right"></i></button>
                             </div>
@@ -664,7 +665,8 @@ export default {
             saving: false,
             // logs
             histories: [],
-            historyfor: ''
+            historyfor: '',
+            exportlink: ''
         }
     },
     methods: {
@@ -739,7 +741,17 @@ export default {
                 this.syncing = false
                 this.displaystatus = options.status
                 this.displaysyncstatus = options.status
+                this.setExportLink(options)
             })
+        },
+        setExportLink(options){
+            // /api/export/1/annex-e/New/Program/0/0/0
+            var ids = {
+                one:   options.type == 'Program' ? options.program_id    : options.division_id,
+                two:   options.type == 'Program' ? options.subprogram_id : options.unit_id,
+                three: options.type == 'Program' ? options.cluster_id    : options.subunit_id,
+            }
+            this.exportlink = '/api/export/'+options.workshopId+'/annex-e/'+options.status+'/'+options.type+'/'+ids.one+'/'+ids.two+'/'+ids.three
         },
         // Form
         submitForm(status){
