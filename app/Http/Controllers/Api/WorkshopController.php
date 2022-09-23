@@ -1259,7 +1259,7 @@ class WorkshopController extends Controller
         }
         
         $filename = 'CY_'.$year.'_'.$annex.'_'.$status.'.xlsx';
-        $xlsx = SimpleXLSXGen::fromArray( $data );
+        $xlsx = SimpleXLSXGen::fromArray( $data, $filename );
         foreach($xlsxheader['mergedcells'] as $merge){
             $xlsx->mergeCells($merge);
         }
@@ -1274,13 +1274,16 @@ class WorkshopController extends Controller
                 $xlsx->setColWidth($num, $width);
             }
         }
-        // return $xlsxbody['body'];
+        // return $xlsxbody['body'];\
         $xlsx->downloadAs($filename); 
     }
 
     private function xlsxheader($annex, $year){
         if($annex == 'annex-e'){
             $header = [
+                [null, null, null, null, null, null, null, null, '<b>Annex E</b>'],
+                ['<middle><center><b>CY '.$year.' PHYSICAL PLAN</b></center></middle>'],
+                [null],
                 ['<middle><center><b>Program/Project</b></center></middle>', 
                  '<middle><center><b>Performance Indicators</b></center></middle>', 
                  '<middle><center><b>Previous Year Accomplishments<br> CY '.$year.'</b></center></middle>', null , 
@@ -1296,15 +1299,16 @@ class WorkshopController extends Controller
                 [null, null, '<middle><center><b>Jan 1 - Sep 30</b></center></middle>', '<middle><center><b>Oct 1 - Dec 30</b></center></middle>']
             ];
             $mergedcells = [
-                'A1:A3',
-                'B1:B3',
-                'E1:E3',
-                'F2:F3',
-                'G2:G3',
-                'H2:H3',
-                'I2:I3',
-                'C1:D1',
-                'F1:I1',
+                'A2:I2',
+                'A4:A6',
+                'B4:B6',
+                'E4:E6',
+                'F5:F6',
+                'G5:G6',
+                'H5:H6',
+                'I5:I6',
+                'C4:D4',
+                'F4:I4',
             ];
             return ['header' => $header, 'mergedcells' => $mergedcells];
         }
@@ -1356,11 +1360,11 @@ class WorkshopController extends Controller
         }
 
 
-        $ctr = 0; $defaultrow = 3;
+        $ctr = 0; $defaultrow = 6;
         foreach($programs as $program){
             $items = $this->setItems($grouped, $program->id);
             if(sizeof($items) > 0 || $this->childWithItem($program, $grouped, 'program')){
-                $programTitle = $this->appendBgColor('<b>'.$program->title.'</b>', '#08f26e');
+                $programTitle = $this->appendBgColor('<b>'.$program->title.'</b>', '#92D050');
                 array_push($body, [$programTitle]); $ctr = $ctr+1;
                 array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
             }
@@ -1401,7 +1405,7 @@ class WorkshopController extends Controller
                 foreach($subprogram->clusters as $cluster){
                     $items = $this->setItems($grouped, $program->id, $subprogram->id, $cluster->id);
                     if(sizeof($items) > 0){
-                        $clusterTitle = $this->appendBgColor('<b>'.$cluster->title.'</b>', '#52B2BF');
+                        $clusterTitle = $this->appendBgColor('<b>'.$cluster->title.'</b>', '#BDD7EE');
                         array_push($body, [$clusterTitle]); $ctr = $ctr+1;
                         array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
                     }
@@ -1422,35 +1426,49 @@ class WorkshopController extends Controller
         $results = [];
         if($annex == 'annex-e'){
             foreach($items as $item){
+                $withindicator = false; $length = sizeof($item->indicators);
                 foreach($item->indicators as $key => $indicator){
-                    $title = $key == 0 ? $item->project->title : null;
+                    $title = !$withindicator ? $item->project->title : null;
                     $array = [
                         '<wraptext>'.$title.'</wraptext>',
-                        '<wraptext>'.$indicator->description.'</wraptext>'
                     ];
+                    if($indicator->details || !$indicator->common){
+                        array_push($array, '<wraptext>'.$indicator->description.'</wraptext>');
+                    }
                     $details = $this->xlsxDetails($indicator->details);
                     foreach($details as $detail){
                         array_push($array, $detail);
                     }
-                    array_push($results, $array);
+                    if($indicator->details || ($title && $withindicator) || $length == ($key+1) || !$indicator->common){
+                        array_push($results, $array);
+                        $withindicator = true;
+                    }
                 }
                 foreach($item->subs as $sub){
+                    $withindicator = false; $length = sizeof($item->indicators);
                     foreach($sub->indicators as $key => $indicator){
-                        $title = $key != 0 ? null : ($sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title));
+                        $title = $withindicator ? null : ($sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title));
+                        $title = $title != null ? '-   '.$title : null;
                         $array = [
-                            '<wraptext>'.$title.'</wraptext>',
-                            '<wraptext>'.$indicator->description.'</wraptext>'
+                            '<wraptext><i>'.$title.'</i></wraptext>',
                         ];
+                        if($indicator->details){
+                            array_push($array, '<wraptext>'.$indicator->description.'</wraptext>');
+                        }
                         $details = $this->xlsxDetails($indicator->details);
                         foreach($details as $detail){
                             array_push($array, $detail);
                         }
-                        array_push($results, $array);
+                        if($indicator->details || ($title && $withindicator) || $length == ($key+1) || !$indicator->common){
+                            array_push($results, $array);
+                            $withindicator = true;
+                        }
                     }
                     if(sizeof($sub->indicators) == 0){
                         $title = $sub->temp_title == null ? $sub->subproject->title : $this->formatTempTitle($sub->temp_title);
+                        $title = '-   '.$title;
                         $array = [
-                            '<wraptext>'.$title.'</wraptext>',
+                            '<wraptext><i>'.$title.'</i></wraptext>',
                         ];
                         array_push($results, $array);
                     }
@@ -1466,7 +1484,7 @@ class WorkshopController extends Controller
         foreach($columns as $column){
             $num = null;
             if($details !== null){
-                $num = $details[$column] == 0 ? null : $details[$column];
+                $num = $details[$column] == 0 ? null : number_format($details[$column], 0, ".", ",");
             }
             $num = $bold ? '<b>'.$num.'</b>' : $num;
             $num = $blue ? '<style color="#0000FF">'.$num.'</style>' : $num;

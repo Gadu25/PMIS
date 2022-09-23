@@ -8,10 +8,10 @@
         <template v-if="!loading">
             <div class="d-flex justify-content-between mb-2">
                 <div>
-                    <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-2" :class="printmode ? 'btn-success' : 'btn-secondary'" @click="printmode = !printmode">{{!printmode? 'Print' : 'Display'}} View</button>
-                    <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary"><i class="far fa-print"></i> Print</button>
-                    <a v-if="!editmode && exportlink != ''" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient">Export XSLX</a>
-
+                    <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-2" :class="printmode ? 'btn-secondary' : 'btn-outline-secondary'" @click="printmode = !printmode"><i v-if="printmode" class="far fa-arrow-left"></i> Export</button>
+                    <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary me-1"><i class="far fa-print"></i> Print or Save as PDF</button>
+                    <a v-if="!editmode && exportlink != '' && printmode" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient"><i class="far fa-file-excel"></i> Excel</a>
+                    <span v-else><small v-if="printmode"> if export excel missing, resync records</small></span>
                 </div>
                 <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
             </div>
@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div class="position-relative" :class="'col-sm-'+(filtershow ? '9': '12')">
-                    <button class="btn btn-sm btn-outline-secondary float-end ms-1" v-if="!filtershow" @click="filtershow = true"><i class="fas fa-arrow-left"></i></button>
+                    <button class="btn btn-sm btn-secondary position-absolute end-0" style="z-index: 999" v-if="!filtershow" @click="filtershow = true"><i class="fas fa-arrow-left"></i></button>
                     <!-- Display View -->
                     <template v-if="!editmode">
                         <div class="card border-0 shadow overflow-auto" :style="!printmode ? 'height: calc(100vh - 210px)' : ''">
@@ -833,10 +833,12 @@ export default {
             var state = false
             for(let i = 0; i < this.indcols.length; i++){
                 var col = this.indcols[i]
-                if(col != 'description'){
-                    var intcol = this.strToFloat(indicator[col])
-                    if(!state){
-                        state = (intcol > 0)
+                if(col !== 'description'){
+                    if(indicator[col]){
+                        var intcol = this.strToFloat(indicator[col])
+                        if(!state){
+                            state = (intcol > 0)
+                        }
                     }
                 }
             }
