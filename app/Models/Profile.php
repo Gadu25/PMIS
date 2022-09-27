@@ -34,6 +34,6 @@ class Profile extends Model
     }
 
     public function roles(){
-        return $this->belongsToMany(SidebarRole::class, 'profile_role', 'profile_id');
+        return $this->belongsToMany(SidebarRole::class, 'profile_role', 'profile_id')->orderBy('sidebar_item_id', 'asc');
     }
 }

@@ -27,9 +27,7 @@ Array.prototype.remove = function() {
     return this;
 };
 
-// import money from 'v-money3'
 import money from 'v-money'
-// import { Money3Component } from "v-money3";
 import App from './components/App.vue'
 
 const app = createApp(App)
@@ -38,9 +36,3 @@ app.use(store)
 app.use(print)
 app.use(money)
 app.mount("#app")
-
-// createApp(App)
-//     .use(router)
-//     .use(store)
-//     .use(print)
-//     .mount("#app")

@@ -184,29 +184,49 @@
                     <div class="modal-body">
                         <Roles v-if="modalmode == 'roles'" />
                         <!-- User Roles -->
-                        <div v-if="modalmode == 'user'" class="roles-container">
-                            <template v-for="item in sidebaritems" :key="item.id+'-sidebaritem'">
-                                <div v-if="item.roles.length > 0 && form.selectedKey !== ''">
-                                    <h6 class="text-center">{{item.name}}</h6>
-                                    <div class="row">
-                                        <div class="col-sm-6" v-for="role in item.roles" :key="item.id+'-sidebarrole-'+role.id">
-                                            <div class="form-check form-switch">
-                                                <input :value="role.id" class="form-check-input" type="checkbox" :id="role.code" v-model="form.profiles[form.selectedKey].roles">
-                                                <div class="form-check-label d-flex justify-content-between">
-                                                    <label :for="role.code">{{role.title}}</label>
-                                                    <div id="tooltip">
-                                                        <i class="far fa-question-circle " :id="role.id"></i>
-                                                        <span id="tooltiptext">{{role.description}}</span>
+                        <div v-if="modalmode == 'user'">
+                            <div class="mb-2">
+                                <button v-if="!copyroles" @click="copyroles = !copyroles" class="btn btn-sm btn-primary mb-1">Copy Roles</button>
+                                <template v-else>
+                                    <div class="form-floating mb-2">
+                                        <select class="form-control" id="CopyUser" v-model="copyuser">
+                                            <template v-for="division, div in users" :key="div">
+                                                <optgroup v-for="unit, unitname in division" :key="unitname" :label="(unitname != '' ? unitname : div)">
+                                                    <option :value="user" v-for="user in unit" :key="user.id">{{setUserOption(user)}}</option>
+                                                </optgroup>
+                                            </template>
+                                        </select>
+                                        <label for="CopyUser">Copy Roles From</label>
+                                    </div>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-sm btn-secondary me-1" @click="copyroles = !copyroles, copyuser = []">Cancel</button>
+                                        <button class="btn btn-sm btn-success" @click="copyUser()">Copy</button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="roles-container">
+                                <template v-for="item in sidebaritems" :key="item.id+'-sidebaritem'">
+                                    <div v-if="item.roles.length > 0 && form.selectedKey !== ''">
+                                        <h6 class="text-center">{{item.name}}</h6>
+                                        <div class="row border-bottom mb-2">
+                                            <div class="col-sm-6" v-for="role in item.roles" :key="item.id+'-sidebarrole-'+role.id">
+                                                <div class="form-check form-switch">
+                                                    <input :value="role.id" class="form-check-input" type="checkbox" :id="role.code" v-model="form.profiles[form.selectedKey].roles">
+                                                    <div class="form-check-label d-flex justify-content-between">
+                                                        <label :for="role.code">{{role.title}}</label>
+                                                        <div id="tooltip">
+                                                            <i class="far fa-question-circle " :id="role.id"></i>
+                                                            <span id="tooltiptext">{{role.description}}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </template>
+                                </template>
+                            </div>
                             <div class="d-flex justify-content-end mt-2">
-                                <button type="button" class="btn rounded-pill min-100 btn-secondary" data-bs-dismiss="modal">Done</button>
-
+                                <button type="button" class="btn rounded-pill min-100 btn-primary" data-bs-dismiss="modal">Save</button>
                             </div>
 
                         </div>
@@ -230,6 +250,7 @@ export default {
             synceddivision_id: 0,
             syncing: false,
             formshow: false,
+            copyroles: false,
             units: [],
             subunits: [],
             changepassword: false,
@@ -253,7 +274,8 @@ export default {
                 isSynced: false,
                 selectedKey: ''
             },
-            modalmode: 'logs'
+            modalmode: 'logs',
+            copyuser: []
         }
     },
     methods: {
@@ -403,6 +425,19 @@ export default {
                 this.subunits = unit.subunits
             }
         },
+        setUserOption(user){
+            var name = ''
+            name = user.firstname+' '+user.lastname +' ('+user.active_profile.title.name+')'
+            return name
+        },
+        copyUser(){
+            var form = this.form
+            var roles = this.copyuser.active_profile.roles
+            for(let i = 0; i < roles.length; i++){
+                var role = roles[i]
+                form.profiles[form.selectedKey].roles.push(role.id)
+            }
+        },
         // Toast
         toastMsg(icon, msg){
             toast.fire({
@@ -495,6 +530,6 @@ export default {
     overflow: auto;
     padding: 8px;
     overflow-x: hidden;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 320px);
 }
 </style>

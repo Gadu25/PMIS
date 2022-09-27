@@ -16,10 +16,13 @@
                 </div>
                 <div class="sidebar-body">
                     <router-link active-class="active" :to="{ name: 'Dashboard' }">Dashboard</router-link>
-                    <router-link active-class="active" :to="{ name: 'Divisions' }">Divisions and Units</router-link>
+                    <template v-for="val, key in auth.active_profile.groupedroles" :key="key">
+                        <router-link active-class="active" :to="{ name: setRouteName(key)}">{{key}}</router-link>
+                    </template>
+                    <!-- <router-link active-class="active" :to="{ name: 'Divisions' }">Divisions and Units</router-link>
                     <router-link active-class="active" :to="{ name: 'Programs' }">Programs and Projects</router-link>
                     <router-link active-class="active" :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
-                    <router-link active-class="active" :to="{ name: 'Users' }">User Management</router-link>
+                    <router-link active-class="active" :to="{ name: 'Users' }">User Management</router-link> -->
                     <a href="/login" @click="logout">Logout</a>
                 </div>
             </div>
@@ -69,6 +72,34 @@ export default {
                 })
             }
         },
+        setRouteName(name){
+            // Divisions and Units
+            // Programs and Projects
+            // Budget Executive Documents
+            // User Management
+            if(name == 'Divisions and Units'){
+                return 'Divisions'
+            }
+            if(name == 'Programs and Projects'){
+                return 'Programs'
+            }
+            if(name == 'Events Management'){
+                return 'Events'
+            }
+            if(name == 'Budget Executive Documents'){
+                return 'Workshops'
+            }
+            if(name == 'Resources and Publications'){
+                return 'Publications'
+            }
+            if(name == 'Reports'){
+                return 'Reports'
+            }
+            if(name == 'User Management'){
+                return 'Users'
+            }
+            return name
+        }
     },
     computed: {
         ...mapGetters('user', ['getAuthUser']),

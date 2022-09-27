@@ -129,8 +129,8 @@ class UserController extends Controller
 
     private function getUsers($divId = null){
         $users = $divId ? 
-            User::with(['profiles', 'division', 'unit', 'subunit'])->orderBy('id', 'asc')->where('division_id', $divId)->get() : 
-            User::with(['profiles', 'division', 'unit', 'subunit'])->orderBy('id', 'asc')->get();
+            User::with(['profiles', 'activeProfile.title', 'activeProfile.roles', 'division', 'unit', 'subunit'])->orderBy('id', 'asc')->where('division_id', $divId)->get() : 
+            User::with(['profiles', 'activeProfile.title', 'activeProfile.roles', 'division', 'unit', 'subunit'])->orderBy('id', 'asc')->get();
         foreach($users as $user){
             foreach($user->profiles as $profile){
                 $profile->title;

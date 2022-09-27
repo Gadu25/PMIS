@@ -1268,17 +1268,22 @@ class WorkshopController extends Controller
         }
         $length = ($annex == 'annex-e') ? 8 : 19;
         for ($x = 0; $x <= $length; $x++) {
+            $num = $x+1;
             if($annex == 'annex-e'){
-                $num = $x+1;
                 $width = $x > 1 ? 20 : 40;
                 $xlsx->setColWidth($num, $width);
             }
+            if($annex == 'annex-f'){
+                $width = $num == 1 ? 20 : ($num == 2 ? 8 : 15); 
+                $xlsx->setColWidth($num, $width);
+            }
         }
-        // return $xlsxbody['body'];\
+        // return $xlsxbody['body'];
         $xlsx->downloadAs($filename); 
     }
 
     private function xlsxheader($annex, $year){
+        $header = []; $mergedcells = [];
         if($annex == 'annex-e'){
             $header = [
                 [null, null, null, null, null, null, null, null, '<b>Annex E</b>'],
@@ -1310,11 +1315,32 @@ class WorkshopController extends Controller
                 'C4:D4',
                 'F4:I4',
             ];
-            return ['header' => $header, 'mergedcells' => $mergedcells];
         }
         else{
-
+            $header = [
+                ['Department of Science and Technology', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, '<b>Annex F</b>'],
+                ['<b>SCIENCE EDUCATION INSTITUE</b>'],
+                ['<style bgcolor="#FFFF00"><b>Schedule of FY '.($year+1).' Project Implementation'],
+                ['<middle><center><wraptext>Project Name / Activity</wraptext></center></middle>', '<middle><center><wraptext>Total Target (P"000)</wraptext></center></middle>', '<center>'.$year.'</center>', null, null, '<center>'.($year+1).'</center>', null, null, null, null, null, null, null, null, null, null, null, '<middle><center>Total</center><middle>', '<middle><center>Remarks</center></middle>'],
+                [null, null, '<center>4th</center>', null, null, '<center>1st</center>', null, null, '<center>2nd</center>', null, null, '<center>3rd</center>', null, null, '<center>4th</center>', null, null, null, null],
+                [null, null, '<center>Oct</center>', '<center>Nov</center>', '<center>Dec</center>', '<center>Jan</center>', '<center>Feb</center>', '<center>Mar</center>', '<center>Apr</center>', '<center>May</center>', '<center>Jun</center>', '<center>Jul</center>', '<center>Aug</center>', '<center>Sep</center>', '<center>Oct</center>', '<center>Nov</center>', '<center>Dec</center>', null, null]
+            ];
+            $mergedcells = [
+                'A3:S3',
+                'A4:A6',
+                'B4:B6',
+                'C4:E4',
+                'C5:E5',
+                'F4:Q4',
+                'F5:H5',
+                'I5:K5',
+                'L5:N5',
+                'O5:Q5',
+                'R4:R6',
+                'S4:S6'
+            ];
         }
+        return ['header' => $header, 'mergedcells' => $mergedcells];
     }
 
     private function xlsxbody($annex, $workshopId, $status, $filter, $id1, $id2, $id3){
@@ -1359,14 +1385,14 @@ class WorkshopController extends Controller
             $cigrouped = $commonindicators->groupBy(['program_id', 'subprogram_id', 'cluster_id']);
         }
 
-
         $ctr = 0; $defaultrow = 6;
         foreach($programs as $program){
+            $lastcell = $annex == 'annex-e' ? 'I' : 'S';
             $items = $this->setItems($grouped, $program->id);
             if(sizeof($items) > 0 || $this->childWithItem($program, $grouped, 'program')){
                 $programTitle = $this->appendBgColor('<b>'.$program->title.'</b>', '#92D050');
                 array_push($body, [$programTitle]); $ctr = $ctr+1;
-                array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
+                array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', $lastcell));
             }
 
             if($annex == 'annex-e'){
@@ -1387,7 +1413,7 @@ class WorkshopController extends Controller
                 $items = $this->setItems($grouped, $program->id, $subprogram->id);
                 if(sizeof($items) > 0 || $this->childWithItem($subprogram, $grouped, $program->id)){
                     array_push($body, ['<b>'.$subprogram->title.'</b>']); $ctr = $ctr+1;
-                    array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
+                    array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', $lastcell));
                 }
                 $xlsxitems = $this->xlsxItems($items, $annex);
                 foreach($xlsxitems as $item){
@@ -1407,7 +1433,7 @@ class WorkshopController extends Controller
                     if(sizeof($items) > 0){
                         $clusterTitle = $this->appendBgColor('<b>'.$cluster->title.'</b>', '#BDD7EE');
                         array_push($body, [$clusterTitle]); $ctr = $ctr+1;
-                        array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', 'I'));
+                        array_push($mergedcells, $this->setRowMerge($defaultrow, $ctr, 'A', $lastcell));
                     }
 
                     $xlsxitems = $this->xlsxItems($items, $annex);
@@ -1475,7 +1501,86 @@ class WorkshopController extends Controller
                 }
             }
         }
+        else{
+            foreach($items as $item){
+                $arrays = $this->xlsxSetActivities($item);
+                foreach($arrays as $array){
+                    array_push($results, $array);
+                }
+                array_push($results,$this->xlsxSetFunds($item->funds));
+                foreach($item->subs as $sub){
+                    $arrays = $this->xlsxSetActivities($sub, true);
+                    foreach($arrays as $array){
+                        array_push($results, $array);
+                    }
+                    array_push($results,$this->xlsxSetFunds($sub->funds));
+                }
+            }
+        }
         return $results;
+    }
+
+    private function xlsxSetActivities($item, $isSub = false){
+        $results = [];
+        if(!$isSub){
+            $project = $item->projects[0];
+            $title = (sizeof($item->projects) > 1) ? $project->subprogram->title : $project->title;
+        }
+        else{
+            $title = '<i>-    '.$item->subproject->title.'</i>';
+        }
+        $title = '<wraptext><top>'.$title.'</top></wraptext>';
+        $activitiesArray = [];
+        for($i = 0; $i <= 15; $i++){
+            $acts = [];
+            foreach($item->activities as $activity){
+                if($i == $activity->table_key){
+                    array_push($acts, $activity->description);
+                }
+            }
+            $activitiesArray[$i] = $acts;
+        }
+        $len = 0;
+        foreach($activitiesArray as $arr){
+            $arrSize = sizeof($arr);
+            $len = $arrSize > $len ? $arrSize : $len;
+        }
+        for($x = 0; $x < $len; $x++){
+            $array = $x == 0 ? [$title, null] : [null, null];
+            for($i = 0; $i < 15; $i++){
+                $actArray = $activitiesArray[$i];
+                $act = array_key_exists($x, $actArray) ? '<top><wraptext>'.$actArray[$x].'</wraptext></top>' : null;
+                array_push($array, $act);
+            }
+            if($x == 0){
+                array_push($array, null);
+                array_push($array, $item->remarks);
+            }
+            array_push($results, $array);
+        }
+        if($len == 0){
+            $array = [$title];
+            array_push($results, $array);
+        }
+        return $results;
+    }
+
+    private function xlsxSetFunds($funds){
+        $array = ['<style bgcolor="#FCE4D6"><center><b>Fundings</b></center></style>', '<style bgcolor="#FCE4D6"></style>'];
+        $total = 0;
+        for($i = 0; $i < 15; $i++){
+            $num = '';
+            foreach($funds as $fund){
+                if($fund->table_key == $i){
+                    $total = $total + $fund->amount;
+                    $num = number_format($fund->amount, 2, ".", ",");
+                }
+            }
+            array_push($array, '<style bgcolor="#FCE4D6">'.$num.'</style>');
+        }
+        $total = number_format($total, 2, ".", ",");
+        array_push($array, '<style bgcolor="#FCE4D6">'.$total.'</style>', '<style bgcolor="#FCE4D6"></style>');
+        return $array;
     }
 
     private function xlsxDetails($details, $bold = false, $blue = false){

@@ -8,9 +8,11 @@
         <template v-if="!loading">
             <div class="d-flex justify-content-between mb-2">
                 <div>
-                    <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-2" :class="printmode ? 'btn-secondary' : 'btn-outline-secondary'" @click="printmode = !printmode"><i v-if="printmode" class="far fa-arrow-left"></i> Export</button>
-                    <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary me-1"><i class="far fa-print"></i> Print or Save as PDF</button>
-                    <a v-if="!editmode && exportlink != '' && printmode" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient"><i class="far fa-file-excel"></i> Excel</a>
+                    <template v-if="inUserRole('annex_e_export')">
+                        <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-1" :class="printmode ? 'btn-secondary' : 'btn-outline-secondary'" @click="printmode = !printmode"><i v-if="printmode" class="far fa-arrow-left"></i> Export</button>
+                        <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary me-1"><i class="far fa-print"></i> Print or Save as PDF</button>
+                        <a v-if="!editmode && exportlink != '' && printmode" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient"><i class="far fa-file-excel"></i> Excel</a>
+                    </template>
                     <span v-else><small v-if="printmode"> if export excel missing, resync records</small></span>
                 </div>
                 <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>

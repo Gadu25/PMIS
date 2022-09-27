@@ -7,9 +7,11 @@
         </div>
         <div class="d-flex justify-content-between mb-2 ">
             <div> <!-- div needed for flex space between  -->
-                <template v-if="!editmode">
-                    <button class="btn btn-sm shadow-none min-100 me-2" :class="!printmode ? 'btn-secondary' : 'btn-success'" @click="printmode = !printmode">{{!printmode ? 'Print' : 'Display'}} View</button>
-                    <button class="btn btn-sm btn-outline-secondary" v-print="'#printMe'" v-if="printmode"><i class="far fa-print"></i> Print</button>
+                <template v-if="!editmode && inUserRole('annex_f_export')">
+                    <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-1" :class="printmode ? 'btn-secondary' : 'btn-outline-secondary'" @click="printmode = !printmode"><i v-if="printmode" class="far fa-arrow-left"></i> Export</button>
+                    <button class="btn btn-sm btn-outline-secondary me-1" v-print="'#printMe'" v-if="printmode"><i class="far fa-print"></i> Print or Save as PDF</button>
+                    <a v-if="!editmode && exportlink != '' && printmode" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient"><i class="far fa-file-excel"></i> Excel</a>
+                    <span v-else><small v-if="printmode"> if export excel missing, resync records</small></span>
                 </template>
             </div>
             <button class="btn btn-sm shadow-none" v-if="annexfs.length > 0 && !formshow" @click="editmode = !editmode, printmode = false" :class="!editmode? 'btn-success' : 'btn-primary'">{{editmode ? 'View' : 'Edit'}} mode</button>
@@ -318,6 +320,7 @@ export default {
                 precision: 2,
                 masked:    false /* doesn't work with directive */
             },
+            exportlink: ''
         }
     },
     methods: {
@@ -379,6 +382,7 @@ export default {
                     const items = await this.fetchAnnexFs(this.filter).then(res => {
                         this.syncing = false
                         this.syncedstatus = this.filter.status
+                        this.setExportLink(this.filter)
                         return res
                     })
                     var end = new Date().getTime();
@@ -387,6 +391,15 @@ export default {
                 }, time)
             })
             return promise
+        },
+        setExportLink(options){
+            // /api/export/1/annex-e/New/Program/0/0/0
+            var ids = {
+                one:   options.type == 'Program' ? (options.program_id ? options.program_id : 0)    : (options.division_id ? options.division_id : 0),
+                two:   options.type == 'Program' ? (options.subprogram_id ? options.program_id : 0) : (options.unit_id     ? options.unit_id : 0),
+                three: options.type == 'Program' ? (options.cluster_id ? options.program_id : 0)    : (options.subunit_id  ? options.subunit_id : 0),
+            }
+            this.exportlink = '/api/export/'+options.workshopId+'/annex-f/'+options.status+'/'+options.type+'/'+ids.one+'/'+ids.two+'/'+ids.three
         },
         // Form
         childClick(item, title, type){
