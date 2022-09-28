@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\Subproject;
 use App\Models\Staff;
+use App\Models\Program;
+use App\Models\Subprogram;
+use App\Models\Cluster;
 use DB;
 
 class ProjectController extends Controller
@@ -162,5 +165,25 @@ class ProjectController extends Controller
         $project->division_id = $request['division_id'];
         $project->unit_id = ($request['unit_id'] == 0) ? null : $request['unit_id'];
         $project->subunit_id = ($request['subunit_id'] == 0) ? null : $request['subunit_id'];
+    }
+
+    public function showSortedProjects($selected){
+        $program = Program::where('title', $selected)->get();
+        $subprogram = Subprogram::where('title', $selected)->get();
+        $cluster = Cluster::where('title', $selected)->get();
+        $projects = [];
+        $query = Project::query();
+        $query = $query->with(['program', 'subprogram', 'cluster', 'subprojects', 'leader.profile.user']);
+        if(sizeof($program) > 0){
+            $query = $query->where('program_id', $program[0]->id);
+        }
+        if(sizeof($subprogram) > 0){
+            $query = $query->where('subprogram_id', $subprogram[0]->id);
+        }
+        if(sizeof($cluster) > 0){
+            $query = $query->where('cluster_id', $cluster[0]->id);
+        }
+        $projects = $query->get();
+        return $projects;
     }
 }

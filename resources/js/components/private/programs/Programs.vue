@@ -533,7 +533,15 @@ export default {
                 this.loading = false
             })
         })
-    }
+    },
+    watch: {
+        $route: {
+            immediate: true,
+            handler(to, from) {
+                this.childSelected = (this.$route.name != 'Programs')
+            }
+        },
+    },
 }
 </script>
 <style scoped>

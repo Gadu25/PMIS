@@ -2,10 +2,12 @@ import axios from "axios";
 
 const state = {
     projects: [],
+    sortedprojects: []
 }
 
 const getters = {
     getProjects: (state) => state.projects,
+    getSortedProjects: (state) => state.sortedprojects,
 }
 
 const actions = {
@@ -22,11 +24,19 @@ const actions = {
             commit('setProjects', response.data.projects)
         }
         return response.data
+    },
+    async fetchSortedProjects({commit}, selected){
+        const response = await axios.get('/api/project/sort/'+selected).then(res => {
+            commit('setSortedProjects', res.data)
+            return res.data
+        })
+        return response
     }
 }
 
 const mutations = {
     setProjects: (state, data) => state.projects = data,
+    setSortedProjects: (state, data) => state.sortedprojects = data,
 }
 
 export default {

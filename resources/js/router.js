@@ -33,7 +33,7 @@ const routes = [
     { 
         path: '/programs-and-projects', name: 'Programs', component: Programs, meta: { requiresAuth: true, title: 'Programs and Projects' },
         children: [
-            { path: '/programs-and-projects/:selected', name: 'Projects', component: Projects, meta: { requiresAuth: true, title: 'Project' } },
+            { path: '/programs-and-projects/projects/:selected', name: 'Projects', component: Projects, meta: { requiresAuth: true, title: 'Projects' } },
         ]
     },
     { path: '/events-management', name: 'Events', component: Events, meta: { requiresAuth: true, title: 'Events Management' } },

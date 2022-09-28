@@ -1,7 +1,7 @@
 <template>
     <div>
         <h6 class="text-end fw-bold">Annex E</h6>
-        <h6 class="text-center mb-3 fw-bold">CY {{workshop.year}} PHYSICAL PLAN </h6>
+        <h6 class="text-center mb-3 fw-bold">CY {{parseInt(workshop.year)+1}} PHYSICAL PLAN </h6>
         <div class="table-responsive" :class="!printmode ? 'display' : ''" :style="!printmode ? 'font-size: 14px;' : 'font-size: 12px;'" v-dragscroll>
             <table class="table table-sm table-bordered" :style="!printmode ? 'width: 1500px' : ''">
                 <TableHead :syncing="syncing" :printmode="printmode" />

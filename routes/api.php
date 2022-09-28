@@ -45,6 +45,7 @@ Route::prefix('/program')->group(function(){
 
 Route::prefix('/project')->group(function(){
     Route::middleware('auth:sanctum')->get('/', [ProjectController::class, 'index']);
+    Route::middleware('auth:sanctum')->get('/sort/{selected}', [ProjectController::class, 'showSortedProjects']);
     Route::middleware('auth:sanctum')->post('/', [ProjectController::class, 'store']);
     Route::middleware('auth:sanctum')->post('/multiple', [ProjectController::class, 'storeMultiple']);
     Route::middleware('auth:sanctum')->put('/{id}', [ProjectController::class, 'update']);
