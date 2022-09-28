@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         // $this->call(DivisionSeeder::class);
         // $this->call(TitleSeeder::class);
         // $this->call(ProgramSeeder::class);
-        // $this->call(SuperadminSeeder::class);
         // $this->call(SidebarItemSeeder::class);
+        // $this->call(SuperadminSeeder::class);
     }
 }

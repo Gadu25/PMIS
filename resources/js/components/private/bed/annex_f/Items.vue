@@ -59,8 +59,9 @@ export default {
         getTotalAmount(funds){
             var total = 0
             for(let i = 0; i < funds.length; i++){
-                if(i > 2){
-                    var amount = this.strToFloat(fundArray[i].amount)
+                var fund = funds[i]
+                if(fund.table_key > 2){
+                    var amount = this.strToFloat(fund.amount)
                     total = total + Math.abs(amount)
                 }
             }

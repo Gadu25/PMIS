@@ -95,6 +95,9 @@ export default {
             if(name == 'Reports'){
                 return 'Reports'
             }
+            if(name == 'Strategic Planning'){
+                return 'StrategicPlanning'
+            }
             if(name == 'User Management'){
                 return 'Users'
             }
@@ -212,6 +215,7 @@ export default {
     background: white;
     height: calc(100% - 45px);
     overflow: auto;
+    overflow-x: hidden;
 }
 @media only screen and (max-width: 600px) {
     .body{

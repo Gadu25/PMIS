@@ -39,13 +39,13 @@
                             <div :id="'workshop'+workshop.id" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
                                     <div class="according-items">
-                                        <ul class="items">
+                                        <ul class="items" :style="!inUserRole('workshop_edit') && !inUserRole('workshop_delete') ? 'width: 100% !important' : ''">
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexE', params: { workshopId: workshop.id } }"><li>Annex E</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
-                                            <router-link @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
-                                            <router-link @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Performance Indicators</li></router-link>
+                                            <router-link v-if="isUserPlanningUnit()" @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
+                                            <router-link v-if="isUserPlanningUnit()" @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Performance Indicators</li></router-link>
                                         </ul>
-                                        <div class="actions">
+                                        <div class="actions" v-if="inUserRole('workshop_edit') || inUserRole('workshop_delete')">
                                             <button style="min-width: 140.7px;" v-if="inUserRole('workshop_edit')" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
                                             <button style="min-width: 140.7px;" v-if="inUserRole('workshop_delete')" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
                                         </div>
@@ -142,6 +142,12 @@ export default {
         inUserRole(code){
             var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
             return (role)
+        },
+        isUserPlanningUnit(){
+            var unit = this.authuser.unit
+            if(unit){
+                return unit.name.includes('Planning')
+            }
         }
     },
     computed: {

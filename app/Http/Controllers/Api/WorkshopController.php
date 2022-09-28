@@ -452,16 +452,47 @@ class WorkshopController extends Controller
                             $numId  = ($num == 1) ? 'fid'   : (($num == 2) ? 'sid'    : 'tid');
                             $numKey = ($num == 1) ? 'first' : (($num == 2) ? 'second' : 'third');
                             $existingBreakdown = ($bd[$numId]);
+                            $quarter = $bd['quarter'];
+                            $number = $bd[$numKey];
                             $breakdown = ($existingBreakdown) ? IndicatorBreakdown::findOrFail($bd[$numId]) : new IndicatorBreakdown; 
-                            if($this->formatAmount($bd[$numKey]) > 0){
-                                $breakdown->quarter = $bd['quarter'];
+                            if($this->formatAmount($number) > 0){
+                                $breakdown->quarter = $quarter;
                                 $breakdown->month = $num;
-                                $breakdown->number = $bd[$numKey];
+                                $breakdown->number = $number;
                                 $performanceindicator->breakdowns()->save($breakdown);
                             }
                             else{
                                 if($existingBreakdown){
                                     $breakdown->delete();
+                                }
+                            }
+                            
+                            if($performanceindicator->common){
+                                // set activity details
+                                $table_key = ($quarter+($num-1)) + ($quarter*2);
+                                $description =  $indicator['description'];
+                                // find annex f item
+                                $annexe = $performanceindicator->item;
+                                $project = $annexe->project;
+                                $annexf = AnnexF::whereHas('projects', function($q) use($project){
+                                    $q->where('id', $project->id);
+                                })->where('workshop_id', $annexe->workshop_id)->first();
+                                // check if activity already exists
+                                $existingActivity = false;
+                                foreach($annexf->activities as $activity){
+                                    if(!$existingActivity){
+                                        $existingActivity = (str_contains($activity->description, $description) && $activity->table_key == $table_key) ? $activity : false;
+                                    }
+                                }
+                                $activity = $existingActivity ? $existingActivity : new AnnexFActivity;
+                                $activity->description = $description.': '.$number;
+                                $activity->table_key = $table_key;
+
+                                if($this->formatAmount($number) > 0){
+                                    $annexf->activities()->save($activity);
+                                }
+                                if($this->formatAmount($number) == 0 && $existingActivity){
+                                    $annexf->activities()->delete($activity);
                                 }
                             }
                         }
@@ -1321,23 +1352,24 @@ class WorkshopController extends Controller
                 ['Department of Science and Technology', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, '<b>Annex F</b>'],
                 ['<b>SCIENCE EDUCATION INSTITUE</b>'],
                 ['<style bgcolor="#FFFF00"><b>Schedule of FY '.($year+1).' Project Implementation'],
+                [null],
                 ['<middle><center><wraptext>Project Name / Activity</wraptext></center></middle>', '<middle><center><wraptext>Total Target (P"000)</wraptext></center></middle>', '<center>'.$year.'</center>', null, null, '<center>'.($year+1).'</center>', null, null, null, null, null, null, null, null, null, null, null, '<middle><center>Total</center><middle>', '<middle><center>Remarks</center></middle>'],
                 [null, null, '<center>4th</center>', null, null, '<center>1st</center>', null, null, '<center>2nd</center>', null, null, '<center>3rd</center>', null, null, '<center>4th</center>', null, null, null, null],
                 [null, null, '<center>Oct</center>', '<center>Nov</center>', '<center>Dec</center>', '<center>Jan</center>', '<center>Feb</center>', '<center>Mar</center>', '<center>Apr</center>', '<center>May</center>', '<center>Jun</center>', '<center>Jul</center>', '<center>Aug</center>', '<center>Sep</center>', '<center>Oct</center>', '<center>Nov</center>', '<center>Dec</center>', null, null]
             ];
             $mergedcells = [
                 'A3:S3',
-                'A4:A6',
-                'B4:B6',
-                'C4:E4',
+                'A5:A7',
+                'B5:B7',
                 'C5:E5',
-                'F4:Q4',
-                'F5:H5',
-                'I5:K5',
-                'L5:N5',
-                'O5:Q5',
-                'R4:R6',
-                'S4:S6'
+                'C6:E6',
+                'F5:Q5',
+                'F6:H6',
+                'I6:K6',
+                'L6:N6',
+                'O6:Q6',
+                'R5:R7',
+                'S5:S7'
             ];
         }
         return ['header' => $header, 'mergedcells' => $mergedcells];
@@ -1385,7 +1417,7 @@ class WorkshopController extends Controller
             $cigrouped = $commonindicators->groupBy(['program_id', 'subprogram_id', 'cluster_id']);
         }
 
-        $ctr = 0; $defaultrow = 6;
+        $ctr = 0; $defaultrow = $annex == 'annex-e' ? 6 : 7;
         foreach($programs as $program){
             $lastcell = $annex == 'annex-e' ? 'I' : 'S';
             $items = $this->setItems($grouped, $program->id);
@@ -1572,7 +1604,7 @@ class WorkshopController extends Controller
             $num = '';
             foreach($funds as $fund){
                 if($fund->table_key == $i){
-                    $total = $total + $fund->amount;
+                    $total = ($i > 2) ? $total + $fund->amount : $total;
                     $num = number_format($fund->amount, 2, ".", ",");
                 }
             }

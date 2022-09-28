@@ -1,7 +1,7 @@
 <template>
     <div class="px-3 py-4">
         <button class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
-        <h2 class="text-center">Annex One</h2>
+        <h2 class="text-center">Annex 1</h2>
         <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small><hr>
         <template v-if="!loading">
             <div class="d-flex justify-content-end">

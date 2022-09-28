@@ -145,9 +145,9 @@
                                                             <template v-if="checkUserDivision(item.project)">
                                                                 <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
                                                                 <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details')" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                 <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                             </template>
+                                                            <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                         </td>
                                                     </tr>
                                                 </template>
@@ -177,9 +177,9 @@
                                                                 <template v-if="checkUserDivision(item.project)">
                                                                     <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
                                                                     <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details')" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                     <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                 </template>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                             </td>
                                                         </tr>
                                                         <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -213,9 +213,9 @@
                                                                     <template v-if="checkUserDivision(item.project)">
                                                                         <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
                                                                         <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && !isForReview(item.status)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                         <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                     </template>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                 </td>
                                                             </tr>
                                                             <tr v-for="sub in item.subs" :key="'sub_'+sub.id">

@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Models\Division;
 use App\Models\Unit;
 use App\Models\Title;
+use App\Models\SidebarRole;
 
 class SuperadminSeeder extends Seeder
 {
@@ -39,5 +40,12 @@ class SuperadminSeeder extends Seeder
         $profile->title_id = $title->id;
         $profile->access_level = 'Admin';
         $profile->save();
+
+        $dbroles = SidebarRole::all();
+        $rolesArray = [];
+        foreach($dbroles as $role){
+            array_push($rolesArray, $role->id);
+        }
+        $profile->roles()->sync($rolesArray);
     }
 }

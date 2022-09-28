@@ -182,6 +182,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <Logs v-if="modalmode == 'logs'" />
                         <Roles v-if="modalmode == 'roles'" />
                         <!-- User Roles -->
                         <div v-if="modalmode == 'user'">
@@ -238,11 +239,12 @@
 </template>
 <script>
 import Roles from './Roles.vue'
+import Logs from './Logs.vue'
 import { mapActions, mapGetters } from 'vuex'
 export default {
     name: 'Users',
     components: {
-        Roles
+        Roles, Logs
     },
     data(){
         return {

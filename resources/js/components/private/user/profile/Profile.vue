@@ -9,9 +9,22 @@
         </div>
         <div class="details">
             <div class="main-container">
-                <div class="card">
+                <div class="mb-2">
+                    <button @click="tab = 'projects'"   class="btn btn-sm shadow-none me-1" :class="tab == 'projects' ? 'btn-secondary' : 'btn-outline-secondary'">Projects</button>
+                    <button @click="tab = 'activities'" class="btn btn-sm shadow-none" :class="tab == 'activities' ? 'btn-secondary' : 'btn-outline-secondary'">Activities</button>
+                </div>
+                <div class="card" id="activities" v-if="tab == 'activities'">
                     <div class="card-body">
                         User Activities. Coming soon...
+                    </div>
+                </div>
+                <div class="projects-container" v-if="tab == 'projects'">
+                    <div class="col-sm-3 px-1" v-for="data in authuser.active_profile.leader_of" :key="data.id">
+                        <div class="card shadow" style="height: 130px;">
+                            <div class="card-body">
+                                {{data.project.title}}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -44,7 +57,8 @@ export default {
     name: 'Profile',
     data(){
         return {
-            shownotification: false
+            shownotification: false,
+            tab: 'projects'
         }
     },
     methods: {
@@ -188,6 +202,16 @@ export default {
         margin-top: 4px;
         font-style: italic;
     }
+
+    .projects-container{
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .projects-container>div{
+        /* padding: 0 0; */
+        cursor: pointer;
+    }
+
     @media only screen and (max-width: 600px) {
         .gen-info>h4{
             margin-bottom: 12px;

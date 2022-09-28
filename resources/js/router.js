@@ -20,6 +20,8 @@ import Publications from './components/private/publications/Publications.vue'
 
 import Reports from './components/private/reports/Reports.vue'
 
+import StrategicPlanning from './components/private/strategic_planning/StrategicPlanning.vue'
+
 import Users from './components/private/user/management/Users.vue'
 import Profile from './components/private/user/profile/Profile.vue'
 
@@ -46,6 +48,7 @@ const routes = [
     },
     { path: '/resources-and-publications', name: 'Publications', component: Publications, meta: { requiresAuth: true, title: 'Resources and Publications' } },
     { path: '/reports', name: 'Reports', component: Reports, meta: { requiresAuth: true, title: 'Reports' } },
+    { path: '/reports', name: 'StrategicPlanning', component: StrategicPlanning, meta: { requiresAuth: true, title: 'Strategic Planning' } },
     { path: '/users-management', name: 'Users', component: Users, meta: { requiresAuth: true, title: 'User Management' } },
     { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, title: 'Profile'} }
 ]

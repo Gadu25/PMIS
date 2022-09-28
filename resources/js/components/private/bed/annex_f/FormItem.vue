@@ -4,9 +4,9 @@
             <td><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
             <td :class="checkUserDivision(item.projects) ? 'btns' : ''">
                 <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" v-if="checkUserDivision(item.projects) && inUserRole('annex_f_edit_details')"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
-                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"  v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                 <!-- <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
             </td>
+            <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"  v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
         </tr>
         <tr v-for="sub in item.subs" :key="sub.id+'sub-item'">
             <td colspan="2"><div class="fs-14 fst-italic ms-4">{{sub.subproject.title}}</div></td>

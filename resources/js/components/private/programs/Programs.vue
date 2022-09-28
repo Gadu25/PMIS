@@ -156,7 +156,7 @@
                                                 </select>
                                                 <label for="DisplayType">Type</label>
                                             </div>
-                                            <template v-if="displaytype == 'program'">
+                                            <template v-if="displaytype == 'division'">
                                                 <div class="form-floating mb-3">
                                                     <select class="form-select" id="Division">
                                                         <option :value="0">Any Division</option>

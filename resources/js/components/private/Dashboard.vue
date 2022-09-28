@@ -1,5 +1,5 @@
 <template>
-    <div class="px-5 pt-4">
+    <div class="px-5 pt-4 main-container">
         <h2 class="text-center">Project Management Information System</h2>
             <h3>Mandates (per EO 128)</h3>
             <ul>
@@ -28,5 +28,8 @@ export default {
 }
 </script>
 <style scoped>
-
+.main-container{
+    height: calc(100vh - 45px);
+    overflow: auto;
+}
 </style>
