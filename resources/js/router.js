@@ -7,6 +7,7 @@ import Divisions from './components/private/divisions/Divisions.vue'
 
 import Programs from './components/private/programs/Programs.vue'
 import Projects from './components/private/programs/Projects.vue'
+import Portfolio from './components/private/programs/Portfolio.vue'
 
 import Events from './components/private/events/Events.vue'
 
@@ -34,6 +35,7 @@ const routes = [
         path: '/programs-and-projects', name: 'Programs', component: Programs, meta: { requiresAuth: true, title: 'Programs and Projects' },
         children: [
             { path: '/programs-and-projects/projects/:selected', name: 'Projects', component: Projects, meta: { requiresAuth: true, title: 'Projects' } },
+            { path: '/programs-and-projects/projects/portfolio/:id', name: 'Portfolio', component: Portfolio, meta: { requiresAuth: true, title: 'Project Portfolio' } },
         ]
     },
     { path: '/events-management', name: 'Events', component: Events, meta: { requiresAuth: true, title: 'Events Management' } },

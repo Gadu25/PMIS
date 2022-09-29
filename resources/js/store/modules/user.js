@@ -4,14 +4,16 @@ const state = {
     user: [],
     users: [],
     authUser: [],
-    titles: []
+    titles: [],
+    staffs: [],
 }
 
 const getters = {
     getUser: (state) => state.user,
     getUsers: (state) => state.users,
     getAuthUser: (state) => state.authUser,
-    getTitles: (state) => state.titles
+    getTitles: (state) => state.titles,
+    getStaffs: (state) => state.staffs,
 }
 
 const actions = {
@@ -82,6 +84,14 @@ const actions = {
         commit('setUser', [])
         window.location.replace('/login')
     },
+    // Staff functions
+    async fetchStaffs({commit}){
+        const response = await axios.get('/api/user/staff').then(res => {
+            commit('setStaffs', res.data)
+            return res.data
+        })
+        return response
+    }
 }
 
 const mutations = {
@@ -89,6 +99,7 @@ const mutations = {
     setUsers: (state, data) => state.users = data,
     setAuthUser: (state, data) => state.authUser = data,
     setTitles: (state, data) => state.titles = data,
+    setStaffs: (state, data) => state.staffs = data,
 }
 
 export default {

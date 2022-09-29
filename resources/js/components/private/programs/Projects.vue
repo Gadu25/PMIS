@@ -19,7 +19,7 @@
                                 <span v-if="project.cluster"><strong>Cluster: </strong> {{project.cluster.title}}<br></span>
                                 <span><strong>Project Leader: </strong> {{setProjectLeaderName(project.leader.profile.user)}}</span>
                                 <div class="d-flex justify-content-end border-top pt-2 mt-2">
-                                    <button class="btn btn-sm btn-outline-secondary">View Portfolio</button>
+                                    <router-link :to="{ name: 'Portfolio', params: { id: project.id } }" class="btn btn-sm btn-outline-secondary">View Portfolio</router-link>
                                 </div>
                             </div>
                         </div>

@@ -1,11 +1,13 @@
 import axios from "axios";
 
 const state = {
+    project: [],
     projects: [],
     sortedprojects: []
 }
 
 const getters = {
+    getProject: (state) => state.project,
     getProjects: (state) => state.projects,
     getSortedProjects: (state) => state.sortedprojects,
 }
@@ -31,10 +33,25 @@ const actions = {
             return res.data
         })
         return response
+    },
+    async fetchProject({commit}, id){
+        const response = await axios.get('/api/project/'+id).then(res => {
+            commit('setProject', res.data)
+            return res.data
+        })
+        return response
+    },
+    async updatePortfolio({commit}, form){
+        const response = await axios.put('/api/project/portfolio/'+form.id, form).then(res => {
+            commit('setProject', res.data)
+            return res.data
+        })
+        return response
     }
 }
 
 const mutations = {
+    setProject: (state, data) => state.project = data,
     setProjects: (state, data) => state.projects = data,
     setSortedProjects: (state, data) => state.sortedprojects = data,
 }

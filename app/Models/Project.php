@@ -10,7 +10,7 @@ class Project extends Model
     use HasFactory;
 
     protected $fillables = [
-        'num', 'title', 'status', 'program_id', 'subprogram_id', 'cluster_id', 'division_id', 'unit_id', 'subunit_id'
+        'num', 'title', 'status', 'program_id', 'subprogram_id', 'cluster_id', 'division_id', 'unit_id', 'subunit_id', 'description'
     ];
 
     public function program(){

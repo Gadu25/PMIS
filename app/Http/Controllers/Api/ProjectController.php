@@ -19,7 +19,11 @@ class ProjectController extends Controller
     }
 
     public function show($id){
-        return Project::findOrFail($id);
+        return $this->getProject($id);
+    }
+
+    private function getProject($id){
+        return Project::with('leader.profile.user', 'encoders.profile.user')->where('id', $id)->first();
     }
 
     public function store(Request $request){
@@ -34,6 +38,7 @@ class ProjectController extends Controller
             $project->num = $proj['num'];
             $project->status = $proj['status'];
             $project->title = $proj['title'];
+            $project->description = $proj['description'];
             $this->saveIds($project, $request);
             $project->save();
 
@@ -185,5 +190,44 @@ class ProjectController extends Controller
         }
         $projects = $query->get();
         return $projects;
+    }
+
+    public function updatePortfolio(Request $request, $id){
+        $project = Project::findOrFail($id);
+        $project->description = $request['description'];
+        $project->save();
+
+        $leader = $request['leader'];
+        if($project->leader->profile->id != $leader['profile_id']){
+            $project->leader()->delete();
+            $newLeader = new Staff;
+            $newLeader->profile_id = $leader['profile_id'];
+            $newLeader->type = 'Leader';
+            $newLeader->project_id = $project->id;
+            $newLeader->save();
+        }
+
+        $encoders = $request['encoders'];
+        $initialEncoders = $project->encoders;
+        $ids = [];
+
+        foreach($encoders as $enc){
+            $encoder = $enc['id'] ? Staff::findOrFail($enc['id']) : new Staff;
+            $encoder->type = 'Encoder';
+            $encoder->profile_id = $enc['profile_id'];
+            $encoder->project_id = $project->id;
+            $encoder->save();
+
+            array_push($ids, $encoder->id);
+        }
+
+        foreach($initialEncoders as $encoder){
+            if(!in_array($encoder->id, $ids)){
+                $encoder->delete();
+            }
+        }
+
+
+        return $this->getProject($id);
     }
 }

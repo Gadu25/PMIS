@@ -33,6 +33,10 @@ Route::prefix('/user')->group(function(){
         Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'updateSidebarRole']);
         Route::middleware('auth:sanctum')->delete('/{id}', [UserController::class, 'destroySidebarRole']);
     });
+
+    Route::prefix('/staff')->group(function(){
+        Route::middleware('auth:sanctum')->get('/', [UserController::class, 'getStaffs']);
+    });
 });
 
 Route::prefix('/division')->group(function(){
@@ -45,10 +49,12 @@ Route::prefix('/program')->group(function(){
 
 Route::prefix('/project')->group(function(){
     Route::middleware('auth:sanctum')->get('/', [ProjectController::class, 'index']);
+    Route::middleware('auth:sanctum')->get('/{id}', [ProjectController::class, 'show']);
     Route::middleware('auth:sanctum')->get('/sort/{selected}', [ProjectController::class, 'showSortedProjects']);
     Route::middleware('auth:sanctum')->post('/', [ProjectController::class, 'store']);
     Route::middleware('auth:sanctum')->post('/multiple', [ProjectController::class, 'storeMultiple']);
     Route::middleware('auth:sanctum')->put('/{id}', [ProjectController::class, 'update']);
+    Route::middleware('auth:sanctum')->put('/portfolio/{id}', [ProjectController::class, 'updatePortfolio']);
     Route::middleware('auth:sanctum')->delete('/{id}', [ProjectController::class, 'destroy']);
 });
 

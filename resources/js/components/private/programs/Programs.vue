@@ -110,6 +110,11 @@
                                                     <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="subp.title">
                                                     <label for="floatingInput">Sub-Project Title</label>
                                                 </div>
+                                                <strong>Description</strong>
+                                                <div class="form-floating mb-3">
+                                                    <textarea class="form-control" id="floatingInput" placeholder=" " style="height: 100px" v-model="project.description"></textarea>
+                                                    <label for="floatingInput">Brief Description</label>
+                                                </div>
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <strong>Staff</strong>
                                                     <div>
@@ -278,6 +283,7 @@ export default {
                     title: '', 
                     num: this.setUID(), 
                     status: 'New', 
+                    description: '',
                     subprojects: [], 
                     staffs: [{ id: '', profile_id: 0, type: 'Leader' }],
                     selectedStaffs: [] 
@@ -307,6 +313,7 @@ export default {
             var formproject = form.projects[0]
 
             formproject.title = project.title
+            formproject.description = project.description
             formproject.num = project.num
             formproject.status = project.status
 
