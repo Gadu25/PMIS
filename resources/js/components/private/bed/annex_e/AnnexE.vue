@@ -1089,7 +1089,7 @@ export default {
         },
         strToFloat(num){
             let strNum = num.toString().replace(/\,/g,'')
-            return parseFloat(strNum)
+            return Math.abs(parseFloat(strNum))
         },
         // Form 2 - Outcome and Output
         submitFormTwo(){

@@ -4,6 +4,7 @@ import { createApp } from '@vue/runtime-dom'
 import router from './router'
 import store from './store/index.js'
 import print from 'vue3-print-nb'
+import CKEditor from '@ckeditor/ckeditor5-vue';
 
 import swal from 'sweetalert2'
 window.swal = swal;
@@ -35,4 +36,5 @@ app.use(router)
 app.use(store)
 app.use(print)
 app.use(money)
+app.use(CKEditor)
 app.mount("#app")

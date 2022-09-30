@@ -1,27 +1,26 @@
 <template>
-    <div class="px-2 py-2">
+    <div class="px-2 py-2" v-if="!loading">
         <h3 class="text-center">
-            <span v-if="loading">Loading Portfolio<i class="far fa-spinner fa-spin" ></i></span> 
-            <span v-else>{{project.title}}</span>
+            {{project.title}}
         </h3>
         <div class="row flex-row-reverse px-3" v-if="tab == ''">
             <div class="mb-2">
                 <button class="btn btn-sm btn-outline-secondary" @click="$router.back()"><i class="far fa-arrow-left"></i> Back</button>
             </div>
             <div class="col-sm-3">
-                <div class="card shadow mb-2" id="btn" @click="tab = 'libs'">
+                <div class="card border-0 shadow mb-3" id="btn" @click="tab = 'libs'">
                     <div class="card-body">
                         <h6 class="text-center">Line-Item Budgets (LIBs) & Project Proposals</h6>
                     </div>
                 </div>
-                <div class="card shadow mb-2" id="btn">
+                <div class="card border-0 shadow mb-3" id="btn">
                     <div class="card-body">
                         <h6 class="text-center">Project Forms</h6>
                     </div>
                 </div>
             </div>
             <div class="col-sm-9">
-                <div class="card shadow">
+                <div class="card shadow border-0">
                     <div class="card-body" v-if="!loading">
                         <button class="btn btn-sm btn-primary float-end bg-gradient shadow-none" @click="editForm()" data-bs-toggle="modal" data-bs-target="#description"><i class="far fa-pencil-alt"></i></button>
                         <h4 class="text-center border-bottom pb-2 mb-2">Portfolio</h4>
@@ -144,6 +143,8 @@
             </div>
         </div>
     </div>
+    <h1 class="text-center m-5 p-5" v-else>Loading Portfolio <i class="far fa-spinner fa-spin" ></i></h1> 
+
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex'
@@ -265,13 +266,15 @@ export default {
 </script>
 <style scoped>
 #portfolio{
-    max-height: calc(100vh - 250px);
+    height: calc(100vh - 250px);
     padding-right: 10px;
     overflow: auto;
 }
 #btn:hover{
-    background: rgba(0,0,0,0.25);
+    background-color: rgba(0,0,0,0.02) !important;
     cursor: pointer;
+    transform: scale(1.02);
+    transition: width 0.3s;
 }
 .encoders-container{
     max-height: 30vh;

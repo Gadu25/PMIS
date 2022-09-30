@@ -1,12 +1,13 @@
 <template>
     <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
-        <button class="btn btn-sm btn-danger"  style="min-width: 100px" @click="childClick()"><i class="fas fa-times"></i> Cancel</button>
+        <button class="btn btn-sm btn-secondary"  style="min-width: 100px" @click="childClick()"><i class="fas fa-times"></i> Cancel</button>
         <strong>{{editmode ? 'Update' : 'New'}} Profile</strong>
-        <button class="btn btn-sm btn-success" style="min-width: 100px">Submit</button>
+        <button class="btn btn-sm btn-success" @click="submitForm()" style="min-width: 100px">Submit</button>
     </div>
     <div id="form-container">
         <div class="text-center mb-2"><strong>General Info</strong></div>
         <div class="row">
+            <!-- General Information -->
             <div class="col-sm-8">
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="floatingInput" placeholder=" " v-model="form.title">
@@ -16,7 +17,7 @@
             <div class="col-sm-4">
                 <div class="form-floating mb-3">
                     <select class="form-select" id="floatingSelect" v-model="form.status">
-                        <option selected hidden disabled>Select one</option>
+                        <option value="" selected hidden disabled>Select one</option>
                         <option value="New">New</option>
                         <option value="Ongoing">Ongoing</option>
                         <option value="Completed">Completed</option>
@@ -26,41 +27,32 @@
                 </div>
             </div>
             <div class="col-sm-6">
-                <div class="form-floating mb-3">
-                    <select class="form-select" id="floatingSelect" v-model="form.comp">
-                        <option selected hidden disabled>Select one</option>
+                <div class="form-floating position-relative mb-3">
+                    <button class="btn btn-sm btn-outline-secondary border-0 position-absolute end-0" v-if="form.comp.includes('Other')" @click="form.comp = 'Mandate'"><i class="fas fa-times"></i></button>
+                    <select class="form-select" id="floatingSelect" v-model="form.comp" v-if="!form.comp.includes('Other')">
+                        <option value="" selected hidden disabled>Select one</option>
                         <option value="Disaster and Risk Reduction and Management (DRRM)">Disaster and Risk Reduction and Management (DRRM)</option>
                         <option value="Gender and Development (GAD)">Gender and Development (GAD)</option>
                         <option value="Indigenous People">Indigenous People</option>
                         <option value="Mandate">Mandate</option>
                         <option value="Person With Disabilities (PWD)">Person With Disabilities (PWD)</option>
                         <option value="Senior Citizen">Senior Citizen</option>
-                        <option value="Other">Other</option>
+                        <option value="Other - ">Other</option>
                     </select>
+                    <input type="text" v-else class="form-control" v-model="form.comp">
                     <label for="floatingSelect">Compliance with Law</label>
                 </div>
             </div>
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <select class="form-select" id="floatingSelect" v-model="form.leader">
-                        <option selected hidden disabled>Select one</option>
-                        
-                    </select>
-                    <label for="floatingSelect">Project Leader</label>
-                </div>
-            </div>
-            <p>Proponents  <button class="btn btn-sm btn-outline-success border-0 shadow-none mb-1" tabindex="-1" @click="addProponent()"><i class="fas fa-plus"></i></button></p>
-            <div class="col-sm-4" v-for="proponent, key in form.proponents" :key="key">
-                <div class="form-floating mb-3 position-relative">
-                    <button class="btn btn-sm btn-outline-danger border-0 end-0 position-absolute shadow-none" tabindex="-1" v-if="form.proponents.length > 1" @click="removeProponent(proponent)"><i class="fas fa-times"></i></button>
-                    <input type="text" class="form-control" id="floatingInput" placeholder=" " v-model="proponent.name">
-                    <label for="floatingInput">Proponent {{key+1}}</label>
+                    <input type="text" class="form-control" id="floatingInput" v-model="form.leader" disabled>
+                    <label for="floatingInput">Project Leader</label>
                 </div>
             </div>
             <p>Implementation Period</p>
             <div class="col-sm-4">
                 <div class="form-floating mb-3">
-                    <select class="form-select" id="floatingSelect" v-model="form.start">
+                    <select @change="checkMonthSelected()" class="form-select" id="floatingSelect" v-model="form.start">
                         <option selected hidden disabled>Select one</option>
                         <option :value="month" v-for="month in 12" :key="month">{{monthName(month)}}</option>
                     </select>
@@ -69,7 +61,7 @@
             </div>
             <div class="col-sm-4">
                 <div class="form-floating mb-3">
-                    <select class="form-select" id="floatingSelect" v-model="form.end">
+                    <select @change="checkMonthSelected()" class="form-select" id="floatingSelect" v-model="form.end">
                         <option selected hidden disabled>Select one</option>
                         <option :value="month" v-for="month in 12" :key="month">{{monthName(month)}}</option>
                     </select>
@@ -84,24 +76,33 @@
                     </select>
                     <label for="floatingSelect">Year</label>
                 </div>
-            </div><hr>
-            <div class="text-center mb-2"><strong>Proposal</strong> <button class="btn btn-outline-success btn-sm border-0 shadow-none mb-1" tabindex="-1" data-bs-toggle="modal" data-bs-target="#proposalcontent" @click="newContent()"><i class="fas fa-plus"></i></button></div>
-            <div class="col-sm-12 d-flex" v-for="content, key in form.proposalcontent" :key="key">
-                <div class="form-floating mb-3" style="width: 90%">
-                    <textarea class="form-control" style="height: 120px" placeholder=" " id="floatingTextarea"></textarea>
-                    <label for="floatingTextarea">{{content.title}}</label>
+            </div>
+            <p>Proponents  <button class="btn btn-sm btn-outline-success border-0 shadow-none mb-1" tabindex="-1" @click="addProponent()"><i class="fas fa-plus"></i></button></p>
+            <div class="col-sm-4" v-for="proponent, key in form.proponents" :key="key">
+                <div class="form-floating mb-3 position-relative">
+                    <button class="btn btn-sm btn-outline-danger border-0 end-0 position-absolute shadow-none" tabindex="-1" v-if="form.proponents.length > 1" @click="removeProponent(proponent)"><i class="fas fa-times"></i></button>
+                    <input type="text" class="form-control" id="floatingInput" placeholder=" " v-model="proponent.name">
+                    <label for="floatingInput">Proponent {{key+1}}</label>
                 </div>
-                <div class="text-center" style="width: 10%;">
-                    <button tabindex="-1" style="width: 32px" class="btn btn-sm btn-outline-secondary my-1 shadow-none"><i class="fas fa-paperclip"></i></button><br>
-                    <template v-if="!content.required">
-                        <button tabindex="-1" style="width: 32px" class="btn btn-sm btn-primary mb-1" data-bs-toggle="modal" data-bs-target="#proposalcontent" @click="editContent(content, key)"><i class="far fa-pencil-alt"></i></button><br>
+            </div><hr>
+            <!-- Proposal Content -->
+            <div class="text-center mb-2"><strong>Proposal</strong> <button class="btn btn-outline-success btn-sm border-0 shadow-none mb-1" tabindex="-1" data-bs-toggle="modal" data-bs-target="#modal" @click="newContent()"><i class="fas fa-plus"></i></button></div>
+            <div class="col-sm-12" v-for="content, key in form.proposalcontent" :key="key">
+                <div class="d-flex justify-content-between mb-1">
+                    <div class="content-title fw-bold">{{content.title}}</div>
+                    <div class="content-controls" v-if="!content.required">
+                        <button tabindex="-1" style="width: 32px" class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal" @click="editContent(content, key)"><i class="far fa-pencil-alt"></i></button>
                         <button tabindex="-1" style="width: 32px" class="btn btn-sm btn-danger" @click="removeContent(content)"><i class="far fa-trash-alt"></i></button>
-                    </template>
+                    </div>
+                </div>
+                <div class="border mb-3">
+                    <ckeditor :editor="editor" v-model="content.text" :config="editorConfig"  style="min-height: 120px;" placeholder=" " id="floatingTextarea"></ckeditor>
                 </div>
             </div><hr>
-            <div class="col-sm-2">
+            <!-- Line-Item Budget -->
+            <div class="col-sm-3">
                 <div class="form-floating mb-3">
-                    <select class="form-select" id="floatingSelect">
+                    <select class="form-select" id="floatingSelect" v-model="form.source">
                         <option selected hidden disabled>Select one</option>
                         <option value="2A1">2A1</option>
                         <option value="2A1-AC">2A1-AC</option>
@@ -109,26 +110,14 @@
                     </select>
                     <label for="floatingSelect">Source of Funds</label>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" @change="resetBudget" v-model="form.selectedbudget" value="Personal Services" id="PS">
-                    <label class="form-check-label" for="PS">
-                        Personal Services
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" @change="resetBudget" v-model="form.selectedbudget" value="Maintenance and Other Operating Expenses (MOOE)" id="MOOE">
-                    <label class="form-check-label" for="MOOE">
-                        Maintenance and Other Operating Expenses (MOOE)
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" @change="resetBudget" v-model="form.selectedbudget" value="Capital Outlay" id="CO">
-                    <label class="form-check-label" for="CO">
-                        Capital Outlay
+                <div class="form-check" v-for="type in budgettypes" :key="type">
+                    <input class="form-check-input" type="checkbox" @change="resetBudget" v-model="form.selectedbudget" :value="type" :id="type">
+                    <label class="form-check-label" :for="type">
+                        {{type}}
                     </label>
                 </div>
             </div>
-            <div class="col-sm-10">
+            <div class="col-sm-9">
                 <div class="text-center mb-2"><strong>Line-Item Budget (LIB)</strong></div>
                 <div class="budget-items-container">
                     <template v-for="budget in form.budgets" :key="budget.name">
@@ -139,7 +128,7 @@
                                 <button tabindex="-1" @click="removeBudgetItem(budget.items, item)" class="btn btn-sm btn-outline-danger border-0 shadow-none position-absolute rounded" style="left: -1.5em"><i class="fas fa-times"></i></button>
                                 <input id="budget-input" v-model="item.name" type="text" class="form-control rounded-0 border-0 shadow-none w-50" placeholder="Item Name">
                                 <span class="input-group-text bg-white border-0">₱</span>
-                                <input id="budget-input" v-model="item.amount" v-money="money" type="text" class="form-control rounded-0 border-0 shadow-none text-end" placeholder="P 0.00">
+                                <input id="budget-input" v-model="item.amount" v-money="money" @change="checkAmount(item.amount, key, budget.name)" type="text" class="form-control rounded-0 border-0 shadow-none text-end" placeholder="P 0.00">
                             </div>
                             <div class="input-group ms-3">
                                 <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 w-50 fw-bold" value="Sub-Total">
@@ -154,13 +143,47 @@
                         <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 fw-bold text-end" :value="getGrandTotal()">
                     </div>
                 </div>
+            </div><hr>
+            <!-- Schedule of Activities -->
+            <div class="text-center mb-2"><strong>Schedule of Activities</strong> </div>
+            <div class="activity-types mb-2">
+                <label class="me-2">Activity Type:</label>
+                <div class="form-check form-check-inline" v-for="type in activitytypes" :key="type">
+                    <input class="form-check-input shadow-none" type="radio" :name="type" :id="type" :value="type" v-model="form.activitytype" :style="form.activitytype == 'Milestone' && type == 'Milestone' ? 'background-color: #32CD32; border: #32CD32' : ''">
+                    <label class="form-check-label" :for="type">{{type}}</label>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <button class="d-none" data-bs-toggle="modal" data-bs-target="#modal" ref="showModal">shumudal</button>
+                <table class="table table-sm table-bordered">
+                    <thead class="text-center">
+                        <tr>
+                            <th style="width: 30%">Activities</th>
+                            <template v-for="month in 12" :key="month+'act'">
+                                <th v-if="monthInImplementation(month)">{{monthName(month).substring(0, 3)}}</th>
+                            </template>
+                            <th class="p-0" tabindex="-1" style="width: 32px;"><button @click="addActivity()" class="btn btn-outline-success rounded-0 border-0 shadow-none"><i class="fas fa-plus"></i></button></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="activity, key in form.activities" :key="key+'_formactivity'">
+                            <td class="p-0">
+                                <input id="budget-input" type="text" v-model="activity.title" class="form-control border-0 rounded-0 shadow-none" placeholder="Activity Title...">
+                            </td>
+                            <template v-for="act, akey in activity.months" :key="act.month+'act'">
+                                <td v-if="monthInImplementation(act.month)" style="cursor: pointer;" class="text-center" @click="setActivity(key, akey, act)"> <i  v-if="act.type != ''" :style="'color:' + (act.type == 'Regular' ? '#0d6efd' : '#32CD32')" class="fas fa-circle"></i> </td>
+                            </template>
+                            <td class="p-0" tabindex="-1" style="width: 32px;"><button @click="removeActivity(activity)" class="btn btn-outline-danger rounded-0 border-0 shadow-none w-100"><i class="fas fa-times"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="proposalcontent" tabindex="-1">
+    <div class="modal fade" id="modal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <div class="modal-content" v-if="tab == 'content'">
                 <div class="modal-header">
                     <h5 class="modal-title">{{editproposalcontent ? 'Update' : 'New'}} Content</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
@@ -177,18 +200,49 @@
                     </form>
                 </div>
             </div>
+            <div class="modal-content" v-if="tab == 'activity'">
+                <div class="modal-header">
+                    <h5 class="modal-title">Set Milestone Activity</h5>
+                    <button type="button" class="btn-close d-none" data-bs-dismiss="modal" ref="CloseMilestone"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row">
+                        <div class="col-sm-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" class="form-control" :min="minDate" :max="maxDate" v-model="form.monthact.start" id="start" placeholder="start">
+                                <label for="start">Start</label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-floating">
+                                <input type="date" class="form-control" :min="minDate" :max="maxDate" v-model="form.monthact.end" id="end" placeholder="end">
+                                <label for="end">End</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button @click="saveMilestone(false)" class="btn btn-sm btn-secondary rounded-pill px-4 me-1" data-bs-dismiss="modal">Cancel</button>
+                        <button @click="saveMilestone(true)" class="btn btn-sm btn-success rounded-pill px-4">Save</button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 </template>
 <script>
+import { mapActions, mapGetters } from 'vuex'
+import InlineEditor from '@ckeditor/ckeditor5-build-inline';
 export default {
     name: 'Form',
     emits: ['clicked'],
     setup({emit}){},
     data(){
         return {
+            tab: 'content',
             form: {
                 id: '',
+                project_id: '',
                 title: '',
                 status: '',
                 comp: 'Mandate',
@@ -201,13 +255,21 @@ export default {
                     {title: 'Background / Rationale', text: '', file: '', required: true},
                     {title: 'General Objective',      text: '', file: '', required: true}
                 ],
+                source: '',
                 selectedbudget: ['Personal Services', 'Maintenance and Other Operating Expenses (MOOE)'],
                 budgets: [
                     {name: 'Personal Services', items: []},
                     {name: 'Maintenance and Other Operating Expenses (MOOE)', items: []},
                     {name: 'Capital Outlay', items: []}
-                ]
+                ],
+                activitytype: 'Regular',
+                activities: [],
+                monthact: {
+                    start: '',
+                    end: ''
+                }
             },
+            budgettypes: ['Personal Services', 'Maintenance and Other Operating Expenses (MOOE)', 'Capital Outlay'],
             editproposalcontent: false,
             newcontenttitle: '',
             newcontentkey: '',
@@ -219,11 +281,28 @@ export default {
                 precision: 2,
                 masked: false /* doesn't work with directive */
             },
+            editor: InlineEditor,
+            editorData: '<p>Content of the editor.</p>',
+            editorConfig: {
+                // The configuration of the editor.
+            },
+            activitytypes: ['Regular', 'Milestone'],
+            minDate: '',
+            maxDate: '',
+            tempactivitykey: '',
+            tempactkey: ''
         }
     },
     methods: {
         fillForm(){
+            var date = new Date
+            this.form.year = date.getFullYear()
 
+            var leader = this.project.leader.profile.user
+            this.form.leader = leader.firstname+' '+leader.lastname
+
+            this.form.title = this.project.title
+            this.form.project_id = this.project.id
         },
         childClick(){
             this.$emit('clicked')
@@ -252,6 +331,7 @@ export default {
             this.editproposalcontent = false
             this.newcontenttitle = ''
             this.newcontentkey = ''
+            this.tab = 'content'
         },
         editContent(content, key){
             this.editproposalcontent = true
@@ -287,7 +367,7 @@ export default {
             return true
         },
         addBudgetItem(items){
-            items.push({title: '', amount: 0})
+            items.push({name: '', amount: 0})
         },
         removeBudgetItem(items, item){
             items.remove(item)
@@ -296,6 +376,14 @@ export default {
             if(!$event.target.checked){
                 var budget = this.form.budgets.find(elem => elem.name == $event.target.value)
                 budget.items = []
+            }
+        },
+        checkAmount(amount, key, type){
+            if(amount.toString().includes('-')){
+                // this.toastMsg('warning', 'Avoid negative')
+                var budget = this.form.budgets.find(elem => elem.name == type)
+                var item = budget.items[key]
+                item.amount = item.amount.replace(/\-/g,'')
             }
         },
         getSubTotal(items){
@@ -315,12 +403,6 @@ export default {
 
             return this.formatNumber(total)
         },
-        toastMsg(icon, msg){
-            toast.fire({
-                icon: icon,
-                title: msg
-            })
-        },
         strToFloat(num){
             let strNum = num.toString().replace(/\,/g,'')
             return parseFloat(strNum)
@@ -328,11 +410,176 @@ export default {
         formatNumber(num){
             return (Math.round(num * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2 })
         },
+        monthInImplementation(month){
+            var start = this.form.start
+            var end = this.form.end
+            return (month >= start && month <= end)
+        },
+        checkMonthSelected(){
+            if(this.form.end < this.form.start){
+                this.toastMsg('warning', 'Start month must be before the End Month')
+                this.form.start = 1; this.form.end = 12;
+            }
+            if(this.form.activities.length > 0){
+                this.swalConfirmCancel('Changing Implementation Period will reset Activities', 'Continue?').then(res => {
+                    if(res == 'confirm'){
+                        for(let i = 0; i < this.form.activities.length; i++){
+                            var activity = this.form.activities[i]
+                            activity.months = []
+                            this.setActivityMonths(activity)
+                        }
+                    }
+                })
+            }
+        },
+        saveMilestone(proceed){
+            var akey = this.tempactkey
+            var key = this.tempactivitykey
+            var activity = this.form.activities[key].months[akey]
+
+            var start = this.form.monthact.start
+            var end = this.form.monthact.end
+            if(proceed){
+                if(start == ''){ this.toastMsg('warning', 'Start date required'); return false }
+                if(end == '')  { this.toastMsg('warning', 'End date required');   return false }
+                if(start > end){ this.toastMsg('warning', 'Start date must be on or before the End date'); return false }
+            }
+
+            activity.type = proceed ? 'Milestone' : ''
+            activity.start = proceed ? start : ''
+            activity.end = proceed ? end : ''
+
+            this.$refs.CloseMilestone.click()
+        },
+        setActivity(key, akey, act){
+            var type = this.form.activitytype
+            act.type = act.type != type ? type : ''
+            act.start = ''
+            act.end = ''
+            if(act.type == 'Milestone'){
+                this.tab = 'activity'
+                var year = this.form.year
+
+                this.form.monthact.start = ''
+                this.form.monthact.end = ''
+
+                var date = new Date(year, act.month, 0);
+                var last = date.toString().split(' ')
+
+                var month = act.month < 10 ? '0'+act.month : act.month
+                this.minDate = year+'-'+month+'-01'
+                this.maxDate = year+'-'+month+'-'+last[2]
+
+                this.tempactivitykey = key
+                this.tempactkey = akey
+
+
+                this.$refs.showModal.click()
+            }
+        },
+        addActivity(){
+            var activity = {
+                title: '',
+                months: []
+            }
+            this.setActivityMonths(activity)
+
+            this.form.activities.push(activity)
+        },
+        removeActivity(activity){
+            this.form.activities.remove(activity)
+        },
+        setActivityMonths(activity){
+            var start = this.form.start
+            var end = this.form.end
+            for(let i = start; i <= end; i++){
+                var month = {
+                    id: '',
+                    month: i,
+                    start: '',
+                    end: '',
+                    type: ''
+                }
+                activity.months.push(month)
+            }
+        },
+        validateForm(){
+            var form = this.form
+            if(form.title == '') { this.toastMsg('warning', 'Title required'); return false }
+            if(form.status == ''){ this.toastMsg('warning', 'Status required'); return false }
+            if(form.comp == '')  { this.toastMsg('warning', 'Compliance with Law required'); return false }
+            for(let proponent of form.proponents){
+                if(proponent.name == ''){ this.toastMsg('warning', 'Proponent required'); return false}
+            }
+            for(let content of form.proposalcontent){
+                if(content.text == ''){ this.toastMsg('warning', content.title+' empty'); return false }
+            }
+            if(form.source == ''){ this.toastMsg('warning', 'Source of Funds required'); return false }
+            if(form.selectedbudget.length == 0){ this.toastMsg('warning', 'Please add budget for LIB'); return false }
+            for(let budget of form.budgets){
+                if(budget.items.length == 0){ this.toastMsg('warning', budget.name+', empty items'); return false }
+                for(let item of budget.items){
+                    if(item.name == ''){ this.toastMsg('warning', budget.name+', item name required'); return false }
+                    if(item.amount == '0.00'){ this.toastMsg('warning', budget.name+', item amount required'); return false }
+                }
+            }
+            var months = []
+            for(let i = form.start; i <= form.end; i++){
+                months.push(i)
+            }
+            var monthchecker = []
+            for(let activity of form.activities){
+                if(activity.title == ''){ this.toastMsg('warning', 'Activity Title required'); return false }
+                for(let month of activity.months){
+                    if(month.type != '' && !monthchecker.includes(month.month)){
+                        monthchecker.push(month.month)
+                    }
+                }
+            }
+            if(months.length != monthchecker.length){
+                this.toastMsg('warning', 'All months must have at least one (1) activity');
+                return false;
+            }
+            return true
+        },
+        submitForm(){
+            if(this.validateForm()){
+
+            }
+        },
+        toastMsg(icon, msg){
+            toast.fire({
+                icon: icon,
+                title: msg
+            })
+        },
+        async swalConfirmCancel(title, message){
+            const res = await swal.fire({
+                title: title,
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Continue!',
+                reverseButtons: true
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    return 'confirm'
+                }
+                else{
+                    return 'cancel'
+                }
+            })
+            return res
+        },
+    },
+    computed: {
+        ...mapGetters('project', ['getProject']),
+        project(){ return this.getProject }
     },
     created(){
         this.fillForm()
-        var date = new Date
-        this.form.year = date.getFullYear()
     },
     props: {
         editmode: Boolean

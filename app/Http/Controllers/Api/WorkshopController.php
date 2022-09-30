@@ -453,7 +453,7 @@ class WorkshopController extends Controller
                             $numKey = ($num == 1) ? 'first' : (($num == 2) ? 'second' : 'third');
                             $existingBreakdown = ($bd[$numId]);
                             $quarter = $bd['quarter'];
-                            $number = $bd[$numKey];
+                            $number = abs($bd[$numKey]);
                             $breakdown = ($existingBreakdown) ? IndicatorBreakdown::findOrFail($bd[$numId]) : new IndicatorBreakdown; 
                             if($this->formatAmount($number) > 0){
                                 $breakdown->quarter = $quarter;
@@ -1135,7 +1135,7 @@ class WorkshopController extends Controller
     
     private function formatAmount($amount){
         $newAmount = str_replace(',', '', $amount);
-        return $amount ? (float)$newAmount : 0;
+        return $amount ? abs((float)$newAmount) : 0;
     }
 
     private function getWorkshopYear($id){
