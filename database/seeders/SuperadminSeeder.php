@@ -40,12 +40,5 @@ class SuperadminSeeder extends Seeder
         $profile->title_id = $title->id;
         $profile->access_level = 'Admin';
         $profile->save();
-
-        $dbroles = SidebarRole::all();
-        $rolesArray = [];
-        foreach($dbroles as $role){
-            array_push($rolesArray, $role->id);
-        }
-        $profile->roles()->sync($rolesArray);
     }
 }

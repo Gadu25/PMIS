@@ -20,7 +20,7 @@ class LineItemBudget extends Model
         return $this->belongsTo(ProjectProfile::class, 'project_profile_id');
     }
 
-    public function items(){
-        return $this->hasMany(LibItem::class, 'lib_id');
+    public function types(){
+        return $this->hasMany(LibType::class, 'lib_id');
     }
 }

@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
         <button class="btn btn-sm btn-secondary"  style="min-width: 100px" @click="childClick()"><i class="fas fa-times"></i> Cancel</button>
         <strong>{{editmode ? 'Update' : 'New'}} Profile</strong>
-        <button class="btn btn-sm btn-success" @click="submitForm()" style="min-width: 100px">Submit</button>
+        <button class="btn btn-sm" :class="editmode ? 'btn-primary' : 'btn-success'" @click="submitForm()" style="min-width: 100px">{{editmode ? 'Save Changes' : 'Submit'}}</button>
     </div>
     <div id="form-container">
         <div class="text-center mb-2"><strong>General Info</strong></div>
@@ -100,57 +100,59 @@
                 </div>
             </div><hr>
             <!-- Line-Item Budget -->
-            <div class="col-sm-3">
-                <div class="form-floating mb-3">
-                    <select class="form-select" id="floatingSelect" v-model="form.source">
-                        <option selected hidden disabled>Select one</option>
-                        <option value="2A1">2A1</option>
-                        <option value="2A1-AC">2A1-AC</option>
-                        <option value="2A2">2A2</option>
-                    </select>
-                    <label for="floatingSelect">Source of Funds</label>
-                </div>
-                <div class="form-check" v-for="type in budgettypes" :key="type">
-                    <input class="form-check-input" type="checkbox" @change="resetBudget" v-model="form.selectedbudget" :value="type" :id="type">
-                    <label class="form-check-label" :for="type">
-                        {{type}}
-                    </label>
-                </div>
-            </div>
-            <div class="col-sm-9">
-                <div class="text-center mb-2"><strong>Line-Item Budget (LIB)</strong></div>
-                <div class="budget-items-container">
-                    <template v-for="budget in form.budgets" :key="budget.name">
-                        <div class="border-bottom mb-2 pb-2" v-if="form.selectedbudget.includes(budget.name)">
-                            <p><strong>{{budget.name}}</strong> <small tabindex="-1" id="addItem" @click="addBudgetItem(budget.items)"><i class="fas fa-plus"></i> Item</small></p>
-                            <div class="ms-4"><strong>Items</strong><strong class="float-end">Amount</strong></div>
-                            <div class="input-group position-relative ms-3" v-for="item, key in budget.items" :key="key">
-                                <button tabindex="-1" @click="removeBudgetItem(budget.items, item)" class="btn btn-sm btn-outline-danger border-0 shadow-none position-absolute rounded" style="left: -1.5em"><i class="fas fa-times"></i></button>
-                                <input id="budget-input" v-model="item.name" type="text" class="form-control rounded-0 border-0 shadow-none w-50" placeholder="Item Name">
-                                <span class="input-group-text bg-white border-0">₱</span>
-                                <input id="budget-input" v-model="item.amount" v-money="money" @change="checkAmount(item.amount, key, budget.name)" type="text" class="form-control rounded-0 border-0 shadow-none text-end" placeholder="P 0.00">
-                            </div>
-                            <div class="input-group ms-3">
-                                <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 w-50 fw-bold" value="Sub-Total">
-                                <span class="input-group-text bg-white border-0 border-top">₱</span>
-                                <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 fw-bold text-end border-top" :value="getSubTotal(budget.items)">
-                            </div>
-                        </div>
-                    </template>
-                    <div class="input-group ms-3" v-if="form.selectedbudget.length > 0">
-                        <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 w-50 fw-bold" value="Grand Total">
-                        <span class="input-group-text bg-white border-0">₱</span>
-                        <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 fw-bold text-end" :value="getGrandTotal()">
+            <template v-if="!editmode">
+                <div class="col-sm-3">
+                    <div class="form-floating mb-3">
+                        <select class="form-select" id="floatingSelect" v-model="form.source">
+                            <option selected hidden disabled>Select one</option>
+                            <option value="2A1">2A1</option>
+                            <option value="2A1-AC">2A1-AC</option>
+                            <option value="2A2">2A2</option>
+                        </select>
+                        <label for="floatingSelect">Source of Funds</label>
+                    </div>
+                    <div class="form-check" v-for="budgettype in budgettypes" :key="budgettype">
+                        <input class="form-check-input" type="checkbox" @change="resetBudget" v-model="form.selectedbudget" :value="budgettype" :id="budgettype">
+                        <label class="form-check-label" :for="budgettype">
+                            {{budgettype}}
+                        </label>
                     </div>
                 </div>
-            </div><hr>
+                <div class="col-sm-9">
+                    <div class="text-center mb-2"><strong>Line-Item Budget (LIB)</strong></div>
+                    <div class="budget-items-container">
+                        <template v-for="budget in form.budgets" :key="budget.name">
+                            <div class="border-bottom mb-2 pb-2" v-if="form.selectedbudget.includes(budget.name)">
+                                <p><strong>{{budget.name}}</strong> <small tabindex="-1" id="addItem" @click="addBudgetItem(budget.items)"><i class="fas fa-plus"></i> Item</small></p>
+                                <div class="ms-4"><strong>Items</strong><strong class="float-end">Amount</strong></div>
+                                <div class="input-group position-relative ms-3" v-for="item, key in budget.items" :key="key">
+                                    <button tabindex="-1" @click="removeBudgetItem(budget.items, item)" class="btn btn-sm btn-outline-danger border-0 shadow-none position-absolute rounded" style="left: -1.5em"><i class="fas fa-times"></i></button>
+                                    <input id="budget-input" v-model="item.name" type="text" class="form-control rounded-0 border-0 shadow-none w-50" placeholder="Item Name">
+                                    <span class="input-group-text bg-white border-0">₱</span>
+                                    <input id="budget-input" v-model="item.amount" v-money="money" @change="checkAmount(item.amount, key, budget.name)" type="text" class="form-control rounded-0 border-0 shadow-none text-end" placeholder="P 0.00">
+                                </div>
+                                <div class="input-group ms-3">
+                                    <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 w-50 fw-bold" value="Sub-Total">
+                                    <span class="input-group-text bg-white border-0 border-top">₱</span>
+                                    <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 fw-bold text-end border-top" :value="getSubTotal(budget.items)">
+                                </div>
+                            </div>
+                        </template>
+                        <div class="input-group ms-3" v-if="form.selectedbudget.length > 0">
+                            <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 w-50 fw-bold" value="Grand Total">
+                            <span class="input-group-text bg-white border-0">₱</span>
+                            <input type="text" disabled class="form-control bg-white border-0 shadow-none rounded-0 fw-bold text-end" :value="getGrandTotal()">
+                        </div>
+                    </div>
+                </div><hr>
+            </template>
             <!-- Schedule of Activities -->
             <div class="text-center mb-2"><strong>Schedule of Activities</strong> </div>
             <div class="activity-types mb-2">
                 <label class="me-2">Activity Type:</label>
-                <div class="form-check form-check-inline" v-for="type in activitytypes" :key="type">
-                    <input class="form-check-input shadow-none" type="radio" :name="type" :id="type" :value="type" v-model="form.activitytype" :style="form.activitytype == 'Milestone' && type == 'Milestone' ? 'background-color: #32CD32; border: #32CD32' : ''">
-                    <label class="form-check-label" :for="type">{{type}}</label>
+                <div class="form-check form-check-inline" v-for="activitytype in activitytypes" :key="activitytype">
+                    <input class="form-check-input shadow-none" type="radio" :name="activitytype" :id="activitytype" :value="activitytype" v-model="form.activitytype" :style="form.activitytype == 'Milestone' && activitytype == 'Milestone' ? 'background-color: #32CD32; border: #32CD32' : ''">
+                    <label class="form-check-label" :for="activitytype">{{activitytype}}</label>
                 </div>
             </div>
             <div class="table-responsive">
@@ -296,14 +298,54 @@ export default {
     methods: {
         ...mapActions('project', ['saveProfile']),
         fillForm(){
-            var date = new Date
-            this.form.year = date.getFullYear()
+            if(this.editmode){
+                var profile = this.profile
+                this.form.id = profile.id
+                this.form.project_id = profile.project_id
+                this.form.title = profile.title
+                this.form.status = profile.status
+                this.form.comp = profile.compliance_with_law
+                this.form.leader = profile.project_leader
+                this.form.start = profile.start
+                this.form.end = profile.end
+                this.form.year = profile.year
+                this.form.proponents = []
+                for(let proponent of profile.proponents){
+                    this.form.proponents.push({
+                        id: proponent.id,
+                        name: proponent.name
+                    })
+                }
+                this.form.proposalcontent = []
+                for(let content of profile.proposals){
+                    this.form.proposalcontent.push({
+                        id: content.id,
+                        title: content.title,
+                        text: content.text,
+                        required: (content.title.includes('Background') || content.title.includes('General'))
+                    })
+                }
+                this.form.activities = []
+                for(let activity of profile.activities){
+                    var act = {
+                        id: activity.id,
+                        title: activity.title,
+                        months: []
+                    }
+                    this.setActivityMonths(act, activity.months)
+                    this.form.activities.push(act)
+                }
+            }
+            else{
+                var date = new Date
+                this.form.year = date.getFullYear()
 
-            var leader = this.project.leader.profile.user
-            this.form.leader = leader.firstname+' '+leader.lastname
+                var leader = this.project.leader.profile.user
+                this.form.leader = leader.firstname+' '+leader.lastname
 
-            this.form.title = this.project.title
-            this.form.project_id = this.project.id
+                this.form.title = this.project.title
+                this.form.project_id = this.project.id
+            }
         },
         childClick(){
             this.$emit('clicked')
@@ -342,6 +384,7 @@ export default {
         addContent(){
             if(this.checkContentTitle()){
                 this.form.proposalcontent.push({
+                    id: '',
                     title: this.newcontenttitle,
                     text: '',
                     file: '',
@@ -480,6 +523,7 @@ export default {
         },
         addActivity(){
             var activity = {
+                id: '',
                 title: '',
                 months: []
             }
@@ -490,16 +534,18 @@ export default {
         removeActivity(activity){
             this.form.activities.remove(activity)
         },
-        setActivityMonths(activity){
+        setActivityMonths(activity, months = []){
             var start = this.form.start
             var end = this.form.end
             for(let i = start; i <= end; i++){
+                var dbmonth = months.find(elem => elem.month == i)
+                var checker = (dbmonth)
                 var month = {
-                    id: '',
+                    id: checker ? dbmonth.id : '',
                     month: i,
-                    start: '',
-                    end: '',
-                    type: ''
+                    start: checker ? dbmonth.start : '',
+                    end: checker ? dbmonth.end : '',
+                    type: checker ? dbmonth.type : ''
                 }
                 activity.months.push(month)
             }
@@ -515,14 +561,16 @@ export default {
             for(let content of form.proposalcontent){
                 if(content.text == ''){ this.toastMsg('warning', content.title+' empty'); return false }
             }
-            if(form.source == ''){ this.toastMsg('warning', 'Source of Funds required'); return false }
-            if(form.selectedbudget.length == 0){ this.toastMsg('warning', 'Please add budget for LIB'); return false }
-            for(let budget of form.budgets){
-                if(form.selectedbudget.includes(budget.name)){
-                    if(budget.items.length == 0){ this.toastMsg('warning', budget.name+', empty items'); return false }
-                    for(let item of budget.items){
-                        if(item.name == ''){ this.toastMsg('warning', budget.name+', item name required'); return false }
-                        if(item.amount == '0.00'){ this.toastMsg('warning', budget.name+', item amount required'); return false }
+            if(!this.editmode){
+                if(form.source == ''){ this.toastMsg('warning', 'Source of Funds required'); return false }
+                if(form.selectedbudget.length == 0){ this.toastMsg('warning', 'Please add budget for LIB'); return false }
+                for(let budget of form.budgets){
+                    if(form.selectedbudget.includes(budget.name)){
+                        if(budget.items.length == 0){ this.toastMsg('warning', budget.name+', empty items'); return false }
+                        for(let item of budget.items){
+                            if(item.name == ''){ this.toastMsg('warning', budget.name+', item name required'); return false }
+                            if(item.amount == '0.00'){ this.toastMsg('warning', budget.name+', item amount required'); return false }
+                        }
                     }
                 }
             }
@@ -591,16 +639,15 @@ export default {
         this.fillForm()
     },
     props: {
-        editmode: Boolean
+        editmode: Boolean,
+        profile: Object
     }
 }
 </script>
 <style scoped>
 #form-container{
     padding: 0 1.5em 15em 1.5em;
-    /* padding-right: 1.5em;
-    padding-left: 1.5em; */
-    height: calc(100vh - 155px);
+    height: calc(100vh - 175px);
     overflow: auto;
 }
 #addItem{

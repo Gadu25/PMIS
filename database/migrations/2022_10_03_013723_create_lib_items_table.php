@@ -15,10 +15,9 @@ return new class extends Migration
     {
         Schema::create('lib_items', function (Blueprint $table) {
             $table->id();
-            $table->mediumText('item');
+            $table->mediumText('name');
             $table->float('amount', 12, 2);
-            $table->string('type');
-            $table->foreignId('lib_id')->constrained('line_item_budgets')->cascadeOnDelete();
+            $table->foreignId('lib_type_id')->constrained('lib_types')->cascadeOnDelete();
             $table->timestamps();
         });
     }

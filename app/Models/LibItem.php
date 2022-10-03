@@ -10,13 +10,12 @@ class LibItem extends Model
     use HasFactory;
 
     protected $fillables = [
-        'item',
+        'name',
         'amount',
-        'type',
-        'lib_id'
+        'lib_type_id'
     ];
 
-    public function lib(){
-        return $this->belongsTo(LineItemBudget::class, 'lib_id');
+    public function type(){
+        return $this->belongsTo(LibType::class, 'lib_type_id');
     }
 }

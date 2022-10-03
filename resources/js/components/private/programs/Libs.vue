@@ -14,6 +14,10 @@
                     </div>
                 </div>
             </div>
+            <div class="text-center p-5" v-if="project.profiles.length == 0">
+                <h1> No Profiles found for this Project</h1>
+                <h3><a href="#" @click="formshow = true, editmode = false">Click here to add one</a> </h3>
+            </div>
         </div>
     </div>
     <Form :editmode="editmode" @clicked="formshow = false" v-if="formshow" />

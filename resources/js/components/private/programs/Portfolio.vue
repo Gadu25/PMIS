@@ -38,7 +38,7 @@
                             <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Id distinctio aliquam reprehenderit iste amet quisquam accusamus, aperiam accusantium illo! Dolore facere vitae, consequatur nostrum cumque non fuga dolores culpa odit nihil quas consequuntur illum quos autem vero praesentium sequi quaerat quod alias saepe recusandae tenetur a? Consequatur veniam maxime minus voluptate vitae, sunt tempora autem voluptatem aliquam repellat enim laudantium?</p>
                             <strong>Specific Objective/s</strong>
                             <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Minus commodi odio iste, atque quo vero. Placeat, nesciunt velit dolore cumque obcaecati autem molestiae facere ipsam repellat totam, nemo debitis dolor? Velit ducimus delectus earum non a facilis, quis nemo numquam sit deleniti adipisci obcaecati porro laudantium cum enim at. Nemo iure, sapiente suscipit eum tempora veritatis quos fugit odit excepturi ad eius, placeat est, neque accusamus commodi natus vitae! Voluptatum, delectus perspiciatis praesentium ipsum commodi fugit dolores possimus sequi aliquam.</p> -->
-                            <strong>Benefeciaries</strong>
+                            <strong>Benefeciaries (static data)</strong>
                             <table class="table table-sm table-bordered mb-2">
                                 <thead class="text-center">
                                     <tr>
@@ -69,7 +69,7 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <strong>Annual Budget</strong>
+                            <strong>Annual Budget (static data)</strong>
                             <table class="table table-sm table-bordered">
                                 <thead class="text-center">
                                     <tr>

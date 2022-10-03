@@ -54,6 +54,10 @@ const actions = {
     async saveProfile({commit}, form){
         const response = form.id ? await axios.put('/api/project/profile/'+form.id, form) : await axios.post('/api/project/profile', form)
         if(!response.data.errors){
+            if(form.id){
+                commit('setProfile', response.data.profile)
+                return response.data
+            }
             commit('setProject', response.data.project)
         }
         return response.data

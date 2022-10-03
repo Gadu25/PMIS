@@ -16,6 +16,7 @@ use App\Models\ProjectProfile;
 use App\Models\Proponent;
 use App\Models\ProposalContent;
 use App\Models\LineItemBudget;
+use App\Models\LibType;
 use App\Models\LibItem;
 use App\Models\ScheduleOfActivity;
 use App\Models\SoaMonth;
@@ -37,7 +38,7 @@ class ProjectController extends Controller
         return Project::with(
             'profiles.proponents', 
             'profiles.proposals', 
-            'profiles.libs.items', 
+            'profiles.libs.types.items', 
             'profiles.activities.months', 
             'leader.profile.user', 
             'encoders.profile.user')
@@ -271,67 +272,30 @@ class ProjectController extends Controller
             $authProfileId = $auth->activeProfile->id;
 
             $profile = new ProjectProfile;
-            $profile->title               = $request['title'];
-            $profile->status              = $request['status'];
-            $profile->compliance_with_law = $request['comp'];
-            $profile->project_leader      = $projectleader;
-            $profile->start               = $request['start'];
-            $profile->end                 = $request['end'];
-            $profile->year                = $request['year'];
-            $profile->project_id          = $project->id;
-            $profile->created_by          = $authProfileId;
-            $profile->save();
+            $this->saveProfile($profile, $request, $projectleader);
+            $this->saveProponents($request['proponents'], $profile->id);
+            $this->saveProposalContents($request['proposalcontent'], $profile->id);
+            $this->saveActivities($request['activities'], $profile->id);
 
-            foreach($request['proponents'] as $prop){
-                $proponent = new Proponent;
-                $proponent->name = $prop['name'];
-                $proponent->project_profile_id = $profile->id;
-                $proponent->save();
-            }
-
-            foreach($request['proposalcontent'] as $propcon){
-                $content = new ProposalContent;
-                $content->title = $propcon['title'];
-                $content->text = $propcon['text'];
-                $content->project_profile_id = $profile->id;
-                $content->save();
-            }
-
+            $lib = new LineItemBudget;
+            $lib->status = 'Draft';
+            $lib->source_of_funds = $request['source'];
+            $lib->project_profile_id = $profile->id;
+            $lib->created_by = $authProfileId;
+            $lib->save();
             foreach($request['budgets'] as $budget){
                 if(sizeof($budget['items']) > 0){
-                    $lib = new LineItemBudget;
-                    $lib->status = 'Draft';
-                    $lib->source_of_funds = $request['source'];
-                    $lib->project_profile_id = $profile->id;
-                    $lib->created_by = $authProfileId;
-                    $lib->save();
+                    $libtype = new LibType;
+                    $libtype->name = $budget['name'];
+                    $libtype->lib_id = $lib->id;
+                    $libtype->save();
 
                     foreach($budget['items'] as $budgetitem){
                         $item = new LibItem;
-                        $item->item = $budgetitem['name'];
+                        $item->name = $budgetitem['name'];
                         $item->amount = $this->formatAmount($budgetitem['amount']);
-                        $item->type = $budget['name'];
-                        $item->lib_id = $lib->id;
+                        $item->lib_type_id = $libtype->id;
                         $item->save();
-                    }
-                }
-            }
-
-            foreach($request['activities'] as $activity){
-                $soa = new ScheduleOfActivity;
-                $soa->title = $activity['title'];
-                $soa->project_profile_id = $profile->id;
-                $soa->save();
-
-                foreach($activity['months'] as $month){
-                    if($month['type'] != ''){
-                        $soamonth = new SoaMonth;
-                        $soamonth->type = $month['type'];
-                        $soamonth->start = $month['start'];
-                        $soamonth->end = $month['end'];
-                        $soamonth->month = $month['month'];
-                        $soamonth->soa_id = $soa->id;
-                        $soamonth->save();
                     }
                 }
             }
@@ -346,15 +310,120 @@ class ProjectController extends Controller
     }
 
     public function showProfile($id){
-        return ProjectProfile::with('project', 'proponents', 'proposals', 'libs.items', 'activities.months')->where('id',$id)->first();
+        return ProjectProfile::with('project', 'proponents', 'proposals', 'libs.types.items', 'activities.months')->where('id',$id)->first();
     }
 
     public function updateProfile(Request $request, $id){
+        DB::beginTransaction();
+        try {
+            $project = Project::findOrFail($request['project_id']);
+            $profile = ProjectProfile::findOrFail($id);
 
+            foreach($project->profiles as $prof){
+                if($prof->year == $request['year'] && $profile->id != $id){
+                    return ['message' => 'Project Profile for year '.$profile->year.' already existed.', 'errors' => 'Profile Year Exists'];
+                }
+            }
+
+            $this->saveProfile($profile, $request, $profile->project_leader);
+            $this->saveProponents($request['proponents'], $profile->id, $profile->proponents);
+            $this->saveProposalContents($request['proposalcontent'], $profile->id, $profile->proposals);
+            $this->saveActivities($request['activities'], $profile->id, $profile->activities);
+
+            DB::commit();
+            return ['message' => 'Profile added!', 'profile' => $this->showProfile($id)];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
     }
 
     public function destroyProfile($id){
 
+    }
+
+    private function saveProfile($profile, $request, $projectleader){
+        $profile->title               = $request['title'];
+        $profile->status              = $request['status'];
+        $profile->compliance_with_law = $request['comp'];
+        $profile->project_leader      = $projectleader;
+        $profile->start               = $request['start'];
+        $profile->end                 = $request['end'];
+        $profile->year                = $request['year'];
+        $profile->project_id          = $request['project_id'];
+        if(!$request['id']){
+            $profile->created_by      = $authProfileId;
+        }
+        $profile->save();
+    }
+
+    private function saveProponents($proponents, $profileId, $initialProponents = []){
+        $ids = [];
+        foreach($proponents as $prop){
+            $proponent = $prop['id'] ? Proponent::findOrFail($prop['id']) : new Proponent;
+            $proponent->name = $prop['name'];
+            $proponent->project_profile_id = $profileId;
+            $proponent->save();
+            array_push($ids, $proponent->id);
+        }
+        foreach($initialProponents as $proponent){
+            if(!in_array($proponent->id, $ids)){
+                $proponent->delete();
+            }
+        }
+    }
+
+    private function saveProposalContents($contents, $profileId, $initialContents = []){
+        $ids = [];
+        foreach($contents as $propcon){
+            $content = $propcon['id'] ? ProposalContent::findOrFail($propcon['id']) : new ProposalContent;
+            $content->title = $propcon['title'];
+            $content->text = $propcon['text'];
+            $content->project_profile_id = $profileId;
+            $content->save();
+            array_push($ids, $content->id);
+        }
+        foreach($initialContents as $content){
+            if(!in_array($content->id, $ids)){
+                $content->delete();
+            }
+        }
+    }
+
+    private function saveActivities($activities, $profileId, $initialActivities = []){
+        $ids = []; 
+        foreach($activities as $activity){
+            $soa = $activity['id'] ? ScheduleOfActivity::findOrFail($activity['id']) : new ScheduleOfActivity;
+            $initialMonths = $soa->months; $monthIds = [];
+            $soa->title = $activity['title'];
+            $soa->project_profile_id = $profileId;
+            $soa->save();
+            foreach($activity['months'] as $month){
+                if($month['type'] != ''){
+                    $soamonth = $month['id'] ? SoaMonth::findOrFail($month['id']) : new SoaMonth;
+                    $soamonth->type = $month['type'];
+                    $soamonth->start = $month['start'];
+                    $soamonth->end = $month['end'];
+                    $soamonth->month = $month['month'];
+                    $soamonth->soa_id = $soa->id;
+                    $soamonth->save();
+                    array_push($monthIds, $soamonth->id);
+                }
+            }
+            foreach($initialMonths as $month){
+                if(!in_array($month->id, $monthIds)){
+                    $month->delete();
+                }
+            }
+            array_push($ids, $soa->id);
+        }
+        foreach($initialActivities as $activity){
+            if(!in_array($activity->id, $ids)){
+                $activity->months()->delete();
+                $activity->delete();
+            }
+        }
     }
 
     private function formatAmount($amount){
