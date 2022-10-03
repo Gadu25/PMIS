@@ -49,6 +49,10 @@ class Project extends Model
         return $this->hasMany(Subproject::class);
     }
 
+    public function profiles(){
+        return $this->hasMany(ProjectProfile::class)->orderBy('year', 'desc');
+    }
+
     // Workshop
     public function annexones(){
         return $this->hasMany(AnnexOne::class);

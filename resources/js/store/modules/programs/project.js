@@ -1,12 +1,14 @@
 import axios from "axios";
 
 const state = {
+    profile: [],
     project: [],
     projects: [],
     sortedprojects: []
 }
 
 const getters = {
+    getProfile: (state) => state.profile,
     getProject: (state) => state.project,
     getProjects: (state) => state.projects,
     getSortedProjects: (state) => state.sortedprojects,
@@ -47,10 +49,26 @@ const actions = {
             return res.data
         })
         return response
+    },
+    // Project Profile
+    async saveProfile({commit}, form){
+        const response = form.id ? await axios.put('/api/project/profile/'+form.id, form) : await axios.post('/api/project/profile', form)
+        if(!response.data.errors){
+            commit('setProject', response.data.project)
+        }
+        return response.data
+    },
+    async fetchProfile({commit}, id){
+        const response = await axios.get('/api/project/profile/'+id).then(res => {
+            commit('setProfile', res.data)
+            return res.data
+        })
+        return response
     }
 }
 
 const mutations = {
+    setProfile: (state, data) => state.profile = data,
     setProject: (state, data) => state.project = data,
     setProjects: (state, data) => state.projects = data,
     setSortedProjects: (state, data) => state.sortedprojects = data,

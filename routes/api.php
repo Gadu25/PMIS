@@ -56,6 +56,14 @@ Route::prefix('/project')->group(function(){
     Route::middleware('auth:sanctum')->put('/{id}', [ProjectController::class, 'update']);
     Route::middleware('auth:sanctum')->put('/portfolio/{id}', [ProjectController::class, 'updatePortfolio']);
     Route::middleware('auth:sanctum')->delete('/{id}', [ProjectController::class, 'destroy']);
+
+    Route::prefix('/profile')->group(function(){
+        Route::middleware('auth:sanctum')->get('/', [ProjectController::class, 'getProfiles']);
+        Route::middleware('auth:sanctum')->post('/', [ProjectController::class, 'storeProfile']);
+        Route::middleware('auth:sanctum')->get('/{id}', [ProjectController::class, 'showProfile']);
+        Route::middleware('auth:sanctum')->put('/{id}', [ProjectController::class, 'updateProfile']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [ProjectController::class, 'destroyProfile']);
+    });
 });
 
 Route::prefix('/workshop')->group(function(){

@@ -162,7 +162,7 @@
                             <template v-for="month in 12" :key="month+'act'">
                                 <th v-if="monthInImplementation(month)">{{monthName(month).substring(0, 3)}}</th>
                             </template>
-                            <th class="p-0" tabindex="-1" style="width: 32px;"><button @click="addActivity()" class="btn btn-outline-success rounded-0 border-0 shadow-none"><i class="fas fa-plus"></i></button></th>
+                            <th class="p-0" tabindex="-1" style="width: 32px;"><button tabindex="-1" @click="addActivity()" class="btn btn-outline-success rounded-0 border-0 shadow-none"><i class="fas fa-plus"></i></button></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -173,7 +173,7 @@
                             <template v-for="act, akey in activity.months" :key="act.month+'act'">
                                 <td v-if="monthInImplementation(act.month)" style="cursor: pointer;" class="text-center" @click="setActivity(key, akey, act)"> <i  v-if="act.type != ''" :style="'color:' + (act.type == 'Regular' ? '#0d6efd' : '#32CD32')" class="fas fa-circle"></i> </td>
                             </template>
-                            <td class="p-0" tabindex="-1" style="width: 32px;"><button @click="removeActivity(activity)" class="btn btn-outline-danger rounded-0 border-0 shadow-none w-100"><i class="fas fa-times"></i></button></td>
+                            <td class="p-0" tabindex="-1" style="width: 32px;"><button tabindex="-1" @click="removeActivity(activity)" class="btn btn-outline-danger rounded-0 border-0 shadow-none w-100"><i class="fas fa-times"></i></button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -294,6 +294,7 @@ export default {
         }
     },
     methods: {
+        ...mapActions('project', ['saveProfile']),
         fillForm(){
             var date = new Date
             this.form.year = date.getFullYear()
@@ -517,10 +518,12 @@ export default {
             if(form.source == ''){ this.toastMsg('warning', 'Source of Funds required'); return false }
             if(form.selectedbudget.length == 0){ this.toastMsg('warning', 'Please add budget for LIB'); return false }
             for(let budget of form.budgets){
-                if(budget.items.length == 0){ this.toastMsg('warning', budget.name+', empty items'); return false }
-                for(let item of budget.items){
-                    if(item.name == ''){ this.toastMsg('warning', budget.name+', item name required'); return false }
-                    if(item.amount == '0.00'){ this.toastMsg('warning', budget.name+', item amount required'); return false }
+                if(form.selectedbudget.includes(budget.name)){
+                    if(budget.items.length == 0){ this.toastMsg('warning', budget.name+', empty items'); return false }
+                    for(let item of budget.items){
+                        if(item.name == ''){ this.toastMsg('warning', budget.name+', item name required'); return false }
+                        if(item.amount == '0.00'){ this.toastMsg('warning', budget.name+', item amount required'); return false }
+                    }
                 }
             }
             var months = []
@@ -544,7 +547,13 @@ export default {
         },
         submitForm(){
             if(this.validateForm()){
-
+                this.saveProfile(this.form).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
+                    if(!res.errors){
+                        this.childClick()
+                    }
+                })
             }
         },
         toastMsg(icon, msg){
