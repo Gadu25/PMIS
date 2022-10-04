@@ -53,7 +53,7 @@
                     </div>
                 </div>
                 <div v-else>
-                    calendar!
+                    <Calendar :year="this.filter.year" />
                 </div>
             </div>
             <div class="controls">
@@ -89,8 +89,10 @@
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import Calendar from './Calendar.vue'
 export default {
     name: 'Events',
+    components: { Calendar },
     data(){
         return {
             filter: {
@@ -191,16 +193,10 @@ export default {
         height: calc(100vh - 220px);
         overflow: auto;
     }
-    /* .content>.card{
-        height: calc(100vh - 290px)
-    } */
     .controls{
         width: 100%;
         display: flex;
         flex-direction: column;
     }
-    /* .side-btns>button{
-        width: 100%;
-    } */
 }
 </style>

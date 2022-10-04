@@ -20,6 +20,11 @@ import CommonIndicators from './components/private/bed/common/CommonIndicators.v
 import Publications from './components/private/publications/Publications.vue'
 
 import Reports from './components/private/reports/Reports.vue'
+import AnnexEReport from './components/private/reports/reports/AnnexE.vue'
+import AnnexFReport from './components/private/reports/reports/AnnexF.vue'
+import AnnualReport from './components/private/reports/reports/Annual.vue'
+import MonthlyReport from './components/private/reports/reports/Monthly.vue'
+import QuarterlyReport from './components/private/reports/reports/Quarterly.vue'
 
 import StrategicPlanning from './components/private/strategic_planning/StrategicPlanning.vue'
 
@@ -49,8 +54,18 @@ const routes = [
         ]
     },
     { path: '/resources-and-publications', name: 'Publications', component: Publications, meta: { requiresAuth: true, title: 'Resources and Publications' } },
-    { path: '/reports', name: 'Reports', component: Reports, meta: { requiresAuth: true, title: 'Reports' } },
-    { path: '/reports', name: 'StrategicPlanning', component: StrategicPlanning, meta: { requiresAuth: true, title: 'Strategic Planning' } },
+    { 
+        path: '/reports', name: 'Reports', component: Reports, meta: { requiresAuth: true, title: 'Reports' },
+        children: [
+            { path: '/reports/annex-e', name: 'AnnexEReport', component: AnnexEReport, meta: { requiresAuth: true, title: 'Annex E' } },
+            { path: '/reports/annex-f', name: 'AnnexFReport', component: AnnexFReport, meta: { requiresAuth: true, title: 'Annex F' } },
+            { path: '/reports/annual-report', name: 'AnnualReport', component: AnnualReport, meta: { requiresAuth: true, title: 'Annual Report' } },
+            { path: '/reports/monthly-report', name: 'MonthlyReport', component: MonthlyReport, meta: { requiresAuth: true, title: 'Monthly Report' } },
+            { path: '/reports/quarterly-report', name: 'QuarterlyReport', component: QuarterlyReport, meta: { requiresAuth: true, title: 'Quarterly Report' } },
+        ]
+    },
+
+    { path: '/strategic-planning', name: 'StrategicPlanning', component: StrategicPlanning, meta: { requiresAuth: true, title: 'Strategic Planning' } },
     { path: '/users-management', name: 'Users', component: Users, meta: { requiresAuth: true, title: 'User Management' } },
     { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, title: 'Profile'} }
 ]

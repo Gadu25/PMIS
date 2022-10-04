@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DivisionController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\WorkshopController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TagController;
 
 Route::controller(AuthController::class)->group(function(){
@@ -108,6 +109,7 @@ Route::prefix('/workshop')->group(function(){
     Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'update']);
     Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroy']);
 });
+Route::get('/export/{workshopId}/{annex}/{status}/{type}/{id1}/{id2}/{id}', [WorkshopController::class, 'exportxlsx']);
 
 Route::prefix('/tag')->group(function(){
     Route::middleware('auth:sanctum')->get('/', [TagController::class, 'index']);
@@ -117,4 +119,11 @@ Route::prefix('/tag')->group(function(){
     Route::middleware('auth:sanctum')->delete('/{id}', [TagController::class, 'destroy']);
 });
 
-Route::get('/export/{workshopId}/{annex}/{status}/{type}/{id1}/{id2}/{id}', [WorkshopController::class, 'exportxlsx']);
+Route::prefix('/report')->group(function(){
+    Route::prefix('/annual')->group(function(){
+        Route::middleware('auth:sanctum')->get('/', [ReportController::class, 'arindex']);
+        Route::middleware('auth:sanctum')->post('/', [ReportController::class, 'arstore']);
+        Route::middleware('auth:sanctum')->post('/{id}', [ReportController::class, 'arupdate']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [ReportController::class, 'ardelete']);
+    });
+});
