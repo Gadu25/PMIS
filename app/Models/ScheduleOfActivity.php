@@ -19,6 +19,12 @@ class ScheduleOfActivity extends Model
     }
 
     public function months(){
-        return $this->hasMany(SoaMonth::class, 'soa_id');
+        return $this->hasMany(SoaMonth::class, 'soa_id')->orderBy('month', 'asc');
+    }
+
+    public function dates($start = 1, $end = 12){
+        return $this->hasMany(SoaMonth::class, 'soa_id')
+                    // ->whereBetween('month', [$start,$end])
+                    ->where('type', 'Milestone')->orderBy('month', 'asc');
     }
 }

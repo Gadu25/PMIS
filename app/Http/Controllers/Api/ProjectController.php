@@ -38,6 +38,7 @@ class ProjectController extends Controller
         return Project::with(
             'profiles.proponents', 
             'profiles.proposals', 
+            'profiles.milestones.months', 
             'profiles.libs.types.items', 
             'profiles.activities.months', 
             'leader.profile.user', 
@@ -339,6 +340,31 @@ class ProjectController extends Controller
         }
     }
 
+    public function updateLib(Request $request){
+        // pending, need further clarifications
+        DB::beginTransaction();
+        try {
+            $id = $request['id'];
+            $lib = LineItemBudget::findOrFail($id);
+            $lib->source_of_funds = $request['source'];
+            $lib->status = $request['status'];
+            $lib->save();
+
+            foreach($request['types'] as $type){
+                if(in_array($type['name'], $request['selectedudget'])){
+                    // proceed saving
+                }
+                else{
+                    // find items to delete
+                }
+            }
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
     public function destroyProfile($id){
 
     }
@@ -429,5 +455,33 @@ class ProjectController extends Controller
     private function formatAmount($amount){
         $newAmount = str_replace(',', '', $amount);
         return $amount ? abs((float)$newAmount) : 0;
+    }
+
+    // Project Profile Events
+
+    public function getEvents($year, $start, $end){
+        $profiles = ProjectProfile::with('project','milestones.dates')->where('year', $year)->get();
+        $results = [];
+        foreach($profiles as $profile){
+            $milestones = [];
+            foreach($profile->milestones as $milestone){
+                $newdates = [];
+                foreach($milestone->dates as $date){
+                    if($date->month >= $start && $date->month <= $end){
+                        array_push($newdates, $date);
+                    }
+                }
+                $milestone->dates = [];
+                $milestone->newdates = $newdates;
+                if(sizeof($newdates) > 0){
+                    array_push($milestones, $milestone);
+                }
+            }
+            $profile->sorted = $milestones;
+            if(sizeof($milestones) > 0){
+                array_push($results, $profile);
+            }
+        }
+        return $results;
     }
 }

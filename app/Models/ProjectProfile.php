@@ -41,4 +41,12 @@ class ProjectProfile extends Model
     public function activities(){
         return $this->hasMany(ScheduleOfActivity::class);
     }
+
+    public function milestones($start = 1, $end = 12){
+        return $this->hasMany(ScheduleOfActivity::class)
+            ->whereHas('months', function($q) use($start, $end){
+                // $q->whereBetween('month', [$start,$end]);
+                $q->where('type', 'Milestone');
+            });
+    }
 }

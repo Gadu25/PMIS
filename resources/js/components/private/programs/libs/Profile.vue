@@ -266,6 +266,5 @@ td.Milestone{
         width: 50%;
         margin-bottom: 6px;
     }
-    
 }
 </style>

@@ -44,7 +44,7 @@
                                 <div id="peso-sign"></div>
                                 <div class="amount">
                                     <div class="input-group">
-                                        <input v-for="amount, akey in item.amounts" :disabled="akey < (form.libcount - 1)" :key="item.id" v-model="amount.amount" v-money="money" type="text" id="input" class="form-control bg-white border-0 shadow-none rounded-0 text-end">
+                                        <input v-for="amount, akey in item.amounts" :disabled="akey < (form.libcount - 1)" :key="amount.id" v-model="amount.amount" v-money="money" type="text" id="input" class="form-control bg-white border-0 shadow-none rounded-0 text-end">
                                     </div>
                                 </div>
                             </div>
@@ -61,15 +61,15 @@
                             </div>
                         </div>
                     </template>
-                    <div class="budget" id="title">
-                        <div class="title"> Grand Total </div>
-                        <div id="peso-sign"></div>
-                        <div class="amount">
-                            <div class="input-group">
-                                <template v-for="num in form.libcount" :key="num">
-                                    <input :value="setGrandTotal(num)" disabled type="text" id="input" class="form-control border-0 shadow-none rounded-0 text-end bg-white fw-bold">
-                                </template>
-                            </div>
+                </div>
+                <div class="budget" style="padding: 0 0.5em;" id="title">
+                    <div class="title"> Grand Total </div>
+                    <div id="peso-sign"></div>
+                    <div class="amount">
+                        <div class="input-group">
+                            <template v-for="num in form.libcount" :key="num">
+                                <input :value="setGrandTotal(num)" disabled type="text" id="input" class="form-control border-0 shadow-none rounded-0 text-end bg-white fw-bold">
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -85,47 +85,49 @@ export default {
     data(){
         return {
             form: {
-                ids: [],
+                // ids: [],
+                id: '',
                 selectedbudget: [],
                 source: '',
                 types: [
                     {
-                        ids: [],
+                        id: '',
                         name: 'Personal Services',
                         items: [{
-                            id: '',
                             name: '',
                             amounts: [{
+                                id: '',
                                 amount: 0,
                                 libcount: 0
                             }]
                         }]
                     },
                     {
-                        ids: [],
+                        id: '',
                         name: 'Maintenance and Other Operating Expenses (MOOE)',
                         items: [{
-                            id: '',
                             name: '',
                             amounts: [{
+                                id: '',
                                 amount: 0,
                                 libcount: 0
                             }]
                         }]
                     },
                     {
-                        ids: [],
+                        id: '',
                         name: 'Capital Outlay',
                         items: [{
-                            id: '',
                             name: '',
                             amounts: [{
+                                id: '',
                                 amount: 0,
                                 libcount: 0
                             }]
                         }]
                     },
                 ],
+                status: '',
                 libcount: 0
             },
             budgettypes: ['Personal Services', 'Maintenance and Other Operating Expenses (MOOE)', 'Capital Outlay'],
@@ -142,14 +144,14 @@ export default {
     methods: {
         addBudgetItem(items){
             var temp = {
-                id: '',
                 name: '',
                 amounts: []
             }
             for(let i = 0; i < this.form.libcount; i++){
                 temp.amounts.push({
+                    id: '',
                     amount: 0,
-                    libcount: i
+                    libcount: i+1
                 })
             }
             items.push(temp)
@@ -175,10 +177,12 @@ export default {
             var ctr = 0
             for(let lib of libs){
                 form.source = lib.source_of_funds
-                form.ids.push(lib.id)
+                form.id = lib.id
+                // form.ids.push(lib.id)
                 ctr = ctr+1
                 for(let budgettype of lib.types){
                     var type = form.types.find(elem => elem.name == budgettype.name)
+                    type.id = budgettype.id
                     for(let item of budgettype.items){
                         var formitem = type.items.find(elem => elem.name == item.name)
                         if(formitem){
@@ -190,11 +194,11 @@ export default {
                         }
                         else{
                             var temp = {
-                                id: item.id,
                                 name: item.name,
                                 amounts: []
                             }
                             temp.amounts.push({
+                                id: item.id,
                                 amount: this.formatNumber(item.amount),
                                 libcount: ctr
                             })
@@ -214,7 +218,7 @@ export default {
         cleanForm(){
             for(let type of this.form.types){
                 if(type.items.length > 1){
-                    var item = type.items.find(elem => elem.id == '')
+                    var item = type.items.find(elem => elem.name == '')
                     type.items.remove(item)
                 }
             }
@@ -304,5 +308,10 @@ textarea{
     cursor: pointer;
     background: rgba(0,0,0,0.25);
     border-radius: 0.25em;
+}
+.budget-items-container{
+    max-height: calc(100vh - 255px);
+    overflow: auto;
+    padding: 0px 0.5em ;
 }
 </style>

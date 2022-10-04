@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('type');
             $table->date('start')->nullable();
             $table->date('end')->nullable();
-            $table->string('month');
+            $table->integer('month');
             $table->foreignId('soa_id')->constrained('schedule_of_activities')->cascadeOnDelete();
             $table->timestamps();
         });

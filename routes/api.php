@@ -63,7 +63,9 @@ Route::prefix('/project')->group(function(){
         Route::middleware('auth:sanctum')->get('/{id}', [ProjectController::class, 'showProfile']);
         Route::middleware('auth:sanctum')->put('/{id}', [ProjectController::class, 'updateProfile']);
         Route::middleware('auth:sanctum')->delete('/{id}', [ProjectController::class, 'destroyProfile']);
+        Route::middleware('auth:sanctum')->get('/event/{year}/{start}/{end}', [ProjectController::class, 'getEvents']);
     });
+    
 });
 
 Route::prefix('/workshop')->group(function(){
