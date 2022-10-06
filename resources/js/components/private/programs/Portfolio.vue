@@ -1,8 +1,9 @@
 <template>
     <div class="px-2 py-2" v-if="!loading">
-        <h3 class="text-center">
+        <div class="text-center text-truncate position-relative">
+        <h3 :title="project.title">
             {{project.title}}
-        </h3>
+        </h3></div>
         <div class="row flex-row-reverse px-3" v-if="tab == ''">
             <div class="mb-2">
                 <button class="btn btn-sm btn-outline-secondary" @click="$router.back()"><i class="far fa-arrow-left"></i> Back</button>
@@ -15,7 +16,7 @@
                 </div>
                 <div class="card border-0 shadow mb-3" id="btn">
                     <div class="card-body">
-                        <h6 class="text-center">Project Forms</h6>
+                        <h6 class="text-center">Monthly Accomplishment Reports</h6>
                     </div>
                 </div>
             </div>
@@ -38,8 +39,12 @@
                             <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Id distinctio aliquam reprehenderit iste amet quisquam accusamus, aperiam accusantium illo! Dolore facere vitae, consequatur nostrum cumque non fuga dolores culpa odit nihil quas consequuntur illum quos autem vero praesentium sequi quaerat quod alias saepe recusandae tenetur a? Consequatur veniam maxime minus voluptate vitae, sunt tempora autem voluptatem aliquam repellat enim laudantium?</p>
                             <strong>Specific Objective/s</strong>
                             <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Minus commodi odio iste, atque quo vero. Placeat, nesciunt velit dolore cumque obcaecati autem molestiae facere ipsam repellat totam, nemo debitis dolor? Velit ducimus delectus earum non a facilis, quis nemo numquam sit deleniti adipisci obcaecati porro laudantium cum enim at. Nemo iure, sapiente suscipit eum tempora veritatis quos fugit odit excepturi ad eius, placeat est, neque accusamus commodi natus vitae! Voluptatum, delectus perspiciatis praesentium ipsum commodi fugit dolores possimus sequi aliquam.</p> -->
-                            <strong>Benefeciaries (static data)</strong>
-                            <table class="table table-sm table-bordered mb-2">
+                            
+                            <div class="d-flex justify-content-between mb-1">
+                                <strong>Benefeciaries (static data)</strong>
+                                <div><button class="btn btn-sm btn-outline-secondary shadow-none"><i class="fas fa-expand-alt"></i></button></div>
+                            </div>
+                            <table class="table table-sm table-bordered mb-3">
                                 <thead class="text-center">
                                     <tr>
                                         <th></th>
@@ -69,7 +74,10 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <strong>Annual Budget (static data)</strong>
+                            <div class="d-flex justify-content-between mb-1">
+                                <strong>Annual Budget (static data)</strong>
+                                <div><button class="btn btn-sm btn-outline-secondary shadow-none"><i class="fas fa-expand-alt"></i></button></div>
+                            </div>
                             <table class="table table-sm table-bordered">
                                 <thead class="text-center">
                                     <tr>

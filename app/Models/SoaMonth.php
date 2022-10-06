@@ -14,7 +14,10 @@ class SoaMonth extends Model
         'start',
         'end',
         'month',
-        'soa_id'
+        'soa_id',
+        'proposed_venue',
+        'actual_venue',
+        'description'
     ];
 
     public function activity(){

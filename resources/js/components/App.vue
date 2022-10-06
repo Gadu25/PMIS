@@ -8,8 +8,13 @@
                 <div class="sidebar-header">
                     <router-link :to="{ name: 'Dashboard' }" class="sidebar-link">
                         <div class="d-flex justify-content-between">
+                            <div>
                             <img :src="'/images/Logo.png'" alt="logo" width="60">
-                            <span>Project Management Info System</span>
+                            </div>
+                            <div class="w-100 text-center ">
+                                <span style="font-size: 40px; ">P M I S</span>
+                            </div>
+                            <!-- <span>Project Management Info System</span> -->
                         </div>
                     </router-link>
                     <button id="toggleBtn" @click="toggle = !toggle" class="btn btn-sm btn-primary"><i class="fas fa-bars"></i></button>
@@ -19,8 +24,8 @@
                     <template v-for="val, key in auth.active_profile.groupedroles" :key="key">
                         <router-link active-class="active" :to="{ name: setRouteName(key)}">{{key}}</router-link>
                     </template>
-                    <!-- <router-link active-class="active" :to="{ name: 'Divisions' }">Divisions and Units</router-link>
-                    <router-link active-class="active" :to="{ name: 'Programs' }">Programs and Projects</router-link>
+                    <router-link active-class="active" :to="{ name: 'About' }">About System</router-link>
+                    <!-- <router-link active-class="active" :to="{ name: 'Programs' }">Programs and Projects</router-link>
                     <router-link active-class="active" :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
                     <router-link active-class="active" :to="{ name: 'Users' }">User Management</router-link> -->
                     <a href="/login" @click="logout">Logout</a>

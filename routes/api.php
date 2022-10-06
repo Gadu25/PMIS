@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\WorkshopController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\PublicationController;
 use App\Http\Controllers\Api\TagController;
 
 Route::controller(AuthController::class)->group(function(){
@@ -65,6 +66,7 @@ Route::prefix('/project')->group(function(){
         Route::middleware('auth:sanctum')->put('/{id}', [ProjectController::class, 'updateProfile']);
         Route::middleware('auth:sanctum')->delete('/{id}', [ProjectController::class, 'destroyProfile']);
         Route::middleware('auth:sanctum')->get('/event/{year}/{start}/{end}', [ProjectController::class, 'getEvents']);
+        Route::middleware('auth:sanctum')->put('/lib/{id}', [ProjectController::class, 'updateLib']);
     });
     
 });
@@ -126,4 +128,11 @@ Route::prefix('/report')->group(function(){
         Route::middleware('auth:sanctum')->post('/{id}', [ReportController::class, 'arupdate']);
         Route::middleware('auth:sanctum')->delete('/{id}', [ReportController::class, 'ardelete']);
     });
+});
+
+Route::prefix('/publication')->group(function(){
+    Route::middleware('auth:sanctum')->get('/', [PublicationController::class, 'index']);
+    Route::middleware('auth:sanctum')->post('/', [PublicationController::class, 'store']);
+    Route::middleware('auth:sanctum')->put('/{id}', [PublicationController::class, 'update']);
+    Route::middleware('auth:sanctum')->delete('/{id}', [PublicationController::class, 'destroy']);
 });

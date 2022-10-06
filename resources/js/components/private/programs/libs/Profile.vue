@@ -6,11 +6,11 @@
                 <h4 class="text-center">{{profile.year}} Profile</h4>
             </div>
             <div class="content-container">
-                <div class="content">
+                <div class="content" :class="exportmode ? 'print' : ''">
                     <!-- <div class="d-flex justify-content-end mb-2">
                         <button class="btn btn-sm btn-primary"><i class="far fa-pencil-alt"></i></button>
                     </div> -->
-                    <div class="card rounded-0 border-0 shadow">
+                    <div class="card rounded-0 border-0 " :class="!exportmode ? 'shadow' : ''" id="printMe">
                         <div class="card-body">
                             <h5 class="text-center text-uppercase">
                                 {{tab == 'lib' ? 'Line-Item Budget' : 'Project Proposal'}} <br>
@@ -44,19 +44,25 @@
                                 </div>
                             </div>
                             <template v-if="tab == 'proposal'">
-                                <div class="proposal-content" v-for="content in profile.proposals" :key="content.id">
-                                    <strong class="text-uppercase">{{content.title}}</strong><br>
-                                    <span v-html="content.text"></span>
-                                </div>
+                                <template v-for="content in profile.proposals" :key="content.id">
+                                    <span>{{setTexts(content)}}</span>
+                                    <div class="proposal-content"  v-if="content.title != 'Budgetary Requirements' || content.title != 'Gantt Chart'">
+                                        <strong class="text-uppercase">{{content.title}}</strong><br>
+                                        <span v-html="content.text"></span>
+                                    </div>
+                                </template>
                                 <strong class="text-uppercase">Budgetary Requirements: </strong>
+                                <span v-html="budgetaryrequirements"></span>
                             </template>
                             <Budget :libs="profile.libs" />
                             <div class="py-3" v-if="tab == 'lib'">
                                 <p class="m-0">Chargeable Against {{getSOF()}}</p>
                                 <p>Certified Funds Available:</p>
                             </div>
+                            <div id="pagebreak"></div>
                             <div class="mt-4" v-if="tab == 'proposal'">
                                 <strong class="text-uppercase">Schedule of Activities</strong>
+                                <span v-html="ganttchart"></span>
                                 <div class="table-responsive my-3">
                                     <table class="table table-sm table-bordered">
                                         <thead class="text-center">
@@ -87,17 +93,54 @@
                     <button @click="tab = 'lib'"      :class="tab == 'lib'      ? 'btn-secondary' : 'btn-outline-secondary'" class="bg-gradient btn border-0 shadow mb-2">Line-Item Budget</button>
                     <strong>Controls</strong>
                     <template v-if="tab == 'lib'">
-                        <button @click="libformshow = true" class="btn btn-primary border-0 shadow mb-2"><i class="far fa-pencil-alt"></i> Edit LIB</button>
-                        <button class="btn btn-warning border-0 shadow mb-2"><i class="far fa-history"></i> History</button>
+                        <button @click="libformshow = true, editmode = true" class="btn border-0 shadow mb-2" :class="isDraft() ? 'btn-primary' : 'btn-secondary'"><i class="far" :class="isDraft() ? 'fa-pencil-alt' : 'fa-eye'"></i> Line-Item</button>
+                        <button @click="libformshow = true, editmode = false" class="btn btn-success border-0 shadow mb-2" v-if="latestLib.status == 'Approved'"><i class="far fa-plus"></i> Realignment</button>
+                        <button data-bs-toggle="modal" data-bs-target="#modal" class="btn btn-warning border-0 shadow mb-2"><i class="far fa-history"></i> Logs</button>
                     </template>
                     <template v-else>
-                        <button @click="formshow = true" class="btn btn-primary border-0 shadow mb-2"><i class="far fa-pencil-alt"></i> Edit Proposal</button>
+                        <button @click="formshow = true" class="btn btn-primary border-0 shadow mb-2"><i class="far fa-pencil-alt"></i> Proposal</button>
+                    </template>
+                    <button class="btn border-0 shadow mb-2" @click="exportmode = !exportmode" :class="exportmode ? 'btn-secondary' : 'btn-outline-secondary'">{{exportmode ? 'Exit' : ''}} Export</button>
+                    <template v-if="exportmode">
+                        <button class="btn btn-outline-secondary border-0 shadow mb-2" v-print="'#printMe'"><i class="far fa-print"></i> Print / <i class="fas fa-download"></i> PDF</button>
+                        <button class="btn btn-success border-0 shadow mb-2"><i class="fas fa-file-excel"></i> Excel</button>
                     </template>
                 </div>
             </div>
         </template>
         <Form :editmode="editmode" :profile="profile" @clicked="formshow = false" v-if="formshow" />
         <LibForm :editmode="editmode" :libs="profile.libs" @clicked="libformshow = false" v-if="libformshow" />
+        <!-- Modal -->
+        <div class="modal fade" id="modal" tabindex="-1">
+            <div class="modal-dialog modal-dailog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{profile.title}} Logs</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body overflow-auto" style="max-height: calc(100vh - 300px)">
+                        <div class="border-bottom pb-2 mb-3" v-for="lib, key in profile.libs" :key="lib.id">
+                            <strong>
+                                {{key == 0 ? (lib.status == 'Approved' ? 'As Approved' : 'LIB Status: ' + lib.status) : key + getOrdinalSuffix(key) + ' Ammendment'}} 
+                                <span v-if="lib.date_approved">({{lib.date_approved}})</span>
+                            </strong>
+                            <div class=" p-2 mb-3 rounded shadow" v-for="history in lib.histories" :key="history.id">
+                                <span v-html="history.subject"></span>
+                                <span v-if="history.comment != null">Comment: {{history.comment}}</span><hr>
+                                <div class="d-flex justify-content-between">
+                                    <small><strong>By: {{history.profile.user.firstname}} {{history.profile.user.lastname}}</strong></small>
+                                    <small>{{history.created_at}}</small>
+                                </div>
+                                <!-- {{history}} -->
+                            </div>
+                            <div v-if="lib.histories.length == 0" class="text-center p-5">
+                                No Logs found
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div v-else class="p-5 m-5 text-center">
         <h1 class="mb-3">Loading Project Profile </h1>
@@ -105,6 +148,7 @@
     </div>
 </template>
 <script>
+import moment from 'moment'
 import LibForm from './LibForm.vue'
 import Form from './Form.vue'
 import Budget from './Budget.vue'
@@ -120,7 +164,11 @@ export default {
             loading: true,
             formshow: false,
             libformshow: false,
-            editmode: true
+            editmode: true,
+            exportmode: false,
+            latestLib: [],
+            budgetaryrequirements: '',
+            ganttchart: ''
         }
     },
     methods: {
@@ -172,6 +220,35 @@ export default {
             console.log(lib)
             // console.log(this.profile.libs)
         },
+        setLatest(){
+            var length = this.profile.libs.length
+            var key = length - 1
+            this.latestLib = this.profile.libs[key]
+        },
+        isDraft(){
+            return this.latestLib.status == 'Draft'
+        },
+        setTexts(content){
+            if(content.title == 'Budgetary Requirements'){
+                this.budgetaryrequirements = content.text
+            } 
+            if(content.title == 'Gantt Chart'){
+                this.ganttchart = content.text
+            }
+        },
+        getOrdinalSuffix(num){
+            var array = ("" + num).split("").reverse(); // E.g. 123 = array("3","2","1")
+    
+            if (array[1] != "1") { // Number is not in the teens
+                switch (array[0]) {
+                    case "1": return "st";
+                    case "2": return "nd";
+                    case "3": return "rd";
+                }
+            }
+            
+            return "th";
+        },
         formatNumber(num){
             return (Math.round(num * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2 })
         },
@@ -185,6 +262,7 @@ export default {
     },
     created(){
         this.fetchProfile(this.profileId).then(res => {
+            this.setLatest()
             this.loading = false
         })
     }
@@ -207,6 +285,10 @@ export default {
 .content>.card{
     height: calc(100vh - 190px);
     overflow: auto;
+}
+.content.print>.card{
+    min-height: 100vh !important;
+    overflow: hidden;
 }
 .side-btns{
     width: 200px;
@@ -242,6 +324,9 @@ td.Regular{
 }
 td.Milestone{
     background: #32CD32
+}
+#pagebreak{
+    page-break-after: always;
 }
 @media only screen and (max-width: 600px) {
     .content-container{

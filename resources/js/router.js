@@ -25,11 +25,14 @@ import AnnexFReport from './components/private/reports/reports/AnnexF.vue'
 import AnnualReport from './components/private/reports/reports/Annual.vue'
 import MonthlyReport from './components/private/reports/reports/Monthly.vue'
 import QuarterlyReport from './components/private/reports/reports/Quarterly.vue'
+import BedReport from './components/private/reports/reports/Bed.vue'
 
 import StrategicPlanning from './components/private/strategic_planning/StrategicPlanning.vue'
 
 import Users from './components/private/user/management/Users.vue'
 import Profile from './components/private/user/profile/Profile.vue'
+
+import About from './components/private/about/About.vue'
 
 const routes = [
     { path: '/', name: 'Home', component: Home, meta: { requiresAuth: false, title: 'Home'} },
@@ -61,13 +64,15 @@ const routes = [
             { path: '/reports/annex-f', name: 'AnnexFReport', component: AnnexFReport, meta: { requiresAuth: true, title: 'Annex F' } },
             { path: '/reports/annual-report', name: 'AnnualReport', component: AnnualReport, meta: { requiresAuth: true, title: 'Annual Report' } },
             { path: '/reports/monthly-report', name: 'MonthlyReport', component: MonthlyReport, meta: { requiresAuth: true, title: 'Monthly Report' } },
-            { path: '/reports/quarterly-report', name: 'QuarterlyReport', component: QuarterlyReport, meta: { requiresAuth: true, title: 'Quarterly Report' } },
+            { path: '/reports/quarterly-report', name: 'QuarterlyReport', component: QuarterlyReport, meta: { requiresAuth: true, title: 'BAR Report' } },
+            { path: '/reports/bed-report', name: 'BedReport', component: BedReport, meta: { requiresAuth: true, title: 'BEDs Report' } },
         ]
     },
 
     { path: '/strategic-planning', name: 'StrategicPlanning', component: StrategicPlanning, meta: { requiresAuth: true, title: 'Strategic Planning' } },
     { path: '/users-management', name: 'Users', component: Users, meta: { requiresAuth: true, title: 'User Management' } },
-    { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, title: 'Profile'} }
+    { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, title: 'Profile'} },
+    { path: '/about-system', name: 'About', component: About, meta: { requiresAuth: true, title: 'About System'} }
 ]
 
 const router = createRouter({

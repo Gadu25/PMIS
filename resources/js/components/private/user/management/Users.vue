@@ -12,7 +12,7 @@
                             <div class="d-flex">
                                 <div class="form-floating">
                                     <select class="form-select" id="filterDivision" v-model="filterdivision_id">
-                                        <option :value="0">Any Division</option>
+                                        <option :value="0">All Division</option>
                                         <option :value="division.id" v-for="division in divisions" :key="'filterdiv_'+division.id">{{division.name}}</option>
                                     </select>
                                     <label for="filterDivision">Division</label>

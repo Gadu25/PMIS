@@ -61,7 +61,8 @@ export default {
 </script>
 <style scoped>
 #wrapper{
-    height: calc(100vh - 175px);
+    height: calc(100vh - 205px);
     overflow: auto;
+    padding-bottom: 100px;
 }
 </style>

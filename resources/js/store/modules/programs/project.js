@@ -68,6 +68,15 @@ const actions = {
             return res.data
         })
         return response
+    },
+    async saveLib({commit}, form){
+        const response = await axios.put('/api/project/profile/lib/'+form.id, form).then(res => {
+            if(!res.data.errors){
+                commit('setProfile', res.data.profile)
+            }
+            return res.data
+        })
+        return response
     }
 }
 

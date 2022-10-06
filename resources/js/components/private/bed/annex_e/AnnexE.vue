@@ -26,7 +26,7 @@
                             </div>
                             <div class="form-floating mb-3">
                                 <select class="form-control" id="Status" v-model="displaystatus">
-                                    <option value="New">New</option>
+                                    <!-- <option value="New">New</option> -->
                                     <option value="Draft">Draft</option>
                                     <option value="For Review">For Review</option>
                                     <option value="For Approval">For Approval</option>
@@ -45,21 +45,21 @@
                             <template v-if="displaytype == 'Program'">
                                 <div class="form-floating mb-3">
                                     <select class="form-control" id="Program" v-model="disProg.program_id" @change="progChange()">
-                                        <option :value="0">Any Program</option>
+                                        <option :value="0">All Program</option>
                                         <option :value="program.id" v-for="program in programs" :key="'program_'+program.id">{{program.title}}</option>
                                     </select>
                                     <label for="Program">Program</label>
                                 </div>
                                 <div class="form-floating mb-3" v-if="subprograms.length > 0">
                                     <select class="form-control" id="SubProgram" v-model="disProg.subprogram_id" @change="subpChange()">
-                                        <option :value="0">Any Sub-Program</option>
+                                        <option :value="0">All Sub-Program</option>
                                         <option :value="subprogram.id" v-for="subprogram in subprograms" :key="'subprogram_'+subprogram.id">{{(disProg.program_id != 2) ? subprogram.title_short : subprogram.title}}</option>
                                     </select>
                                     <label for="SubProgram">Sub-Program</label>
                                 </div>
                                 <div class="form-floating mb-3" v-if="clusters.length > 0">
                                     <select class="form-control" id="Cluster" v-model="disProg.cluster_id">
-                                        <option :value="0">Any Cluster</option>
+                                        <option :value="0">All Cluster</option>
                                         <option :value="cluster.id" v-for="cluster in clusters" :key="'cluster_'+cluster.id">{{cluster.title}}</option>
                                     </select>
                                     <label for="Cluster">Cluster</label>
@@ -68,21 +68,21 @@
                             <template v-if="displaytype == 'Division'">
                                 <div class="form-floating mb-3">
                                     <select class="form-control" id="Division" v-model="disDiv.division_id" @change="divChange()">
-                                        <option :value="0">Any Division</option>
+                                        <option :value="0">All Division</option>
                                         <option :value="division.id" v-for="division in divisions" :key="'division_'+division.id">{{division.name}}</option>
                                     </select>
                                     <label for="Division">Division</label>
                                 </div>
                                 <div class="form-floating mb-3" v-if="units.length > 0">
                                     <select class="form-control" id="Unit" v-model="disDiv.unit_id" @change="unitChange()">
-                                        <option :value="0">Any Unit</option>
+                                        <option :value="0">All Unit</option>
                                         <option :value="unit.id" v-for="unit in units" :key="'unit_'+unit.id">{{unit.name}}</option>
                                     </select>
                                     <label for="Unit">Unit</label>
                                 </div>
                                 <div class="form-floating mb-3" v-if="subunits.length > 0">
                                     <select class="form-control" id="SubUnit" v-model="disDiv.subunit_id">
-                                        <option :value="0">Any Sub-Unit</option>
+                                        <option :value="0">All Sub-Unit</option>
                                         <option :value="subunit.id" v-for="subunit in subunits" :key="'subunit_'+subunit.id">{{subunit.name}}</option>
                                     </select>
                                     <label for="SubUnit">Sub-Unit</label>
@@ -143,8 +143,8 @@
                                                         <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                         <td class="text-center" :rowspan="item.subs.length + 1">
                                                             <template v-if="checkUserDivision(item.project)">
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details')" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                 <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                             </template>
                                                             <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
@@ -175,8 +175,8 @@
                                                             <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                             <td class="text-center" :rowspan="item.subs.length + 1">
                                                                 <template v-if="checkUserDivision(item.project)">
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details')" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                     <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                 </template>
                                                                 <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
@@ -211,8 +211,8 @@
                                                                 <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                                 <td class="text-center" :rowspan="item.subs.length+1">
                                                                     <template v-if="checkUserDivision(item.project)">
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && !isForReview(item.status)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'Review'}}</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                         <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                     </template>
                                                                     <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
@@ -252,7 +252,7 @@
                 <template v-if="!detailsyncing">
                     <div class="d-flex justify-content-between mb-3" v-if="!saving">
                         <div>
-                            <button class="btn btn-sm btn-danger me-1" @click="detailshow = false"><i class="fas fa-times"></i> Cancel</button>
+                            <button class="btn btn-sm btn-secondary me-1" @click="detailshow = false"><i class="fas fa-times"></i> Close</button>
                             <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-outline-secondary" v-if="histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                         </div>
                         <div v-if="!isForReview(form.status)">
@@ -598,8 +598,8 @@ export default {
             tab: 'performance',
             printmode: false,
             displaytype: 'Program',
-            displaystatus: 'New',
-            displaysyncstatus: 'New',
+            displaystatus: 'Draft',
+            displaysyncstatus: 'Draft',
             disProg: {
                 program_id: 0,
                 subprogram_id: 0,
@@ -1172,7 +1172,7 @@ export default {
             var userStr = JSON.stringify(userObject)
             var projStr = JSON.stringify(projectObject)
 
-            return (userStr === projStr || user.active_profile.title.name == 'Superadmin') && this.isUserProjectLeader(project.leader.profile_id)
+            return (userStr === projStr || user.active_profile.title.name == 'Superadmin')
         },
         isUserProjectLeader(id){
             return id == this.authuser.active_profile.id
@@ -1212,7 +1212,7 @@ export default {
                     }
                 }
             }
-            status = (status == '') ? 'New' : status
+            status = (status == '') ? 'Draft' : status
             this.displaystatus = status
             this.displaysyncstatus = status
         },

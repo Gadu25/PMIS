@@ -2,7 +2,7 @@
     <div class="p-2 " v-if="!childSelected">
         <h2 class="text-center pb-2 mb-3 border-bottom">Reports</h2>
         <div class="row flex-wrap px-2">
-            <div class="col-sm-6 p-2" v-for="report in reports" :key="report">
+            <div class="col-sm-6 px-3 pb-3" v-for="report in reports" :key="report">
                 <div class="card border-0 shadow" @click="childSelected = true, $router.push({ name: reportRoute(report)})">
                     <div class="card-body">
                         <h1> {{report}}</h1>
@@ -21,10 +21,11 @@ export default {
         return {
             reports: [
                 'Annual Reports',
-                'Quarterly Reports',
+                'BAR',
                 'Annex E',
                 'Annex F',
                 'Monthly Accomplishment Reports',
+                'BED',
             ],
             childSelected: false
         }
@@ -40,11 +41,14 @@ export default {
             if(report == 'Annex F'){
                 return 'AnnexFReport'
             }
-            if(report == 'Quarterly Reports'){
+            if(report == 'BAR'){
                 return 'QuarterlyReport'
             }
             if(report == 'Monthly Accomplishment Reports'){
                 return 'MonthlyReport'
+            }
+            if(report == 'BED'){
+                return 'BedReport'
             }
         }
     },
@@ -67,8 +71,8 @@ export default {
     text-align: center;
 }
 .card:hover{
-    transition: 0.3s all ease;
-    background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);;
+    /* transition: 0.3s all ease; */
+    /* background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);; */
     transform: scale(1.02);
     cursor: pointer;
 }

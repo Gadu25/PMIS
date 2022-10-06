@@ -95,7 +95,7 @@
                     </div>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <strong>{{form.id ? 'Project' : 'Projects'}}</strong>
+                    <strong>{{form.id ? 'Project' : 'Projects'}}</strong> <strong>Budgetary Requirements</strong>
                     <button class="btn btn-sm btn-success" v-if="!form.id" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
                 </div>
                 <div class="table-responsive">

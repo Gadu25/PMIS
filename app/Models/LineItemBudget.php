@@ -23,4 +23,8 @@ class LineItemBudget extends Model
     public function types(){
         return $this->hasMany(LibType::class, 'lib_id');
     }
+
+    public function histories(){
+        return $this->morphMany(History::class, 'historiable')->orderBy('created_at', 'desc');
+    }
 }

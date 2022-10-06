@@ -17,6 +17,8 @@ import common from './modules/workshops/common'
 
 import annual from './modules/reports/annual'
 
+import publication from "./modules/publications/publication"
+
 import tag from './modules/tags/tag'
 
 const store = createStore({
@@ -27,6 +29,7 @@ const store = createStore({
         event,
         workshop, annexe, annexf, annexone, common,
         annual,
+        publication,
         tag,
     }
 })

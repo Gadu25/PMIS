@@ -86,17 +86,25 @@
                 </div>
             </div><hr>
             <!-- Proposal Content -->
-            <div class="text-center mb-2"><strong>Proposal</strong> <button class="btn btn-outline-success btn-sm border-0 shadow-none mb-1" tabindex="-1" data-bs-toggle="modal" data-bs-target="#modal" @click="newContent()"><i class="fas fa-plus"></i></button></div>
-            <div class="col-sm-12" v-for="content, key in form.proposalcontent" :key="key">
-                <div class="d-flex justify-content-between mb-1">
-                    <div class="content-title fw-bold">{{content.title}}</div>
+            <div class="text-center mb-2">
+                <strong>Project Proposal</strong> 
+                <!-- <button class="btn btn-outline-success btn-sm border-0 shadow-none mb-1" tabindex="-1" data-bs-toggle="modal" data-bs-target="#modal" @click="newContent()"><i class="fas fa-plus"></i></button> -->
+            </div>
+            <div class="form-group row mb-3 border-bottom" v-for="content, key in form.proposalcontent" :key="key">
+                <!-- <div class="d-flex justify-content-center mb-1">
+                    <div class="content-title fw-bold"></div>
                     <div class="content-controls" v-if="!content.required">
                         <button tabindex="-1" style="width: 32px" class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal" @click="editContent(content, key)"><i class="far fa-pencil-alt"></i></button>
                         <button tabindex="-1" style="width: 32px" class="btn btn-sm btn-danger" @click="removeContent(content)"><i class="far fa-trash-alt"></i></button>
                     </div>
+                </div> -->
+                <div class="col-sm-3 fw-bold">
+                    {{content.title}}
                 </div>
-                <div class="border mb-3">
-                    <ckeditor :editor="editor" v-model="content.text" :config="editorConfig"  style="min-height: 120px;" placeholder=" " id="floatingTextarea"></ckeditor>
+                <div class="col-sm-9">
+                    <div class="border mb-3">
+                        <ckeditor :editor="editor" v-model="content.text" :config="editorConfig"  style="min-height: 120px;" placeholder=" " id="floatingTextarea"></ckeditor>
+                    </div>
                 </div>
             </div><hr>
             <!-- Line-Item Budget -->
@@ -148,11 +156,16 @@
             </template>
             <!-- Schedule of Activities -->
             <div class="text-center mb-2"><strong>Schedule of Activities</strong> </div>
-            <div class="activity-types mb-2">
-                <label class="me-2">Activity Type:</label>
-                <div class="form-check form-check-inline" v-for="activitytype in activitytypes" :key="activitytype">
-                    <input class="form-check-input shadow-none" type="radio" :name="activitytype" :id="activitytype" :value="activitytype" v-model="form.activitytype" :style="form.activitytype == 'Milestone' && activitytype == 'Milestone' ? 'background-color: #32CD32; border: #32CD32' : ''">
-                    <label class="form-check-label" :for="activitytype">{{activitytype}}</label>
+            <div class="d-flex justify-content-between mb-2">
+                <div class="act-types">
+                    <label class="me-2">Activity Type:</label>
+                    <div class="form-check form-check-inline" v-for="activitytype in activitytypes" :key="activitytype">
+                        <input class="form-check-input shadow-none" type="radio" :name="activitytype" :id="activitytype" :value="activitytype" v-model="form.activitytype" :style="form.activitytype == 'Milestone' && activitytype == 'Milestone' ? 'background-color: #32CD32; border: #32CD32' : ''">
+                        <label class="form-check-label" :for="activitytype">{{activitytype}}</label>
+                    </div>
+                </div>
+                <div class="btns">
+                    <button class="btn btn-sm btn-outline-secondary shadow-none" @click="tab = 'workshop'" data-bs-target="#modal" data-bs-toggle="modal">Workshop Activities</button>
                 </div>
             </div>
             <div class="table-responsive">
@@ -216,11 +229,19 @@
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="form-floating">
+                            <div class="form-floating mb-3">
                                 <input type="date" class="form-control" :min="minDate" :max="maxDate" v-model="form.monthact.end" id="end" placeholder="end">
                                 <label for="end">End</label>
                             </div>
                         </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" v-model="form.monthact.proposed_venue" id="proposed_venue" placeholder=" ">
+                        <label for="proposed_venue">Proposed Venue</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea type="text" class="form-control" v-model="form.monthact.description" id="description" placeholder=" " style="min-height: 100px;"></textarea>
+                        <label for="description">Brief Description</label>
                     </div>
                     <div class="d-flex justify-content-end">
                         <button @click="saveMilestone(false)" class="btn btn-sm btn-secondary rounded-pill px-4 me-1" data-bs-dismiss="modal">Cancel</button>
@@ -228,6 +249,15 @@
                     </div>
                 </div>
 
+            </div>
+            <div class="modal-content" v-if="tab == 'workshop'">
+                <div class="modal-header">
+                    <h5 class="modal-title">Workshop Activities</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" ref="CloseWorkshop"></button>
+                </div>
+                <div class="modal-body p-5 text-center">
+                    <h3><i class="fas fa-cog fa-spin"></i> Under Construction</h3>
+                </div>
             </div>
         </div>
     </div>
@@ -254,8 +284,15 @@ export default {
                 year: 0,
                 proponents: [{id: '', name: ''}],
                 proposalcontent: [
-                    {title: 'Background / Rationale', text: '', file: '', required: true},
-                    {title: 'General Objective',      text: '', file: '', required: true}
+                    {id: '', title: 'Background / Rationale',      text: '', file: '', required: true},
+                    {id: '', title: 'Project Description',         text: '', file: '', required: true},
+                    {id: '', title: 'General Objective',           text: '', file: '', required: true},
+                    {id: '', title: 'Specific Objective',          text: '', file: '', required: true},
+                    {id: '', title: 'Methodology',                 text: '', file: '', required: true},
+                    {id: '', title: 'Beneficiaries',               text: '', file: '', required: true},
+                    {id: '', title: 'Expected Output and Outcome', text: '', file: '', required: true},
+                    {id: '', title: 'Budgetary Requirements',      text: '', file: '', required: true},
+                    {id: '', title: 'Gantt Chart',                 text: '', file: '', required: true},
                 ],
                 source: '',
                 selectedbudget: ['Personal Services', 'Maintenance and Other Operating Expenses (MOOE)'],
@@ -268,7 +305,9 @@ export default {
                 activities: [],
                 monthact: {
                     start: '',
-                    end: ''
+                    end: '',
+                    description: '',
+                    proposed_venue: ''
                 }
             },
             budgettypes: ['Personal Services', 'Maintenance and Other Operating Expenses (MOOE)', 'Capital Outlay'],
@@ -322,7 +361,7 @@ export default {
                         id: content.id,
                         title: content.title,
                         text: content.text,
-                        required: (content.title.includes('Background') || content.title.includes('General'))
+                        required: true
                     })
                 }
                 this.form.activities = []
@@ -487,11 +526,16 @@ export default {
                 if(start == ''){ this.toastMsg('warning', 'Start date required'); return false }
                 if(end == '')  { this.toastMsg('warning', 'End date required');   return false }
                 if(start > end){ this.toastMsg('warning', 'Start date must be on or before the End date'); return false }
+                if(this.form.monthact.proposed_venue == ''){ this.toastMsg('warning', 'Proposed Venue required'); return false }
+                if(this.form.monthact.description == ''){ this.toastMsg('warning', 'Description required'); return false }
             }
 
             activity.type = proceed ? 'Milestone' : ''
             activity.start = proceed ? start : ''
             activity.end = proceed ? end : ''
+            activity.description = this.form.monthact.description ? this.form.monthact.description : ''
+            activity.proposed_venue = this.form.monthact.proposed_venue ? this.form.monthact.proposed_venue : ''
+            activity.actual_venue = ''
 
             this.$refs.CloseMilestone.click()
         },
@@ -500,6 +544,9 @@ export default {
             act.type = act.type != type ? type : ''
             act.start = ''
             act.end = ''
+            act.description = ''
+            act.proposed_venue = ''
+            act.actual_venue = ''
             if(act.type == 'Milestone'){
                 this.tab = 'activity'
                 var year = this.form.year
@@ -541,11 +588,14 @@ export default {
                 var dbmonth = months.find(elem => elem.month == i)
                 var checker = (dbmonth)
                 var month = {
-                    id: checker ? dbmonth.id : '',
+                    id:             checker ? dbmonth.id : '',
+                    start:          checker ? dbmonth.start : '',
+                    end:            checker ? dbmonth.end : '',
+                    type:           checker ? dbmonth.type : '',
+                    description:    checker ? dbmonth.description : '',
+                    proposed_venue: checker ? dbmonth.proposed_venue : '',
+                    actual_venue: '',
                     month: i,
-                    start: checker ? dbmonth.start : '',
-                    end: checker ? dbmonth.end : '',
-                    type: checker ? dbmonth.type : ''
                 }
                 activity.months.push(month)
             }
@@ -569,7 +619,7 @@ export default {
                         if(budget.items.length == 0){ this.toastMsg('warning', budget.name+', empty items'); return false }
                         for(let item of budget.items){
                             if(item.name == ''){ this.toastMsg('warning', budget.name+', item name required'); return false }
-                            if(item.amount == '0.00'){ this.toastMsg('warning', budget.name+', item amount required'); return false }
+                            // if(item.amount == '0.00'){ this.toastMsg('warning', budget.name+', item amount required'); return false }
                         }
                     }
                 }

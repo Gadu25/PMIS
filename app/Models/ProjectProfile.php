@@ -31,7 +31,7 @@ class ProjectProfile extends Model
     }
 
     public function proposals(){
-        return $this->hasMany(ProposalContent::class);
+        return $this->hasMany(ProposalContent::class)->orderBy('id', 'asc');
     }
 
     public function libs(){

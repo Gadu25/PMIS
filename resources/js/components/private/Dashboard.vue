@@ -1,6 +1,7 @@
 <template>
     <div class="px-5 pt-4 main-container">
         <h2 class="text-center">Project Management Information System</h2>
+        <p class="fw-bold"><i class="fas fa-cog fa-spin"></i> Under Construction</p>
             <h3>Mandates (per EO 128)</h3>
             <ul>
                 <li>Undertake science education and training; </li>

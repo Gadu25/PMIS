@@ -1,6 +1,6 @@
 <template>
     <template v-for="item in items" :key="'item'+item.id">
-        <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'New'"> <td :rowspan="getRowspan(item.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1">{{item.project.title}}</td> </tr>
+        <tr v-if="getRowspan(item.indicators) > 1 || item.status == 'Draft'"> <td :rowspan="getRowspan(item.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1">{{item.project.title}}</td> </tr>
         <template v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">
             <tr v-if="indicator.details">
                 <td>{{indicator.description}}</td>
@@ -10,7 +10,7 @@
             </tr>
         </template>
         <template v-for="sub in item.subs" :key="'sub_'+sub.id">
-            <tr v-if="getRowspan(sub.indicators) > 1 || item.status == 'New'">
+            <tr v-if="getRowspan(sub.indicators) > 1 || item.status == 'Draft'">
                 <td :rowspan="getRowspan(sub.indicators)" :colspan="getRowspan(item.indicators) == 1 ? 9 : 1"><div class="ms-2">{{!sub.temp_title ? sub.subproject.title : (sub.temp_title == 'ms' ? 'MS' : (sub.temp_title == 'phd') ? 'PhD' : sub.temp_title)}}</div></td>
             </tr>
             <template v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">

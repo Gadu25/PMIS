@@ -3,10 +3,11 @@
         <tr>
             <td><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
             <td :class="checkUserDivision(item.projects) ? 'btns' : ''">
-                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" v-if="checkUserDivision(item.projects) && inUserRole('annex_f_edit_details')"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
+                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" v-if="inUserRole('annex_f_edit_details') && checkUserDivision(item.projects) && (item.status == 'Draft' ? isUserProjectLeader(item.projects) : true )"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
                 <!-- <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
+                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"  v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+
             </td>
-            <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"  v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
         </tr>
         <tr v-for="sub in item.subs" :key="sub.id+'sub-item'">
             <td colspan="2"><div class="fs-14 fst-italic ms-4">{{sub.subproject.title}}</div></td>
@@ -39,7 +40,7 @@ export default {
             var userStr = JSON.stringify(userObject)
             var projStr = JSON.stringify(projectObject)
 
-            return (userStr === projStr || user.active_profile.title.name == 'Superadmin') && this.isUserProjectLeader(project.leader.profile_id)
+            return (userStr === projStr || user.active_profile.title.name == 'Superadmin')
         },
         setStatusIcon(status){
             return status == 'New' ? 'fa-sparkles text-warning' : 
@@ -59,8 +60,14 @@ export default {
         statusNewDraft(status){
             return (status == 'New' || status == 'Draft') && !this.saving
         },
-        isUserProjectLeader(id){
-            return this.authuser.active_profile.id == id
+        isUserProjectLeader(projects){
+            var state = false
+            var project = projects[0]
+            if(project.leader){
+                state = this.authuser.active_profile.id == project.leader.profile_id
+                console.log(project.leader)
+            }
+            return state
         },
         inUserRole(code){
             var role = this.authuser.active_profile.roles.find(elem => elem.code == code)

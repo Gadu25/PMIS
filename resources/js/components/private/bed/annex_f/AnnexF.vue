@@ -25,7 +25,7 @@
                         </div>
                         <div class="form-floating mb-3">
                             <select class="form-control" id="Status" v-model="filter.status">
-                                <option value="New">New</option>
+                                <!-- <option value="New">New</option> -->
                                 <option value="Draft">Draft</option>
                                 <option value="For Review">For Review</option>
                                 <option value="For Approval">For Approval</option>
@@ -44,21 +44,21 @@
                         <template v-if="filter.type == 'Program'">
                             <div class="form-floating mb-3">
                                 <select class="form-control" id="Program" v-model="filter.program_id" @change="changeProgram()">
-                                    <option value="">Any Program</option>
+                                    <option value="">All Program</option>
                                     <option :value="program.id" v-for="program in programs" :key="program.id+'_filter-program'">{{program.title}}</option>
                                 </select>
                                 <label for="Program">Program</label>
                             </div>
                             <div class="form-floating mb-3" v-if="subprograms.length > 0">
                                 <select class="form-control" id="Sub-Program" v-model="filter.subprogram_id" @change="changeSubprogram()">
-                                    <option value="">Any Sub-Program</option>
+                                    <option value="">All Sub-Program</option>
                                     <option :value="subprogram.id" v-for="subprogram in subprograms" :key="subprogram.id+'_filter-subprogram'">{{subprogram.title}}</option>
                                 </select>
                                 <label for="Sub-Program">Sub-Program</label>
                             </div>
                             <div class="form-floating mb-3" v-if="clusters.length > 0">
                                 <select class="form-control" id="Cluster" v-model="filter.cluster_id">
-                                    <option value="">Any Cluster</option>
+                                    <option value="">All Cluster</option>
                                     <option :value="cluster.id" v-for="cluster in clusters" :key="cluster.id+'_filter-cluster'">{{cluster.title}}</option>
                                 </select>
                                 <label for="Cluster">Cluster</label>
@@ -67,21 +67,21 @@
                         <template v-if="filter.type == 'Division'">
                             <div class="form-floating mb-3">
                                 <select class="form-control" id="Division" v-model="filter.division_id" @change="changeDivision()">
-                                    <option value="">Any Division</option>
+                                    <option value="">All Division</option>
                                     <option :value="division.id" v-for="division in divisions" :key="division.id+'_filter-division'">{{division.name}}</option>
                                 </select>
                                 <label for="Division">Division</label>
                             </div>
                             <div class="form-floating mb-3" v-if="units.length > 0">
                                 <select class="form-control" id="Unit" v-model="filter.unit_id" @change="changeUnit()">
-                                    <option value="">Any Unit</option>
+                                    <option value="">All Unit</option>
                                     <option :value="unit.id" v-for="unit in units" :key="unit.id+'_filter-unit'">{{unit.name}}</option>
                                 </select>
                                 <label for="Unit">Unit</label>
                             </div>
                             <div class="form-floating mb-3" v-if="subunits.length > 0">
                                 <select class="form-control" id="Sub-Unit" v-model="filter.subunit_id">
-                                    <option value="">Any Sub-Unit</option>
+                                    <option value="">All Sub-Unit</option>
                                     <option :value="subunit.id" v-for="subunit in subunits" :key="subunit.id+'_filter-subunit'">{{subunit.name}}</option>
                                 </select>
                                 <label for="Sub-Unit">Sub-Unit</label>
@@ -189,7 +189,7 @@
                                                 <td></td>
                                                 <td :class="statusNewDraft(form.status) ? 'p-0' : 'text-end'" v-for="fund, key in form.funds" :key="key+'month-form-fund'">
                                                     <input v-if="statusNewDraft(form.status)" type="text" class="form-control fund-input" @change="numChange(fund.amount, key)" v-model="fund.amount" v-money="money">
-                                                    <span  v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span>
+                                                    <span  v-else>{{fund.amount}}</span>
                                                 </td>
                                                 <td class="text-end"> {{formatAmount(getTotalAmount())}} <input type="text" class="d-none" v-money="money" @change="numChange(0, 15)"></td>
                                                 <td></td>
@@ -217,7 +217,8 @@
                                                     <td></td>
                                                     <td :class="statusNewDraft(form.status) ? 'p-0' : 'text-end'" v-for="fund, fkey in sub.funds" :key="fkey+'month-form-fund-sub'">
                                                         <input v-if="statusNewDraft(form.status)" type="text" class="form-control fund-input" @change="numChange(fund.amount, fkey, key)" v-model="fund.amount" v-money="money">
-                                                        <span  v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span>
+                                                        <span  v-else>{{fund.amount}}</span>
+                                                        <!-- <span  v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span> -->
                                                     </td>
                                                     <td class="text-end"> {{formatAmount(getTotalAmount(sub.funds))}} <input type="text" class="d-none" v-money="money" @change="numChange(0, 15)"></td>
                                                     <td></td>
@@ -225,6 +226,7 @@
                                             </template>
                                         </tbody>
                                     </table>
+                                    <strong>Status: {{form.status}}</strong>
                                 </div>
                             </div>
                             <Logs :histories="histories" :title="historyfor"/>
@@ -282,7 +284,7 @@ export default {
             formshow:   false,
             syncedstatus: '',
             filter: {
-                status:     'New', type: 'Program',
+                status:   'Draft', type: 'Program',
                 program_id:    '', division_id: '',
                 subprogram_id: '', unit_id: '',
                 cluster_id:    '', subunit_id: '',
@@ -577,7 +579,7 @@ export default {
                     }
                 }
             }
-            status = (status == '') ? 'New' : status
+            status = (status == '') ? 'Draft' : status
             this.filter.status = status
             this.syncedstatus = status
         },

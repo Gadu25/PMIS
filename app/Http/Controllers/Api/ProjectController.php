@@ -10,6 +10,9 @@ use App\Models\Staff;
 use App\Models\Program;
 use App\Models\Subprogram;
 use App\Models\Cluster;
+use App\Models\Division;
+use App\Models\Unit;
+use App\Models\Subunit;
 
 // Project Profile
 use App\Models\ProjectProfile;
@@ -20,6 +23,10 @@ use App\Models\LibType;
 use App\Models\LibItem;
 use App\Models\ScheduleOfActivity;
 use App\Models\SoaMonth;
+
+use App\Models\History;
+use App\Models\Notification;
+use App\Models\Profile;
 
 use Auth;
 use DB;
@@ -39,6 +46,7 @@ class ProjectController extends Controller
             'profiles.proponents', 
             'profiles.proposals', 
             'profiles.milestones.months', 
+            'profiles.libs.histories',
             'profiles.libs.types.items', 
             'profiles.activities.months', 
             'leader.profile.user', 
@@ -198,7 +206,7 @@ class ProjectController extends Controller
         $cluster = Cluster::where('title', $selected)->get();
         $projects = [];
         $query = Project::query();
-        $query = $query->with(['program', 'subprogram', 'cluster', 'subprojects', 'leader.profile.user']);
+        $query = $query->with(['program', 'subprogram', 'cluster', 'subprojects', 'leader.profile.user'])->orderBy('id', 'asc');
         if(sizeof($program) > 0){
             $query = $query->where('program_id', $program[0]->id);
         }
@@ -273,7 +281,7 @@ class ProjectController extends Controller
             $authProfileId = $auth->activeProfile->id;
 
             $profile = new ProjectProfile;
-            $this->saveProfile($profile, $request, $projectleader);
+            $this->saveProfile($profile, $request, $projectleader, $authProfileId);
             $this->saveProponents($request['proponents'], $profile->id);
             $this->saveProposalContents($request['proposalcontent'], $profile->id);
             $this->saveActivities($request['activities'], $profile->id);
@@ -306,12 +314,12 @@ class ProjectController extends Controller
         }
         catch (\Exception $e){
             DB::rollback();
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
         }
     }
 
     public function showProfile($id){
-        return ProjectProfile::with('project', 'proponents', 'proposals', 'libs.types.items', 'activities.months')->where('id',$id)->first();
+        return ProjectProfile::with('project', 'proponents', 'proposals', 'libs.histories.profile.user', 'libs.types.items', 'activities.months')->where('id',$id)->first();
     }
 
     public function updateProfile(Request $request, $id){
@@ -326,7 +334,10 @@ class ProjectController extends Controller
                 }
             }
 
-            $this->saveProfile($profile, $request, $profile->project_leader);
+            $auth = Auth::user();
+            $authProfileId = $auth->activeProfile->id;
+
+            $this->saveProfile($profile, $request, $profile->project_leader, $authProfileId);
             $this->saveProponents($request['proponents'], $profile->id, $profile->proponents);
             $this->saveProposalContents($request['proposalcontent'], $profile->id, $profile->proposals);
             $this->saveActivities($request['activities'], $profile->id, $profile->activities);
@@ -346,22 +357,55 @@ class ProjectController extends Controller
         try {
             $id = $request['id'];
             $lib = LineItemBudget::findOrFail($id);
+            $initialStatus = $lib->status;
+
             $lib->source_of_funds = $request['source'];
             $lib->status = $request['status'];
+            if($request['status'] == 'Approved'){
+                $lib->date_approved = date("Y-m-d");
+            }
             $lib->save();
 
-            foreach($request['types'] as $type){
-                if(in_array($type['name'], $request['selectedudget'])){
-                    // proceed saving
+            $subject = '';
+
+            if($request['status'] == 'Draft' || $request['status'] == 'For clearance - Unit Head'){
+                $key = $request['libcount'] - 1;
+                foreach($request['types'] as $type){
+                    if(in_array($type['name'], $request['selectedbudget'])){
+                        // proceed saving 
+                        foreach($type['items'] as $item){
+                            $itemName = $item['name'];
+                            $item = $item['amounts'][$key];
+                            $libitem = $item['id'] ? LibItem::findOrFail($item['id']) : new LibItem;
+                            $libitem->name = $itemName;
+                            $libitem->amount = $this->formatAmount($item['amount']);
+                            $libitem->lib_type_id = $type['id'];
+                            $libitem->save();
+                        }
+                    }
+                    else{
+                        // find items to delete
+                    }
                 }
-                else{
-                    // find items to delete
-                }
+                $subject = '<p class="m-0">Action: Updated Line-Item Budget items</p>';
             }
+
+            if($initialStatus != $request['status']){
+                $subject = $subject.'<p class="m-0">Status Change: '.$initialStatus.' to '.$request['status'].'</p>';
+                $notification = $this->sendNotifications($lib->profile->project, $request['status'], '#lib');
+                $subject = $subject.$notification;
+            }
+
+            $this->createHistory($lib, $subject, $request['comment']);
+
+            // $notified = 
+
+            DB::commit();
+            return ['message' => 'Line-Item Budget saved!', 'profile' => $this->showProfile($lib->project_profile_id)];
         }
         catch (\Exception $e){
             DB::rollback();
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
         }
     }
 
@@ -369,7 +413,7 @@ class ProjectController extends Controller
 
     }
 
-    private function saveProfile($profile, $request, $projectleader){
+    private function saveProfile($profile, $request, $projectleader, $authProfileId){
         $profile->title               = $request['title'];
         $profile->status              = $request['status'];
         $profile->compliance_with_law = $request['comp'];
@@ -403,6 +447,7 @@ class ProjectController extends Controller
     private function saveProposalContents($contents, $profileId, $initialContents = []){
         $ids = [];
         foreach($contents as $propcon){
+            // $content = array_key_exists('id', $propcon) ? ProposalContent::findOrFail($propcon['id']) : new ProposalContent;
             $content = $propcon['id'] ? ProposalContent::findOrFail($propcon['id']) : new ProposalContent;
             $content->title = $propcon['title'];
             $content->text = $propcon['text'];
@@ -432,6 +477,9 @@ class ProjectController extends Controller
                     $soamonth->start = $month['start'];
                     $soamonth->end = $month['end'];
                     $soamonth->month = $month['month'];
+                    $soamonth->proposed_venue = $month['proposed_venue'];
+                    $soamonth->actual_venue = $month['actual_venue'];
+                    $soamonth->description = $month['description'];
                     $soamonth->soa_id = $soa->id;
                     $soamonth->save();
                     array_push($monthIds, $soamonth->id);
@@ -483,5 +531,145 @@ class ProjectController extends Controller
             }
         }
         return $results;
+    }
+
+    // History & Notifications
+    private function sendNotifications($project, $status, $link){
+        $numberOfNotifiedUsers = 0;
+        $subject = '<p class="m-0">Notified: <br>';
+
+        $sender = Auth::user();
+        $senderId = $sender->activeProfile->id;
+
+        $leader =  $project->leader->profile;
+        $leaderId = $leader->id;
+
+        $message = $this->setMessage($project, $status);
+        // Division Level
+        // send notification to project leader
+        if($status != 'For clearance - Unit Head' && $leaderId != $senderId){
+            $this->sendMessage($senderId, $leaderId, $message['title'], $message['body'], $link);
+            $subject = $subject.'<li>'.$leader->user->firstname.' '.$leader->user->lastname.'</li>';
+            $numberOfNotifiedUsers = $numberOfNotifiedUsers+1;
+        }
+        // send notification to unit head
+        if($status == 'For clearance - Unit Head' || 
+            $status == 'For clearance - Planning Unit' || 
+            $status == 'For charging and certify funds available - Budget Unit' || 
+            $status == 'For approval - Director' ||
+            $status == 'Approved'){
+                $profile = Profile::where('title_id', 4)
+                    ->whereHas('user', function($q) use($project){
+                        $q->where('division_id', $project->division_id)
+                          ->where('unit_id', $project->unit_id)
+                          ->where('subunit_id', $project->subunit_id);
+                    })->where('active', true)->first();
+                if($leaderId != $profile->id){
+                    $this->sendMessage($senderId, $profile->id, $message['title'], $message['body'], $link);
+                    $subject = $subject.'<li>'.$profile->user->firstname.' '.$profile->user->lastname.'</li>';
+                    $numberOfNotifiedUsers = $numberOfNotifiedUsers+1;
+                }
+            }
+        // send notification to division chief
+        if($status == 'For approval - Division Chief' || 
+            $status == 'For charging and certify funds available - Budget Unit' || 
+            $status == 'For approval - Director' ||
+            $status == 'Approved'){
+                $profile = Profile::where('title_id', 3)
+                    ->whereHas('user', function($q) use($project){
+                        $q->where('division_id', $project->division_id);
+                    })->where('active', true)->first();
+                $this->sendMessage($senderId, $profile->id, $message['title'], $message['body'], $link);
+                $subject = $subject.'<li>'.$profile->user->firstname.' '.$profile->user->lastname.'</li>';
+                $numberOfNotifiedUsers = $numberOfNotifiedUsers+1;
+            }
+
+        // Management Level
+        // send notification to planning
+        if($status == 'For clearance - Planning Unit'){
+            $division = Division::where('code', 'OD')->first();
+            $unit     = Unit::where('name', 'Planning Unit')->first();
+            $profile = Profile::where('title_id', 4)
+                ->whereHas('user', function($q) use($division, $unit){
+                    $q->where('division_id', $division->id)
+                      ->where('unit_id', $unit->id);
+                })->where('active', true)->first();
+            $this->sendMessage($senderId, $profile->id, $message['title'], $message['body'], $link);
+            $subject = $subject.'<li>'.$profile->user->firstname.' '.$profile->user->lastname.'</li>';
+            $numberOfNotifiedUsers = $numberOfNotifiedUsers+1;
+        }
+        // send notification to budget
+        if($status == 'For charging and certify funds available - Budget Unit'){
+            $division = Division::where('code', 'FAD')->first();
+            $unit     = Unit::where('name', 'Finance Units')->first();
+            $subunit  = Subunit::where('name', 'Budget')->first();
+            $profile = Profile::where('title_id', 4)
+                ->whereHas('user', function($q) use($division, $unit, $subunit){
+                    $q->where('division_id', $division->id)
+                      ->where('unit_id', $unit->id)
+                      ->where('subunit_id', $subunit->id);
+                })->where('active', true)->first();
+            $this->sendMessage($senderId, $profile->id, $message['title'], $message['body'], $link);
+            $subject = $subject.'<li>'.$profile->user->firstname.' '.$profile->user->lastname.'</li>';
+            $numberOfNotifiedUsers = $numberOfNotifiedUsers+1;
+        }
+        // send notification to director
+        if($status == 'For approval - Director'){
+            $director = Profile::where('title_id', 1)->where('active', true)->first();
+            $this->sendMessage($senderId, $director->id, $message['title'], $message['body'], $link);
+            $subject = $subject.'<li>'.$director->user->firstname.' '.$director->user->lastname.'</li>';
+            $numberOfNotifiedUsers = $numberOfNotifiedUsers+1;
+        }
+
+        return $numberOfNotifiedUsers > 0 ? $subject.'</p>' : '';
+    }
+
+    private function sendMessage($senderId, $recipientId, $title, $body, $link){
+        $notification = new Notification;
+        $notification->profile_from = $senderId;
+        $notification->profile_to = $recipientId; 
+        $notification->title = $title;
+        $notification->body = $body;
+        $notification->link = $link;
+        $notification->save();
+    }
+
+    private function setMessage($project, $status){
+        $title = '<strong> Line-Item Budget </strong>';
+        $body = '<p class="m-0">'.$project->title;
+        if($status == 'Draft'){
+            $body = $body.'';
+        }
+        if($status == 'For clearance - Unit Head'){
+            $body = $body.' was sent for clearance';
+        }
+        if($status == 'For approval - Division Chief'){
+            $body = $body.' was sent for approval';
+        }
+        if($status == 'For clearance - Planning Unit'){
+            $body = $body.' was sent for clearance of Planning Unit';
+        }
+        if($status == 'For charging and certify funds available - Budget Unit'){
+            $body = $body.' was sent for charging and certify funds available of Budget Unit';
+        }
+        if($status == 'For approval - Director'){
+            $body = $body.' was sent for approval of Director';
+        }
+        if($status == 'Approved'){
+            $body = $body.' was approved by the Director';
+        }
+        return ['body' => $body.'</p>', 'title' => $title];
+
+    }
+    
+    private function createHistory($lib, $subject, $comment){
+        $user = Auth::user();
+
+        $history = new History;
+        $history->subject = $subject;
+        $history->comment = $comment;
+        $history->profile_id = $user->activeProfile->id;
+
+        $lib->histories()->save($history);
     }
 }

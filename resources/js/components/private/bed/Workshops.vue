@@ -42,7 +42,7 @@
                                         <ul class="items" :style="!inUserRole('workshop_edit') && !inUserRole('workshop_delete') ? 'width: 100% !important' : ''">
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexE', params: { workshopId: workshop.id } }"><li>Annex E</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
-                                            <router-link v-if="isUserPlanningUnit()" @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex One</li></router-link>
+                                            <router-link @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex 1</li></router-link>
                                             <router-link v-if="isUserPlanningUnit()" @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Performance Indicators</li></router-link>
                                         </ul>
                                         <div class="actions" v-if="inUserRole('workshop_edit') || inUserRole('workshop_delete')">

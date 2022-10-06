@@ -822,7 +822,7 @@ class WorkshopController extends Controller
                 $annexe = new AnnexE;
                 $annexe->workshop_id = $workshopId;
                 $annexe->project_id = $annexone->project_id;
-                $annexe->status = 'New';
+                $annexe->status = 'Draft';
                 $annexe->save();
 
                 $project = $annexe->project;
@@ -855,7 +855,7 @@ class WorkshopController extends Controller
                     if($ctr === 0){
                         $annexf = new AnnexF;
                         $annexf->workshop_id = $workshopId;
-                        $annexf->status = 'New';
+                        $annexf->status = 'Draft';
                         $annexf->save();
                         $tempIds = [];
                         foreach($undergrad->projects as $project){
@@ -868,7 +868,7 @@ class WorkshopController extends Controller
                 else{
                     $annexf = new AnnexF;
                     $annexf->workshop_id = $workshopId;
-                    $annexf->status = 'New';
+                    $annexf->status = 'Draft';
                     $annexf->save();
                     $annexf->projects()->sync([$annexone->project_id]);
                 }

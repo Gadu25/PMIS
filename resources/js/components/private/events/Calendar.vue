@@ -3,18 +3,23 @@
         <button type="button" class="d-none" data-bs-toggle="modal" data-bs-target="#modal" ref="modal">
             Launch demo modal
         </button>
-        <FullCalendar :options="calendarOptions"/>
+        <div class="d-flex justify-content-center">
+            <div class="col-sm-9 overflow-auto px-2" style="height: calc(100vh - 130px)">
+                <FullCalendar :options="calendarOptions" />
+            </div>
+        </div>
         <!-- Modal -->
         <div class="modal fade" id="modal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
-                    <h5 class="border-bottom pb-2">{{event.title}}</h5>
-                    <p class="mb-0"><strong>Event: </strong>{{event.description}}</p>
-                    <strong>Date: </strong>{{formatDate()}}
-                    <div class="d-flex justify-content-end pt-2 border-top">
+                    <h5 class="border-bottom pb-2">{{event.project_title}}</h5>
+                    <strong>Event: </strong>{{event.event_title}} <br>
+                    <strong>Date: </strong>{{formatDate()}} <br>
+                    <strong>{{!event.isActualVenue ? 'Proposed' : ''}} Venue: </strong>{{event.venue}} <br>
+                    <strong>Brief Description: </strong>{{event.description}} <br>
+                    <div class="d-flex justify-content-end pt-2 mt-2 border-top">
                         <button style="min-width: 100px" type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
-
                     </div>
                 </div>
             </div>
@@ -52,19 +57,25 @@ export default {
             title: '',
             description: '',
             event: {
-                title: '',
+                project_title: '',
+                event_title: '',
                 description: '',
                 start: '',
-                end: ''
+                end: '',
+                venue: '',
+                isActualVenue: false
             }
         }
     },
     methods: {
         eventclicked(e){
-            this.event.title = e.event.title
+            this.event.project_title = e.event.title
             this.event.start = e.event.startStr
             this.event.end = e.event.endStr
             this.event.description = e.event.extendedProps.description
+            this.event.venue = e.event.extendedProps.venue
+            this.event.isActualVenue = e.event.extendedProps.isActualVenue
+            this.event.event_title = e.event.extendedProps.event_title
 
             this.$refs.modal.click()
         },
@@ -115,11 +126,14 @@ export default {
             for(let profile of this.profiles){
                 var title = profile.title
                 for(let milestone of profile.sorted){
-                    var desc = milestone.title
+                    var event_title = milestone.title
                     for(let date of milestone.newdates){
                         this.calendarOptions.events.push({
                             title: title,
-                            description: desc,
+                            event_title: event_title,
+                            venue: date.actual_venue ? date.actual_venue : date.proposed_venue,
+                            isActualVenue: (date.actual_venue !== null),
+                            description: date.description,
                             start: date.start,
                             end: this.formatEndDate(date.end),
                             backgroundColor: this.getRandomColor(),
