@@ -10,7 +10,7 @@ class AnnexF extends Model
     use HasFactory;
 
     protected $fillables = [ 
-        'workshop_id', 'remarks'
+        'workshop_id', 'remarks', 'year'
     ];
 
     public function projects(){

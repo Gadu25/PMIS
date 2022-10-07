@@ -15,17 +15,27 @@
             <div v-else>
                 <button class="btn btn-sm btn-outline-secondary float-end" @click="form.program_id = ''">Change Program</button>
                 <h3><i class="far" :class="program.id == 1 ? 'fa-user-graduate' : program.id == 2 ? 'fa-microscope' : 'fa-building'"></i> {{program.title}}</h3><hr>
-                <div class="d-flex flex-wrap">
-                    <div class="col-sm-9 px-2 mb-3">
-                        <div class="d-flex justify-content-center mb-2">
-                            <button class="btn shadow-none me-1" @click="changeTab('Performance')" :class="selectedTab == 'Performance' ? 'btn-dark' : 'btn-outline-dark'">Performance Indicators</button>
-                            <button class="btn shadow-none" @click="changeTab('Other')" :class="selectedTab == 'Other' ? 'btn-dark' : 'btn-outline-dark'">Outcome & Output Indicators</button>
+                <div class="row flex-wrap">
+                    <div class="px-2 mb-3" :class="!toggle ? 'col-sm-9' : 'col-sm-12'">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div></div>
+                            <div >
+                                <button class="btn border-0 bg-gradient shadow-none me-1" @click="form.year = parseInt(workshop.year)+1" :class="form.year == parseInt(workshop.year)+1 ? 'btn-primary' : 'btn-outline-primary'">{{parseInt(workshop.year)+1}}</button>
+                                <button class="btn border-0 bg-gradient shadow-none"      @click="form.year = parseInt(workshop.year)+2" :class="form.year == parseInt(workshop.year)+2 ? 'btn-primary' : 'btn-outline-primary'">{{parseInt(workshop.year)+2}}</button>
+                            </div>
+                            <div><button class="btn btn-sm btn-secondary" v-if="toggle" @click="toggle = !toggle"><i class="fas fa-arrow-left"></i> Tags</button></div>
                         </div>
-                        <div class="d-flex justify-content-end mb-2">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div>
+                                <button class="btn btn-sm shadow-none me-1" @click="changeTab('Performance')" :class="selectedTab == 'Performance' ? 'btn-secondary' : 'btn-outline-secondary'">Performance</button>
+                                <button class="btn btn-sm shadow-none" @click="changeTab('Other')" :class="selectedTab == 'Other' ? 'btn-secondary' : 'btn-outline-secondary'">Outcome & Output</button>
+                            </div>
+                            <div>
                             <button type="button" class="btn btn-success btn-sm shadow-none" v-if="inUserRole('common_indicator_add')" data-bs-toggle="modal" data-bs-target="#form" @click="resetForm()"><i class="fas fa-plus"></i></button>
+                            </div>
                         </div>
-                        <div class="px-3 py-2 table-responsive" style="max-height: calc(100vh - 365px);">
-                            <table class="table table-sm table-bordered table-hover shadow">
+                        <div class="px-2 py-2 table-responsive" style="max-height: calc(100vh - 365px);">
+                            <table class="table table-sm table-bordered table-hover shadow" style="min-width: 330px">
                                 <thead>
                                     <tr>
                                         <th>Description</th>
@@ -35,37 +45,42 @@
                                     </tr>
                                 </thead>
                                 <tbody v-if="!datareloading">
-                                    <template v-if="commonindicators[form.program_id]">
-                                        <template v-if="commonindicators[form.program_id][selectedTab]">
-                                            <template v-for="commonindicators, hkey in commonindicators[form.program_id][selectedTab]" :key="hkey+'_header'">
-                                                <tr><td :colspan="selectedTab == 'Other' ? 4 : 3"><strong>{{(hkey) ? hkey : program.title}}</strong></td></tr>
-                                                <template v-for="commonindicator in commonindicators" :key="commonindicator.id+'_indicator'">
-                                                    <tr>
-                                                        <td><div class="ms-2">{{commonindicator.description}}</div></td>
-                                                        <td v-if="selectedTab == 'Other'">{{commonindicator.type}}</td>
-                                                        <td><span class="badge bg-info text-dark me-1" v-for="tag in commonindicator.tags" :key="tag.id+'_indtag'">{{tag.name}}</span></td>
-                                                        <td>
-                                                            <button v-if="inUserRole('common_indicator_edit')" class="btn btn-sm btn-primary me-1" @click="editForm(commonindicator)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i></button>
-                                                            <button v-if="inUserRole('common_indicator_delete')" class="btn btn-sm btn-danger" @click="removeCommonIndicator(commonindicator.id)"><i class="far fa-trash-alt"></i></button>
-                                                        </td>
-                                                    </tr>
-                                                    <tr v-for="subindicator in commonindicator.subindicators" :key="subindicator.id+'_subindicator'">
-                                                        <td :colspan="selectedTab == 'Other' ? 2 : 1"><div class="ms-4">{{subindicator.description}}</div></td>
-                                                        <td :colspan="selectedTab == 'Other' ? 1 : 2"><span class="badge bg-info text-dark me-1" v-for="tag in subindicator.tags" :key="tag.id+'_subtag'">{{tag.name}}</span></td>
-                                                    </tr>
+                                    <template v-if="commonindicators[form.year]">
+                                        <template v-if="commonindicators[form.year][form.program_id]">
+                                            <template v-if="commonindicators[form.year][form.program_id][selectedTab]">
+                                                <template v-for="commonindicators, hkey in commonindicators[form.year][form.program_id][selectedTab]" :key="hkey+'_header'">
+                                                    <tr><td :colspan="selectedTab == 'Other' ? 4 : 3"><strong>{{(hkey) ? hkey : program.title}}</strong></td></tr>
+                                                    <template v-for="commonindicator in commonindicators" :key="commonindicator.id+'_indicator'">
+                                                        <tr>
+                                                            <td><div class="ms-2">{{commonindicator.description}}</div></td>
+                                                            <td v-if="selectedTab == 'Other'">{{commonindicator.type}}</td>
+                                                            <td><span class="badge bg-info text-dark me-1" v-for="tag in commonindicator.tags" :key="tag.id+'_indtag'">{{tag.name}}</span></td>
+                                                            <td>
+                                                                <button v-if="inUserRole('common_indicator_edit')" class="btn btn-sm btn-primary me-1" @click="editForm(commonindicator)" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i></button>
+                                                                <button v-if="inUserRole('common_indicator_delete')" class="btn btn-sm btn-danger" @click="removeCommonIndicator(commonindicator.id)"><i class="far fa-trash-alt"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                        <tr v-for="subindicator in commonindicator.subindicators" :key="subindicator.id+'_subindicator'">
+                                                            <td :colspan="selectedTab == 'Other' ? 2 : 1"><div class="ms-4">{{subindicator.description}}</div></td>
+                                                            <td :colspan="selectedTab == 'Other' ? 1 : 2"><span class="badge bg-info text-dark me-1" v-for="tag in subindicator.tags" :key="tag.id+'_subtag'">{{tag.name}}</span></td>
+                                                        </tr>
+                                                    </template>
                                                 </template>
                                             </template>
+                                            <tr v-else><td colspan="4"><div class="p-5 text-center">No Data Found</div></td></tr>
                                         </template>
-                                        <tr v-else><td colspan="4"><div class="p-5 text-center">No Data Found</div></td></tr>
                                     </template>
                                     <tr v-else><td colspan="4"><div class="p-5 text-center">No Data Found</div></td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    <div class="col-sm-3 px-2 ">
+                    <div class="col-sm-3 px-2 " v-if="!toggle">
                         <div class="card shadow mb-3">
                             <div class="card-body">
+                                <div class="d-flex justify-content-end mb-3">
+                                    <button class="btn btn-sm btn-secondary" @click="toggle = !toggle"><i class="fas fa-arrow-right"></i></button>
+                                </div>
                                 <template v-if="inUserRole('workshop_tag_add')">
                                 <div class="mb-1"><strong>{{tag.id ? 'Update' : 'New'}} Tag</strong></div>
                                     <form @submit.prevent="submitTag()" class="form-floating mb-1">
@@ -206,6 +221,7 @@ export default {
                 program_id: '',
                 subprogram_id: '',
                 cluster_id: '',
+                year: '',
                 type: 'Performance',
                 workshop_id: this.$route.params.workshopId,
                 indicators: [{ id: '', description: '', subs: [], tags: [], tag: 0 }],
@@ -219,7 +235,8 @@ export default {
             },
             program: [],
             clusters: [],
-            selectedTab: 'Performance'
+            selectedTab: 'Performance',
+            toggle: true
         }
     },
     methods: {
@@ -238,8 +255,10 @@ export default {
             this.form.subprogram_id = (commonindicator.subprogram_id) ? commonindicator.subprogram_id : 0
             this.subpChange()
             this.form.cluster_id = (commonindicator.cluster_id) ? commonindicator.cluster_id : 0
-            this.form.indicators[0].id = commonindicator.id
-            this.form.indicators[0].description = commonindicator.description
+            this.form.indicators = [{
+                id: commonindicator.id, 
+                description: commonindicator.description,
+                tag: '', tags: []}]
             if(commonindicator.type == 'Performance'){
                 this.form.indicators[0].tag = commonindicator.tags[0].id
             }
@@ -432,6 +451,7 @@ export default {
             this.fetchWorkshopTags()
             this.fetchCommonIndicators(this.$route.params.workshopId).then(res =>{
                 this.loading = false
+                this.form.year = parseInt(this.workshop.year)+1
             })
         })
         if(this.programs.length == 0){

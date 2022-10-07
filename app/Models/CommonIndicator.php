@@ -10,7 +10,7 @@ class CommonIndicator extends Model
     use HasFactory;
 
     protected $fillables = [
-        'type', 'description', 'workshop_id', 'program_id', 'subprogram_id', 'cluster_id' 
+        'type', 'description', 'workshop_id', 'program_id', 'subprogram_id', 'cluster_id', 'year'
     ];
 
     public function tags(){

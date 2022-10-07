@@ -13,6 +13,7 @@
                         <div class="histories" v-if="tab == 'history'">
                             <div class="history" v-for="history in histories" :key="history.id+'_history'">
                                 <div class="body" v-html="history.subject"></div>
+                                <span v-if="history.comment">Comment: {{history.comment}}</span>
                                 <div class="footer">
                                     <strong><small>By: {{history.profile.user.firstname}} {{history.profile.user.lastname}}</small></strong>
                                     <small>{{history.created_at}}</small>

@@ -155,7 +155,7 @@
                     <button class="btn btn-sm btn-success" v-if="inUserRole('annex_one_add')" @click="resetForm()"><i class="fas fa-plus"></i></button>
                 </div>
                 <div class="d-flex justify-content-center flex-wrap">
-                    <div class="col-sm-3 px-2 mb-3">
+                    <!-- <div class="col-sm-3 px-2 mb-3">
                         <div class="card shadow">
                             <div class="card-body overflow-auto" style="max-height: calc(100vh - 300px)">
                                 <h4><strong><i class="far fa-filter"></i> Filters</strong></h4><hr>
@@ -170,10 +170,10 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-sm-9 overflow-auto px-2 py-4" style="max-height: calc(100vh - 280px)">
+                    </div> -->
+                    <div class="col-sm-12 overflow-auto px-2 py-4" style="max-height: calc(100vh - 280px)">
                         <div class="table-responsive-xl">
-                            <table class="table table-sm table-bordered align-middle shadow">
+                            <table class="table table-bordered align-middle shadow">
                                 <thead>
                                     <tr>
                                         <th>Programs/ Projects/ Activities</th>
@@ -200,6 +200,11 @@
                                             </template>
                                         </template>
                                     </template>
+                                    <tr v-if="annexones.length == 0">
+                                        <td colspan="2" class="p-5 text-center">
+                                            <h1>No Project yet</h1>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

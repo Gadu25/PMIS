@@ -68,7 +68,44 @@ class WorkshopController extends Controller
             $workshop->start = $request['start'];
             $workshop->end = $request['end'];
             $workshop->save();
+            
+            $years = $this->getWorkshopYears($workshop->id);
 
+            $commonindicators = CommonIndicator::where('year', $years[0])->get();
+            foreach($years as $year){
+                foreach($commonindicators as $dbci){
+                    $commonindicator = new CommonIndicator;
+                    $commonindicator->type = $dbci->type;
+                    $commonindicator->description = $dbci->description;
+                    $commonindicator->program_id = $dbci->program_id;
+                    $commonindicator->subprogram_id = $dbci->subprogram_id;
+                    $commonindicator->cluster_id = $dbci->cluster_id;
+                    $commonindicator->year = $year;
+                    $commonindicator->workshop_id = $workshop->id;
+                    $commonindicator->save();
+    
+                    $tags = [];
+                    foreach($dbci->tags as $tag){
+                        array_push($tags, $tag->id);
+                    }
+    
+                    $commonindicator->tags()->sync($tags);
+    
+                    foreach($dbci->subindicators as $dbsci){
+                        $commonindicatorsub = new CommonIndicatorSub;
+                        $commonindicatorsub->description = $dbsci->description;
+                        $commonindicatorsub->common_indicator_id = $commonindicator->id;
+                        $commonindicatorsub->save();
+    
+                        $tags = [];
+                        foreach($dbsci->tags as $tag){
+                            array_push($tags, $tag->id);
+                        }
+    
+                        $commonindicatorsub->tags()->sync($tags);
+                    }
+                }
+            }
             DB::commit();
             return ['message' => 'Workshop added!', 'workshops' => $this->getWorkshops()];
         }
@@ -965,6 +1002,7 @@ class WorkshopController extends Controller
 
     // Common Indicators
     public function getCommonIndicator($workshopId){
+        // $years = $this->getWorkshopYears($workshopId);
         $commonindicators = CommonIndicator::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
         foreach($commonindicators as $indicator){
             $indicator->tags;
@@ -977,7 +1015,7 @@ class WorkshopController extends Controller
                 $subindicator->tags;
             }
         }
-        $grouped = $commonindicators->groupBy(['program_id', 'display_type', 'header']);
+        $grouped = $commonindicators->groupBy(['year', 'program_id', 'display_type', 'header']);
         return $grouped;
     }
 
@@ -992,6 +1030,7 @@ class WorkshopController extends Controller
                 $commonindicator->subprogram_id = ($request['subprogram_id'] == 0) ? null : $request['subprogram_id'];
                 $commonindicator->cluster_id = ($request['cluster_id'] == 0) ? null : $request['cluster_id'];
                 $commonindicator->workshop_id = $request['workshop_id'];
+                $commonindicator->year = $request['year'];
                 $commonindicator->save();
                 
                 $tags = ($request['type'] == 'Performance') ? [$indicator['tag']] : $indicator['tags'];
@@ -1019,6 +1058,7 @@ class WorkshopController extends Controller
     public function updateCommonIndicator(Request $request, $id){
         DB::beginTransaction();
         try {
+            // $years = $this->getWorkshopYears($request['workshop_id']);
             foreach($request['indicators'] as $indicator){
                 $commonindicator = CommonIndicator::findOrFail($id);
                 $commonindicator->type = $request['type'];
@@ -1268,6 +1308,13 @@ class WorkshopController extends Controller
             }
         }
         return $items;
+    }
+
+    private function getWorkshopYears($id){
+        $workshop = Workshop::findOrFail($id);
+        $datearray = explode('-',$workshop->start);
+        $year = (int)$datearray[0];
+        return [$year+1, $year+2];
     }
 
     // Export
@@ -1747,6 +1794,4 @@ class WorkshopController extends Controller
         $row = $defaultrow+$ctr;
         return $col1.$row.':'.$col2.$row;
     }
-
-    
 }
