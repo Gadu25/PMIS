@@ -45,11 +45,12 @@
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexF', params: { workshopId: workshop.id } }"><li>Annex F</li></router-link>
                                             <router-link @click="childSelected = true" :to="{ name: 'AnnexOne', params: { workshopId: workshop.id } }"><li>Annex 1</li></router-link>
                                             <router-link v-if="isUserPlanningUnit()" @click="childSelected = true" :to="{ name: 'CommonIndicators', params: { workshopId: workshop.id } }"><li>Common Performance Indicators</li></router-link>
+                                            <router-link v-if="isUserPlanningUnit()" @click="childSelected = true" :to="{ name: 'Nep', params: { workshopId: workshop.id } }"><li>National Expediture Program</li></router-link>
                                         </ul>
                                         <div class="d-flex justify-content-end">
                                             <div class="" v-if="inUserRole('workshop_edit') || inUserRole('workshop_delete')">
-                                                <button style="min-width: 140.7px;" v-if="inUserRole('workshop_edit')" @click="editForm(workshop)" class="btn btn-sm btn-primary mb-1"><i class="far fa-pencil-alt"></i> Edit Workshop</button><br>
-                                                <button style="min-width: 140.7px;" v-if="inUserRole('workshop_delete')" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> Delete Workshop</button>
+                                                <button style="min-width: 32px;" v-if="inUserRole('workshop_edit')" @click="editForm(workshop)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i> </button>
+                                                <button style="min-width: 32px;" v-if="inUserRole('workshop_delete')" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> </button>
                                             </div>
                                         </div>
                                     </div>

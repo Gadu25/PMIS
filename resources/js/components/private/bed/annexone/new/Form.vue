@@ -45,6 +45,7 @@
                                     <select class="form-select" id="Unit" v-model="form.unit_id" @change="changeUnit()">
                                         <option value="" selected hidden disabled>Select Unit</option>
                                         <option :value="unit.id" v-for="unit in units" :key="unit.id">{{unit.name}}</option>
+                                        <option :value="null">Not Applicable</option>
                                     </select>
                                     <label for="Unit">Unit</label>
                                 </div>
@@ -54,6 +55,7 @@
                                     <select class="form-select" id="SubUnit" v-model="form.subunit_id">
                                         <option value="" selected hidden disabled>Select Sub-Unit</option>
                                         <option :value="subunit.id" v-for="subunit in subunits" :key="subunit.id">{{subunit.name}}</option>
+                                        <option :value="null">Not Applicable</option>
                                     </select>
                                     <label for="SubUnit">Sub-Unit</label>
                                 </div>
@@ -74,6 +76,7 @@
                                     <select class="form-select" id="subProgram" v-model="form.subprogram_id" @change="changeSubprogram()">
                                         <option value="" selected hidden disabled>Select Sub-Program</option>
                                         <option :value="subprogram.id" v-for="subprogram in subprograms" :key="subprogram.id">{{subprogram.title}}</option>
+                                        <option :value="null">Not Applicable</option>
                                     </select>
                                     <label for="subProgram">Sub-Program</label>
                                 </div>
@@ -83,6 +86,7 @@
                                     <select class="form-select" id="cluster" v-model="form.cluster_id">
                                         <option value="" selected hidden disabled>Select Cluster</option>
                                         <option :value="cluster.id" v-for="cluster in clusters" :key="cluster.id">{{cluster.title}}</option>
+                                        <option :value="null">Not Applicable</option>
                                     </select>
                                     <label for="cluster">Cluster</label>
                                 </div>
@@ -93,7 +97,7 @@
                         <div class="form-group row">
                             <div class="col-sm-7">
                                 <div class="form-floating mb-3">
-                                    <select class="form-select" id="Source">
+                                    <select class="form-select" id="Source" v-model="form.source">
                                         <option value="" selected hidden disabled>Select Source of Funds</option>
                                         <option value="2A1">2A1</option>
                                         <option value="2A1-AC">2A1-AC</option>
@@ -106,7 +110,7 @@
                             </div>
                             <div class="col-sm-5">
                                 <div class="form-floating mb-3">
-                                    <select class="form-select" id="headerType">
+                                    <select class="form-select" id="headerType" v-model="form.headerType">
                                         <option value="" selected hidden disabled>Select Header Type</option>
                                         <option value="Subprogram">Subprogram</option>
                                         <option value="None">None</option>
@@ -116,7 +120,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end mb-2" >
+                        <div class="d-flex justify-content-between mb-2" >
+                            <div id="tooltip">
+                                <i class="far fa-question-circle fa-lg"></i>
+                                <span id="tooltiptext">Projects shown on select options are based on selected filters during the first part of the form. Check your selected project filters or contact your System Administrator for further clarifications.</span>
+                            </div>
                             <button class="btn btn-sm btn-success bg-gradient" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
                         </div>
                         <div class="overflow-auto" style="max-height: 50vh;">
@@ -126,7 +134,7 @@
                                     <select class="form-select" id="floatingSelect" @change="changeProject(fp)" v-model="fp.project_id">
                                         <option value="" hidden disabled selected>Select Project</option>
                                         <template v-for="project in projects" :key="project.id">
-                                            <option :value="project.id" v-if="!used.includes(project.id) || project.id == fp.project_id">{{project.title}}</option>
+                                            <option :value="project.id" v-if="formMatchProject(project) && !used.includes(project.id) || project.id == fp.project_id">{{project.title}}</option>
                                         </template>
                                     </select>
                                     <label for="floatingSelect">Project</label>
@@ -134,8 +142,8 @@
                                 <div class="d-flex flex-wrap px-2" v-if="fp.subprojects.length > 0">
                                     <div class="w-100"><strong>Subprojects</strong></div>
                                     <div class="form-check w-50" v-for="subproject in fp.subprojects" :key="subproject.id">
-                                        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-                                        <label class="form-check-label" for="flexCheckDefault">
+                                        <input class="form-check-input" type="checkbox" :value="subproject.id" :id="subproject.title" v-model="fp.subprojectIds">
+                                        <label class="form-check-label" :for="subproject.title">
                                             {{subproject.title}}
                                         </label>
                                     </div>
@@ -155,10 +163,14 @@
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import { dragscroll } from 'vue-dragscroll'
 export default {
     name: 'Form',
     emits: ['clicked'],
     setup({emit}){},
+    directives: {
+        dragscroll: dragscroll,
+    },
     data(){
         return {
             editmode: false,
@@ -170,18 +182,22 @@ export default {
                 division_id: '',
                 unit_id: '',
                 subunit_id: '',
-                projects: []
+                projects: [],
+                source: '',
+                headerType: ''
             },
             subprograms: [],
             clusters: [],
             units: [],
             subunits: [],
             formpart: 1,
-            used: []
+            used: [],
+            processing: false
         }
     },
     methods: {
         ...mapActions('workshop', ['fetchOptions']),
+        ...mapActions('annexone', ['fetchAnnexOnes', 'saveAnnexOne']),
         newForm(){
             this.form.program_id = ''
             this.form.subprogram_id = ''
@@ -194,21 +210,69 @@ export default {
             this.clusters = []
             this.units = []
             this.subunits = []
+            this.used = []
             this.formpart = 1
         },
         addProject(){
             this.form.projects.push({
                 id: '',
                 project_id: '',
+                projectTitle: '',
                 subprojects: [],
                 subprojectIds: []
             })
         },
         removeProject(formproject){
             this.form.projects.remove(formproject)
+            this.used.remove(formproject.project_id)
         },
-        submitForm(){
-            alert('form submitted')
+        async formValidated(form){
+            const promise = await new Promise((resolve, reject) => {
+                var time = 0
+                setTimeout(async () => {
+                    var start = new Date().getTime();
+                    
+                    if(form.source == ''){ reject('Source of Funds required') }
+                    if(form.headerType == ''){ reject('Header type required') }
+
+                    var projects = form.projects
+                    if(projects.length == 0){ reject('Please add at least one (1) Project') }
+                    for(let project of projects){
+                        if(project.project_id == ''){ reject('Empty Project found, Please select a Project or remove the Select Field')}
+                        if(project.subprojects.length > 0){
+                            if(project.subprojectIds.length == 0){
+                                var message = project.projectTitle + ' have Sub-Projects yet none is selected. Continue?'
+                                await this.swalConfirmCancel('Sub-Projects', message).then(res => {
+                                    if(!res){
+                                        reject('Cancelled')
+                                    }
+                                })
+
+                            }
+                        }
+                    }
+
+                    var end = new Date().getTime();
+                    time = end - start;
+                    resolve('Validated')
+                }, time)
+            })
+            return promise
+        },
+        async submitForm(){
+            this.processing = true
+            await this.formValidated(this.form)
+                .then(res => {
+                    this.toastMsg('success', res)
+                    this.processing = false
+                    
+                })
+                .catch((err) => {
+                    var icon = err == 'Cancelled' ? 'info' : 'warning'
+                    var msg  = err == 'Cancelled' ? 'Form submission cancelled' : err
+                    this.toastMsg(icon, msg)
+                    this.processing = false
+                })
         },
         hideForm(){
             this.formshow = false
@@ -232,15 +296,40 @@ export default {
                 return array2.length == 0 ? 'col-sm-6' : 'col-sm-4'
             }
         },
+        formMatchProject(project){
+            var projectIds = {
+                division_id:   project.division_id,
+                unit_id:       project.unit_id,
+                subunit_id:    project.subunit_id,
+                program_id:    project.program_id,
+                subprogram_id: project.subprogram_id,
+                cluster_id:    project.cluster_id
+            }
+            var form = this.form
+            var formIds = {
+                division_id:   form.division_id,
+                unit_id:       form.unit_id       === '' ? null : form.unit_id,
+                subunit_id:    form.subunit_id    === '' ? null : form.subunit_id,
+                program_id:    form.program_id,
+                subprogram_id: form.subprogram_id === '' ? null : form.subprogram_id,
+                cluster_id:    form.cluster_id    === '' ? null : form.cluster_id
+            }
+            
+            return JSON.stringify(projectIds) === JSON.stringify(formIds)
+        },
         checkSelectedProject(){
-            for(let project of this.form.projects){
-                
+            for(let projectId of this.used){
+                var project = this.form.projects.find(elem => elem.project_id == projectId)
+                if(!project){
+                    this.used.remove(projectId)
+                }
             }
         },
         changeProject(formproject){
             var projects = this.editmode ? this.usedprojects : this.projects
             var projectId = formproject.project_id
             var project = projects.find(elem => elem.id == projectId)
+            formproject.projectTitle = project.title
             formproject.subprojects = project.subprojects
             if(!this.used.includes(projectId)){
                 this.used.push(projectId)
@@ -255,7 +344,7 @@ export default {
         },
         changeSubprogram(){
             var subprogram = this.subprograms.find(elem => elem.id == this.form.subprogram_id)
-            this.clusters = subprogram.clusters
+            if(subprogram){ this.clusters = subprogram.clusters }
             this.form.cluster_id = ''
         },
         changeDivision(){
@@ -267,7 +356,7 @@ export default {
         },
         changeUnit(){
             var unit = this.units.find(elem => elem.id == this.form.unit_id)
-            this.subunits = unit.subunits
+            if(unit){ this.subunits = unit.subunits }
             this.form.subunit_id = ''
         },
         toastMsg(icon, msg){
@@ -275,6 +364,21 @@ export default {
                 icon: icon,
                 title: msg
             })
+        },
+        async swalConfirmCancel(title, message){
+            const result = await swal.fire({
+                title: title,
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Continue!',
+                reverseButtons: true
+                }).then((result) => {
+                    return result.isConfirmed
+                })
+            return result
         },
     },
     computed:{
@@ -302,5 +406,33 @@ export default {
     width: 40px;
     padding: 6px;
     font-weight: bold;
+}
+
+#tooltip {
+  position: relative;
+  display: inline-block;
+}
+#tooltip #tooltiptext {
+  visibility: hidden;
+  width: 300px;
+  background-color: rgba(0, 72, 215, 0.8);
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  border-radius: 0.75em;
+  display: none;
+  box-shadow: rgba(0, 0, 0, 0.17) 0px -23px 25px 0px inset, rgba(0, 0, 0, 0.15) 0px -36px 30px 0px inset, rgba(0, 0, 0, 0.1) 0px -79px 40px 0px inset, rgba(0, 0, 0, 0.06) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px;
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+  z-index: 1;
+  left: 25px;
+  top: -10px; 
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+#tooltip:hover #tooltiptext {
+  visibility: visible;
+  display: block;
+  transition: all 0.3s ease-in;
 }
 </style>

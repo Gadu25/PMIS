@@ -731,61 +731,282 @@ class WorkshopController extends Controller
         }
     }
     
-    // Annex One
-    public function getAnnexOne($workshopId){
-        $workshopYear = $this->getWorkshopYear($workshopId);
-        $divisions = Division::select('id','code')->get();
-        $annexones = AnnexOne::where('workshop_id', $workshopId)->orderBy('id','asc')->get();
+    // Annex One OLD
+    // public function getAnnexOne($workshopId){
+    //     $workshopYear = $this->getWorkshopYear($workshopId);
+    //     $divisions = Division::select('id','code')->get();
+    //     $annexones = AnnexOne::where('workshop_id', $workshopId)->orderBy('id','asc')->get();
 
-        $headers = [];
-        foreach($annexones as $annexone){
-            $annexone->funds;
-            $project = $annexone->project;
-            $annexone->header = ($annexone->header_type == 'Subprogram') ? $annexone->project->subprogram->title_short : 
-                                (($annexone->header_type == 'Unit') ? ($annexone->project->subunit_id) ? $annexone->project->subunit->name : $annexone->project->unit->name : 'None');
-            foreach($annexone->subs as $sub){
-                $sub->funds;
-                $sub->subproject;
-            }
+    //     $headers = [];
+    //     foreach($annexones as $annexone){
+    //         $annexone->funds;
+    //         $project = $annexone->project;
+    //         $annexone->header = ($annexone->header_type == 'Subprogram') ? $annexone->project->subprogram->title_short : 
+    //                             (($annexone->header_type == 'Unit') ? ($annexone->project->subunit_id) ? $annexone->project->subunit->name : $annexone->project->unit->name : 'None');
+    //         foreach($annexone->subs as $sub){
+    //             $sub->funds;
+    //             $sub->subproject;
+    //         }
 
-            $annexone->division = $project->division->code.(($project->subunit_id !== null) ? ' - '.$project->subunit->name : (($project->unit_id !== null) ? ' - '.$project->unit->name : ''));
-            $annexone->program = $project->program->title.(($project->cluster_id !== null) ? ' - '.$project->cluster->title : (($project->subprogram_id !== null) ? ' - '.$project->subprogram->title_short : ''));
-        }
+    //         $annexone->division = $project->division->code.(($project->subunit_id !== null) ? ' - '.$project->subunit->name : (($project->unit_id !== null) ? ' - '.$project->unit->name : ''));
+    //         $annexone->program = $project->program->title.(($project->cluster_id !== null) ? ' - '.$project->cluster->title : (($project->subprogram_id !== null) ? ' - '.$project->subprogram->title_short : ''));
+    //     }
 
-        $grouped = $annexones->groupBy(['project.division.code','source_of_funds','header']);
-        // $array = $grouped-;
+    //     $grouped = $annexones->groupBy(['project.division.code','source_of_funds','header']);
+    //     // $array = $grouped-;
 
-        return $grouped;
-    }
+    //     return $grouped;
+    // }
 
+    // public function storeAnnexOne(Request $request){
+    //     DB::beginTransaction();
+    //     try {
+    //         $year = $request['workshop_year'];
+    //         foreach($request['projects'] as $project){
+    //             $annexone = new AnnexOne;
+    //             $annexone->source_of_funds = $request['source'];
+    //             $annexone->header_type     = $request['header'];
+    //             $annexone->workshop_id     = $request['workshop_id'];
+    //             $annexone->project_id      = $project['project_id'];
+    //             $annexone->save();
+    //             $this->saveFunds($annexone, $project, $year);
+
+    //             foreach($project['subprojects'] as $subproject){
+    //                 if($subproject['state']){
+    //                     $annexonesub = new AnnexOneSub;
+    //                     $annexonesub->annex_one_id = $annexone->id;
+    //                     $annexonesub->subproject_id = $subproject['subproject_id'];
+    //                     $annexonesub->save();
+    //                     $this->saveFunds($annexonesub, $subproject, $year);
+    //                 }
+    //             }
+    //         }
+
+    //         DB::commit();
+    //         return ['message' => 'Successfully added!', 'annexones' => $this->getAnnexOne($request['workshop_id'])];
+    //     }
+    //     catch (\Exception $e){
+    //         DB::rollback();
+    //         return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+    //     }
+    // }
+
+    // public function updateAnnexOne(Request $request, $id){
+    //     DB::beginTransaction();
+    //     try {
+    //         $year = $request['workshop_year'];
+    //         $project = $request['projects'][0];
+    //         $annexone = AnnexOne::findOrFail($id);
+    //         $annexone->source_of_funds = $request['source'];
+    //         $annexone->header_type     = $request['header'];
+    //         $this->saveFunds($annexone, $project, $year, true, false);
+            
+    //         foreach($project['subprojects'] as $subproject){
+    //             $subId = $subproject['id'];
+    //             if($subproject['state']){
+    //                 $annexonesub = ($subId) ? AnnexOneSub::findOrFail($subId) : new AnnexOneSub;
+    //                 $annexonesub->annex_one_id = $annexone->id;
+    //                 $annexonesub->subproject_id = $subproject['subproject_id'];
+    //                 $annexonesub->save();
+    //                 $this->saveFunds($annexonesub, $subproject, $year, true, true);
+    //             }
+    //             else{
+    //                 if($subId){
+    //                     $annexonesub = AnnexOneSub::findOrFail($subId);
+    //                     $annexonesub->funds()->delete();
+    //                     $annexonesub->delete();
+    //                 }
+    //             }
+    //         }
+
+    //         DB::commit();
+    //         return ['message' => 'Successfully updated!', 'annexones' => $this->getAnnexOne($request['workshop_id'])];
+    //     }
+    //     catch (\Exception $e){
+    //         DB::rollback();
+    //         return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+    //     }
+    // }
+
+    // public function destroyAnnexOne($id){
+    //     DB::beginTransaction();
+    //     try {
+    //         $annexone = AnnexOne::findOrFail($id);
+    //         foreach($annexone->subs as $annexonesub){
+    //             $annexonesub->funds()->delete();
+    //         }
+    //         $annexone->funds()->delete();
+    //         $annexone->delete();
+
+    //         DB::commit();
+    //         return ['message' => 'Successfully deleted!', 'annexones' => $this->getAnnexOne($annexone->workshop_id)];
+    //     }
+    //     catch (\Exception $e){
+    //         DB::rollback();
+    //         return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+    //     }
+    // }
+
+    // public function publishAnnexOneProjects($workshopId){
+    //     DB::beginTransaction();
+    //     try {
+    //         $annexones = AnnexOne::with('project')->where('workshop_id', $workshopId)->get();
+    //         $commonindicators = CommonIndicator::with(['tags'])
+    //             ->where('workshop_id', $workshopId)
+    //             ->where('type', 'Performance')->get();
+    //         $ctr = 0;
+    //         foreach($annexones as $annexone){
+    //             $annexe = new AnnexE;
+    //             $annexe->workshop_id = $workshopId;
+    //             $annexe->project_id = $annexone->project_id;
+    //             $annexe->status = 'Draft';
+    //             $annexe->save();
+
+    //             $project = $annexe->project;
+
+    //             foreach($commonindicators as $commonindicator){
+    //                 $coprogram_id    = $commonindicator->program_id;
+    //                 $cosubprogram_id = $commonindicator->subprogram_id;
+    //                 $cocluster_id    = $commonindicator->cluster_id;
+    //                 // common indicator - for projects under program
+    //                 if($coprogram_id == $project->program_id && $cosubprogram_id === null && $cocluster_id === null){
+    //                     $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+    //                 }
+    //                 else 
+    //                 // common indicator - for projects under cluster
+    //                 if($coprogram_id == $project->program_id && $cosubprogram_id !== null && $cocluster_id !== null){
+    //                     if($cocluster_id == $project->cluster_id){
+    //                         $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+    //                     }
+    //                 }
+    //                 else
+    //                 // common indicator - for projects under subprogram
+    //                 if($coprogram_id == $project->program_id && $cosubprogram_id == $project->subprogram_id){
+    //                     $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+    //                 }
+    //             }
+
+    //             // check if undergraduate
+    //             $undergrad = Subprogram::where('title_short', 'Undergraduate')->first();
+    //             if($annexone->project->subprogram_id === $undergrad->id){
+    //                 if($ctr === 0){
+    //                     $annexf = new AnnexF;
+    //                     $annexf->workshop_id = $workshopId;
+    //                     $annexf->status = 'Draft';
+    //                     $annexf->save();
+    //                     $tempIds = [];
+    //                     foreach($undergrad->projects as $project){
+    //                         array_push($tempIds, $project->id);
+    //                     }
+    //                     $annexf->projects()->sync($tempIds);
+    //                     $ctr = 1;
+    //                 }
+    //             }
+    //             else{
+    //                 $annexf = new AnnexF;
+    //                 $annexf->workshop_id = $workshopId;
+    //                 $annexf->status = 'Draft';
+    //                 $annexf->save();
+    //                 $annexf->projects()->sync([$annexone->project_id]);
+    //             }
+
+
+    //             foreach($annexone->subs as $annexonesub){
+    //                 $annexesub = new AnnexESub;
+    //                 $annexesub->annex_e_id = $annexe->id;
+    //                 $annexesub->subproject_id = $annexonesub->subproject_id;
+    //                 $annexesub->save();
+
+    //                 $annexfsub = new AnnexFSub;
+    //                 $annexfsub->annex_f_id = $annexf->id;
+    //                 $annexfsub->subproject_id = $annexonesub->subproject_id;
+    //                 $annexfsub->save();
+    //             }
+    //         }
+
+    //         DB::commit();
+    //         return ['message' => 'Projects Published!'];
+    //     }
+    //     catch(\Exception $e){
+    //         DB::rollback();
+    //         return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
+    //     }
+    // }
+
+    // private function saveAnnexECommonIndicator($annexe, $commonindicator){
+    //     $performanceindicator = new PerformanceIndicator;
+    //     $performanceindicator->description = $commonindicator->description;
+    //     $performanceindicator->common = true;
+    //     $annexe->indicators()->save($performanceindicator);
+    //     $performanceindicator->tags()->sync([$commonindicator->tags[0]->id]);
+
+    //     $tempTags = [];
+    //     foreach($commonindicator->subindicators as $sub){
+    //         $tag = $sub->tags[0];
+    //         if(!in_array($tag->name, $tempTags)){
+    //             $annexesub = new AnnexESub;
+    //             $annexesub->annex_e_id = $annexe->id;
+    //             $annexesub->temp_title = $tag->name;
+    //             $annexesub->save();
+
+    //             array_push($tempTags, $tag->name);
+    //         }
+
+    //         $performanceindicator = new PerformanceIndicator;
+    //         $performanceindicator->description = $sub->description;
+    //         $performanceindicator->common = true;
+    //         $annexesub->indicators()->save($performanceindicator);
+    //         $performanceindicator->tags()->sync([$tag->id]);
+    //     }
+    // }
+
+    // private function saveFunds($parent, $data, $year, $update = false, $isSub = false){
+    //     $cols = ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7'];
+    //     $amounts = [];
+    //     $funds = [];
+    //     foreach($cols as $key => $col){
+    //         $col_year = $year + (int)$key;
+    //         $amount = $this->formatAmount($data[$col]);
+    //         if(!$update){
+    //             if($amount != 0){
+    //                 $this->basicSave($parent, $col_year, $amount);
+    //             }
+    //         }
+    //         else{
+    //             $model = ($isSub) ? 'App\Models\AnnexOneSub' : 'App\Models\AnnexOne';
+    //             $fund = AnnexOneFund::where('year', $col_year)->where('fundable_type', $model)->where('fundable_id', $parent->id)->first();
+    //             if($amount != 0){
+    //                 if($fund){
+    //                     $fund->amount = $amount;
+    //                     $fund->save();
+    //                 }
+    //                 else{
+    //                     $this->basicSave($parent, $col_year, $amount);
+    //                 }
+    //             }
+    //             else{
+    //                 if($fund){
+    //                     $fund->delete();
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+    // private function basicSave($parent, $year, $amount){
+    //     $fund = new AnnexOneFund;
+    //     $fund->year = $year;
+    //     $fund->amount = $amount;
+    //     $parent->funds()->save($fund);
+    // }
+
+    // Annex 1 New
     public function storeAnnexOne(Request $request){
         DB::beginTransaction();
         try {
-            $year = $request['workshop_year'];
-            foreach($request['projects'] as $project){
-                $annexone = new AnnexOne;
-                $annexone->source_of_funds = $request['source'];
-                $annexone->header_type     = $request['header'];
-                $annexone->workshop_id     = $request['workshop_id'];
-                $annexone->project_id      = $project['project_id'];
-                $annexone->save();
-                $this->saveFunds($annexone, $project, $year);
 
-                foreach($project['subprojects'] as $subproject){
-                    if($subproject['state']){
-                        $annexonesub = new AnnexOneSub;
-                        $annexonesub->annex_one_id = $annexone->id;
-                        $annexonesub->subproject_id = $subproject['subproject_id'];
-                        $annexonesub->save();
-                        $this->saveFunds($annexonesub, $subproject, $year);
-                    }
-                }
-            }
-
-            DB::commit();
-            return ['message' => 'Successfully added!', 'annexones' => $this->getAnnexOne($request['workshop_id'])];
         }
-        catch (\Exception $e){
+        catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
@@ -794,211 +1015,42 @@ class WorkshopController extends Controller
     public function updateAnnexOne(Request $request, $id){
         DB::beginTransaction();
         try {
-            $year = $request['workshop_year'];
-            $project = $request['projects'][0];
-            $annexone = AnnexOne::findOrFail($id);
-            $annexone->source_of_funds = $request['source'];
-            $annexone->header_type     = $request['header'];
-            $this->saveFunds($annexone, $project, $year, true, false);
-            
-            foreach($project['subprojects'] as $subproject){
-                $subId = $subproject['id'];
-                if($subproject['state']){
-                    $annexonesub = ($subId) ? AnnexOneSub::findOrFail($subId) : new AnnexOneSub;
-                    $annexonesub->annex_one_id = $annexone->id;
-                    $annexonesub->subproject_id = $subproject['subproject_id'];
-                    $annexonesub->save();
-                    $this->saveFunds($annexonesub, $subproject, $year, true, true);
-                }
-                else{
-                    if($subId){
-                        $annexonesub = AnnexOneSub::findOrFail($subId);
-                        $annexonesub->funds()->delete();
-                        $annexonesub->delete();
-                    }
-                }
-            }
 
-            DB::commit();
-            return ['message' => 'Successfully updated!', 'annexones' => $this->getAnnexOne($request['workshop_id'])];
         }
-        catch (\Exception $e){
+        catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
+
     }
 
     public function destroyAnnexOne($id){
         DB::beginTransaction();
         try {
-            $annexone = AnnexOne::findOrFail($id);
-            foreach($annexone->subs as $annexonesub){
-                $annexonesub->funds()->delete();
-            }
-            $annexone->funds()->delete();
-            $annexone->delete();
 
-            DB::commit();
-            return ['message' => 'Successfully deleted!', 'annexones' => $this->getAnnexOne($annexone->workshop_id)];
         }
-        catch (\Exception $e){
+        catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
+
+    }
+
+    public function getAnnexOne($workshopId){
+
     }
 
     public function publishAnnexOneProjects($workshopId){
         DB::beginTransaction();
         try {
-            $annexones = AnnexOne::with('project')->where('workshop_id', $workshopId)->get();
-            $commonindicators = CommonIndicator::with(['tags'])
-                ->where('workshop_id', $workshopId)
-                ->where('type', 'Performance')->get();
-            $ctr = 0;
-            foreach($annexones as $annexone){
-                $annexe = new AnnexE;
-                $annexe->workshop_id = $workshopId;
-                $annexe->project_id = $annexone->project_id;
-                $annexe->status = 'Draft';
-                $annexe->save();
 
-                $project = $annexe->project;
-
-                foreach($commonindicators as $commonindicator){
-                    $coprogram_id    = $commonindicator->program_id;
-                    $cosubprogram_id = $commonindicator->subprogram_id;
-                    $cocluster_id    = $commonindicator->cluster_id;
-                    // common indicator - for projects under program
-                    if($coprogram_id == $project->program_id && $cosubprogram_id === null && $cocluster_id === null){
-                        $this->saveAnnexECommonIndicator($annexe, $commonindicator);
-                    }
-                    else 
-                    // common indicator - for projects under cluster
-                    if($coprogram_id == $project->program_id && $cosubprogram_id !== null && $cocluster_id !== null){
-                        if($cocluster_id == $project->cluster_id){
-                            $this->saveAnnexECommonIndicator($annexe, $commonindicator);
-                        }
-                    }
-                    else
-                    // common indicator - for projects under subprogram
-                    if($coprogram_id == $project->program_id && $cosubprogram_id == $project->subprogram_id){
-                        $this->saveAnnexECommonIndicator($annexe, $commonindicator);
-                    }
-                }
-
-                // check if undergraduate
-                $undergrad = Subprogram::where('title_short', 'Undergraduate')->first();
-                if($annexone->project->subprogram_id === $undergrad->id){
-                    if($ctr === 0){
-                        $annexf = new AnnexF;
-                        $annexf->workshop_id = $workshopId;
-                        $annexf->status = 'Draft';
-                        $annexf->save();
-                        $tempIds = [];
-                        foreach($undergrad->projects as $project){
-                            array_push($tempIds, $project->id);
-                        }
-                        $annexf->projects()->sync($tempIds);
-                        $ctr = 1;
-                    }
-                }
-                else{
-                    $annexf = new AnnexF;
-                    $annexf->workshop_id = $workshopId;
-                    $annexf->status = 'Draft';
-                    $annexf->save();
-                    $annexf->projects()->sync([$annexone->project_id]);
-                }
-
-
-                foreach($annexone->subs as $annexonesub){
-                    $annexesub = new AnnexESub;
-                    $annexesub->annex_e_id = $annexe->id;
-                    $annexesub->subproject_id = $annexonesub->subproject_id;
-                    $annexesub->save();
-
-                    $annexfsub = new AnnexFSub;
-                    $annexfsub->annex_f_id = $annexf->id;
-                    $annexfsub->subproject_id = $annexonesub->subproject_id;
-                    $annexfsub->save();
-                }
-            }
-
-            DB::commit();
-            return ['message' => 'Projects Published!'];
         }
         catch(\Exception $e){
             DB::rollback();
-            return ['message' => 'Something went wrong!', 'errors' => $e->getMessage()];
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
-    }
+    } 
 
-    private function saveAnnexECommonIndicator($annexe, $commonindicator){
-        $performanceindicator = new PerformanceIndicator;
-        $performanceindicator->description = $commonindicator->description;
-        $performanceindicator->common = true;
-        $annexe->indicators()->save($performanceindicator);
-        $performanceindicator->tags()->sync([$commonindicator->tags[0]->id]);
-
-        $tempTags = [];
-        foreach($commonindicator->subindicators as $sub){
-            $tag = $sub->tags[0];
-            if(!in_array($tag->name, $tempTags)){
-                $annexesub = new AnnexESub;
-                $annexesub->annex_e_id = $annexe->id;
-                $annexesub->temp_title = $tag->name;
-                $annexesub->save();
-
-                array_push($tempTags, $tag->name);
-            }
-
-            $performanceindicator = new PerformanceIndicator;
-            $performanceindicator->description = $sub->description;
-            $performanceindicator->common = true;
-            $annexesub->indicators()->save($performanceindicator);
-            $performanceindicator->tags()->sync([$tag->id]);
-        }
-    }
-
-    private function saveFunds($parent, $data, $year, $update = false, $isSub = false){
-        $cols = ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7'];
-        $amounts = [];
-        $funds = [];
-        foreach($cols as $key => $col){
-            $col_year = $year + (int)$key;
-            $amount = $this->formatAmount($data[$col]);
-            if(!$update){
-                if($amount != 0){
-                    $this->basicSave($parent, $col_year, $amount);
-                }
-            }
-            else{
-                $model = ($isSub) ? 'App\Models\AnnexOneSub' : 'App\Models\AnnexOne';
-                $fund = AnnexOneFund::where('year', $col_year)->where('fundable_type', $model)->where('fundable_id', $parent->id)->first();
-                if($amount != 0){
-                    if($fund){
-                        $fund->amount = $amount;
-                        $fund->save();
-                    }
-                    else{
-                        $this->basicSave($parent, $col_year, $amount);
-                    }
-                }
-                else{
-                    if($fund){
-                        $fund->delete();
-                    }
-                }
-            }
-        }
-    }
-
-    private function basicSave($parent, $year, $amount){
-        $fund = new AnnexOneFund;
-        $fund->year = $year;
-        $fund->amount = $amount;
-        $parent->funds()->save($fund);
-    }
 
     // Common Indicators
     public function getCommonIndicator($workshopId){

@@ -9,7 +9,7 @@
                         <h6 :style="'font-size:' + fontsize" class="mb-0 fw-bold">SEI Annual Planning Workshop</h6>
                         <h6 :style="'font-size:' + fontsize" class="fw-bold">{{workshop.date}}</h6>
                     </div>
-                    <div class="table-responsive">
+                    <div class="table-responsive" v-dragscroll>
                         <table class="table table-sm table-bordered" :style="'font-size:' + fontsize">
                             <TableHead />
                         </table>
@@ -40,12 +40,16 @@
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import { dragscroll } from 'vue-dragscroll'
 import Form from './Form.vue'
 import TableHead from './TableHead.vue'
 export default {
     name: 'Display',
     emits: ['clicked'],
     setup({emit}){},
+    directives: {
+        dragscroll: dragscroll,
+    },
     components: { Form, TableHead },
     data(){
         return {

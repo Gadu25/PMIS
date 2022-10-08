@@ -16,6 +16,8 @@ import AnnexE from './components/private/bed/annex_e/AnnexE.vue'
 import AnnexF from './components/private/bed/annex_f/AnnexF.vue'
 import AnnexOne from './components/private/bed/annexone/AnnexOne.vue'
 import CommonIndicators from './components/private/bed/common/CommonIndicators.vue'
+// import NEP from './components/private/bed/nep/NationalExpediture.vue'
+import Nep from './components/private/bed/nep/NationalExpenditure.vue'
 
 import Publications from './components/private/publications/Publications.vue'
 
@@ -54,6 +56,7 @@ const routes = [
             { path: '/budget-executive-documents/annex-f/:workshopId', name: 'AnnexF', component: AnnexF, meta: { requiresAuth: true, title: 'Annex F' } },
             { path: '/budget-executive-documents/annex-one/:workshopId', name: 'AnnexOne', component: AnnexOne, meta: { requiresAuth: true, title: 'Annex One' } },
             { path: '/budget-executive-documents/common-indicators/:workshopId', name: 'CommonIndicators', component: CommonIndicators, meta: { requiresAuth: true, title: 'Common Performance Indicators' } },
+            { path: '/budget-executive-documents/national-expenditure-program/:workshopId', name: 'Nep', component: Nep, meta: { requiresAuth: true, title: 'National Expenditure Program' } },
         ]
     },
     { path: '/resources-and-publications', name: 'Publications', component: Publications, meta: { requiresAuth: true, title: 'Resources and Publications' } },

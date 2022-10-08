@@ -11,8 +11,8 @@
                             <div>
                             <img :src="'/images/Logo.png'" alt="logo" width="60">
                             </div>
-                            <div class="w-100 text-center ">
-                                <span style="font-size: 40px; ">P M I S</span>
+                            <div class="w-100 text-center">
+                                <span style="" id="pmis">P M I S</span>
                             </div>
                             <!-- <span>Project Management Info System</span> -->
                         </div>
@@ -292,5 +292,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 ::-webkit-scrollbar-thumb:hover {
     background: #555; 
 }
-
+#pmis{
+    font-size: 40px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black, 0 0 25px blue, 0 0 5px darkblue;
+}
 </style>
