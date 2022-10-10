@@ -104,6 +104,15 @@ Route::prefix('/workshop')->group(function(){
         Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getCommonIndicator']);
     });
 
+    Route::prefix('/nep')->group(function(){
+        Route::middleware('auth:sanctum')->get('/', [WorkshopController::class, 'getNeps']);
+        Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getWorkshopNeps']);
+        Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeNep']);
+        Route::middleware('auth:sanctum')->put('/multiple', [WorkshopController::class, 'updateNeps']);
+        Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateNep']);
+        Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destoryNep']);
+    });
+
     Route::middleware('auth:sanctum')->get('/options/{workshopId}/{annex}', [WorkshopController::class, 'getOptions']);
     Route::middleware('auth:sanctum')->get('/', [WorkshopController::class, 'index']);
     Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'store']);

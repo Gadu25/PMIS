@@ -31,6 +31,8 @@ use App\Models\AnnexOneFund;
 use App\Models\CommonIndicator;
 use App\Models\CommonIndicatorSub;
 
+use App\Models\NationalExpenditure;
+
 use App\Models\History;
 use App\Models\Notification;
 use App\Models\Profile;
@@ -1051,7 +1053,6 @@ class WorkshopController extends Controller
         }
     } 
 
-
     // Common Indicators
     public function getCommonIndicator($workshopId){
         // $years = $this->getWorkshopYears($workshopId);
@@ -1172,6 +1173,79 @@ class WorkshopController extends Controller
         }
     }
 
+    // National Expenditure
+    public function getNeps(){
+        return NationalExpediture::all();
+    }
+
+    public function getWorkshopNeps($workshopId){
+        return NationalExpenditure::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+    }
+
+    public function storeNep(Request $request){
+        DB::beginTransaction();
+        try {
+            return $request;
+            // $single = $request['savingOptions']
+            // $nationalexpenditure = new NationalExpenditure;
+            // $nationalexpenditure->project_id = $single['project_id'];
+            // $nationalexpenditure->workshop_id = $single['workshop_id'];
+            // $nationalexpenditure->workshop_id = $this->formatAmount($single['amount']);
+            
+            DB::commit();
+            return ['message' => 'Added', 'neps' => []];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function updateNep(Request $request, $id){
+        DB::beginTransaction();
+        try {
+            return $request;
+            // $single = $request['savingOptions']
+            // if($single )
+            // $nationalexpenditure = new NationalExpenditure;
+            // $nationalexpenditure->project_id = $single['project_id'];
+            // $nationalexpenditure->workshop_id = $single['workshop_id'];
+            // $nationalexpenditure->workshop_id = $this->formatAmount($single['amount']);
+            
+            DB::commit();
+            return ['message' => 'Added', 'neps' => []];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function updateNeps(Request $request){
+        DB::beginTransaction();
+        try {
+            return $request;
+            // $single = $request['savingOptions']
+            // if($single )
+            // $nationalexpenditure = new NationalExpenditure;
+            // $nationalexpenditure->project_id = $single['project_id'];
+            // $nationalexpenditure->workshop_id = $single['workshop_id'];
+            // $nationalexpenditure->workshop_id = $this->formatAmount($single['amount']);
+            
+            DB::commit();
+            return ['message' => 'Added', 'neps' => []];
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+
+    }
+
+    public function destoryNep($id){
+
+    }
+
     // Common Functions
 
     public function getOptions($workshopId, $annex){
@@ -1189,11 +1263,11 @@ class WorkshopController extends Controller
             array_push($ids, $annexone->project_id);
             array_push($projectsIds, $annexone->project_id);
         }
-        if($annex == 'one'){
-            $projects = Project::orderBy('id', 'asc')->whereNotIn('id', $ids)->get();
-            foreach($projects as $project){
-                $project->subprojects;
-            }
+        if($annex == 'one' || $annex == 'nep'){
+            $projects = Project::with('subprojects')->orderBy('id', 'asc')->whereNotIn('id', $ids)->get();
+            // foreach($projects as $project){
+            //     $project->subprojects;
+            // }
         }
         else{
             if($annex == 'f'){
@@ -1211,16 +1285,16 @@ class WorkshopController extends Controller
                 }
             }
     
-            $projects = Project::orderBy('id', 'asc')->whereNotIn('id', $ids)->whereIn('id', $projectsIds)->get();
-            foreach($projects as $project){
-                $project->subprojects;
-            }
+            $projects = Project::with('subprojects')->orderBy('id', 'asc')->whereNotIn('id', $ids)->whereIn('id', $projectsIds)->get();
+            // foreach($projects as $project){
+            //     $project->subprojects;
+            // }
         }
     
-        $usedProjects = Project::orderBy('id', 'asc')->whereIn('id', $ids)->get();
-        foreach($usedProjects as $project){
-            $project->subprojects;
-        }
+        $usedProjects = Project::with('subprojects')->orderBy('id', 'asc')->whereIn('id', $ids)->get();
+        // foreach($usedProjects as $project){
+        //     $project->subprojects;
+        // }
 
         return ['programs' => $programs, 'divisions' => $divisions, 'projects' => $projects, 'used_projects' => $usedProjects];
     }

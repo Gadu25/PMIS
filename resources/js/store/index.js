@@ -14,6 +14,7 @@ import annexe from './modules/workshops/annexe'
 import annexf from './modules/workshops/annexf'
 import annexone from './modules/workshops/annexone'
 import common from './modules/workshops/common'
+import nep from './modules/workshops/nep'
 
 import annual from './modules/reports/annual'
 
@@ -27,7 +28,7 @@ const store = createStore({
         division,
         program, project,
         event,
-        workshop, annexe, annexf, annexone, common,
+        workshop, annexe, annexf, annexone, common, nep,
         annual,
         publication,
         tag,
