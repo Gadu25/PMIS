@@ -2,236 +2,238 @@
     <template v-if="!childSelected">
         <div class="px-2 py-1" v-if="!loading">
             <h2 class="text-center">Programs and Projects</h2><hr>
-            <template v-if="!manageprojects">
-                <div class="d-flex justify-content-end">
-                    <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = true"><i class="far fa-cog"></i> Manage Projects</button>
-                </div>
-                <div v-for="program in programs" :key="program.id+'_program'">
-                    <h3><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: program.title } }">{{program.title}}</router-link></h3>
-                    <div class="ms-3" v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
-                        <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h6>
-                        <div class="ms-3" v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
-                            <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: cluster.title } }">{{cluster.title}}</router-link></h6>
-                        </div>
-                    </div><hr>
-                </div>
-            </template>
-            <div v-else>
-                <div class="d-flex justify-content-center">
-                    <div class="col-sm-12">
-                        <div class="px-2 py-4" v-if="formshow">
-                            <div class="mb-2"><h4>Form</h4></div>
-                            <div class="overflow-auto p-2" style="height: 68vh; overflow-x: hidden !important">
-                                <div class="form-group row mb-3">
-                                    <div :class="'mb-2 col-sm-'+ ((subprograms.length > 0 && clusters.length > 0) ? 4 : (subprograms.length > 0) ? 6 : 12 )">
-                                        <div class="form-floating">
-                                            <select class="form-select" id="Program" v-model="form.program_id" @change="progChange()">
-                                                <option value="" selected hidden disabled>Select Program</option>
-                                                <option :value="program.id" v-for="program in programs" :key="program.id+'_progOption'">{{program.title}}</option>
-                                            </select>
-                                            <label for="Program">Program</label>
-                                        </div>
+            <div id="main-container">
+                <template v-if="!manageprojects">
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = true"><i class="far fa-cog"></i> Manage Projects</button>
+                    </div>
+                    <div v-for="program in programs" :key="program.id+'_program'">
+                        <h3><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: program.title } }">{{program.title}}</router-link></h3>
+                        <div class="ms-3" v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
+                            <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h6>
+                            <div class="ms-3" v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
+                                <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: cluster.title } }">{{cluster.title}}</router-link></h6>
+                            </div>
+                        </div><hr>
+                    </div>
+                </template>
+                <div v-else>
+                    <div class="d-flex justify-content-center">
+                        <div class="col-sm-12">
+                            <div class="px-2 py-4" v-if="formshow">
+                                <div class="mb-2"><h4>Form</h4></div>
+                                <div class="overflow-auto p-2" style="height: calc(100vh - 274px); overflow-x: hidden !important">
+                                    <div class="form-group row mb-3">
+                                        <div :class="'mb-2 col-sm-'+ ((subprograms.length > 0 && clusters.length > 0) ? 4 : (subprograms.length > 0) ? 6 : 12 )">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="Program" v-model="form.program_id" @change="progChange()">
+                                                    <option value="" selected hidden disabled>Select Program</option>
+                                                    <option :value="program.id" v-for="program in programs" :key="program.id+'_progOption'">{{program.title}}</option>
+                                                </select>
+                                                <label for="Program">Program</label>
+                                            </div>
 
-                                    </div>
-                                    <div :class="'mb-2 col-sm-' + (clusters.length > 0 ? 4 : 6)" v-if="subprograms.length > 0">
-                                        <div class="form-floating">
-                                            <select class="form-select" id="Subprogram" v-model="form.subprogram_id" @change="subpChange()">
-                                                <option value="" selected hidden disabled>Select Sub-Program</option>
-                                                <option :value="subprogram.id" v-for="subprogram in subprograms" :key="subprogram.id+'_subpOption'">{{subprogram.title}}</option>
-                                                <option value="0" >N/A</option>
-                                            </select>
-                                            <label for="Subprogram">Sub-Program</label>
+                                        </div>
+                                        <div :class="'mb-2 col-sm-' + (clusters.length > 0 ? 4 : 6)" v-if="subprograms.length > 0">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="Subprogram" v-model="form.subprogram_id" @change="subpChange()">
+                                                    <option value="" selected hidden disabled>Select Sub-Program</option>
+                                                    <option :value="subprogram.id" v-for="subprogram in subprograms" :key="subprogram.id+'_subpOption'">{{subprogram.title}}</option>
+                                                    <option value="0" >N/A</option>
+                                                </select>
+                                                <label for="Subprogram">Sub-Program</label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2 col-sm-4" v-if="clusters.length > 0">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="Cluster" v-model="form.cluster_id">
+                                                    <option value="" selected hidden disabled>Select Cluster</option>
+                                                    <option :value="cluster.id" v-for="cluster in clusters" :key="cluster.id+'_clusOption'">{{cluster.title}}</option>
+                                                    <option value="0">N/A</option>
+                                                    
+                                                </select>
+                                                <label for="Cluster">Cluster</label>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="mb-2 col-sm-4" v-if="clusters.length > 0">
-                                        <div class="form-floating">
-                                            <select class="form-select" id="Cluster" v-model="form.cluster_id">
-                                                <option value="" selected hidden disabled>Select Cluster</option>
-                                                <option :value="cluster.id" v-for="cluster in clusters" :key="cluster.id+'_clusOption'">{{cluster.title}}</option>
-                                                <option value="0">N/A</option>
-                                                
-                                            </select>
-                                            <label for="Cluster">Cluster</label>
+                                    <div class="form-group row mb-3">
+                                        <div :class="'mb-2 col-sm-'+ ((units.length > 0 && subunits.length > 0) ? 4 : (units.length > 0) ? 6 : 12 )">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="Division" v-model="form.division_id" @change="divChange()">
+                                                    <option value="" selected hidden disabled>Select Division</option>
+                                                    <option :value="division.id" v-for="division in divisions" :key="division.id+'_divOption'">{{division.name}}</option>
+                                                </select>
+                                                <label for="Division">Division</label>
+                                            </div>
+                                        </div>
+                                        <div :class="'mb-2 col-sm-' + (subunits.length > 0 ? 4 : 6)" v-if="units.length > 0">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="Unit" v-model="form.unit_id" @change="unitChange()">
+                                                    <option value="" selected hidden disabled>Select Unit</option>
+                                                    <option :value="unit.id" v-for="unit in units" :key="unit.id+'_unitOption'">{{unit.name}}</option>
+                                                    <option value="0">N/A</option>
+                                                </select>
+                                                <label for="Unit">Unit</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4" v-if="subunits.length > 0">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="Subunit" v-model="form.subunit_id" @change="subuChange()">
+                                                    <option value="" selected hidden disabled>Select Sub-Unit</option>
+                                                    <option :value="subunit.id" v-for="subunit in subunits" :key="subunit.id+'_subuOption'">{{subunit.name}}</option>
+                                                    <option value="0">N/A</option>
+                                                </select>
+                                                <label for="Subunit">Sub-Unit</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end mb-2" v-if="form.id == ''">
+                                        <button tabindex="-1" class="btn btn-sm btn-secondary" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
+                                    </div>
+                                    <div class="form-group row mb-3">
+                                        <div :class="form.id ? 'col-sm-12' : 'col-sm-6'" class="mb-3" v-for="project, key in form.projects" :key="key+'_title'">
+                                            <div class="card shadow">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <strong>Project</strong>
+                                                        <div>
+                                                            <button tabindex="-1" class="btn btn-sm btn-secondary me-1" @click="addSubproject(key)"><i class="fas fa-plus"></i></button>
+                                                            <button tabindex="-1" class="btn btn-sm btn-danger" @click="removeProject(project)" v-if="form.id == ''"><i class="fas fa-trash-alt"></i> </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="project.title">
+                                                        <label for="floatingInput">Project  Title</label>
+                                                    </div>
+                                                    <strong v-if="project.subprojects.length > 0">Sub-Project/s</strong>
+                                                    <div class="form-floating ms-4 mb-3 position-relative" v-for="subp, skey in project.subprojects" :key="skey+'_subproject'">
+                                                        <button tabindex="-1" class="btn btn-outline-danger border-0 rounded-0 h-100 btn-sm position-absolute top-0 end-0" @click="removeSubproject(key, subp)"><i class="far fa-times"></i></button>
+                                                        <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="subp.title">
+                                                        <label for="floatingInput">Sub-Project Title</label>
+                                                    </div>
+                                                    <strong>Description</strong>
+                                                    <div class="form-floating mb-3">
+                                                        <textarea class="form-control" id="floatingInput" placeholder=" " style="height: 100px" v-model="project.description"></textarea>
+                                                        <label for="floatingInput">Brief Description</label>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <strong>Staff</strong>
+                                                        <div>
+                                                            <button tabindex="-1" class="btn btn-sm btn-success me-1" @click="addStaff(key)"><i class="fas fa-user-plus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-floating mb-3 position-relative" :class="staff.type == 'Encoder' ? 'ms-4' : ''" v-for="staff, skey in project.staffs" :key="key+'_staff_'+skey">
+                                                        <button class="btn btn-sm btn-outline-danger border-0 rounded-0 position-absolute h-100 end-0 top-0" @click="removeStaff(key, staff)" v-if="staff.type == 'Encoder'"><i class="far fa-times"></i></button>
+                                                        <select class="form-control" v-model="staff.profile_id" @change="staffChange($event, key)">
+                                                            <option :value="0" selected hidden disabled>Select {{((staff.type == 'Leader') ? 'Project' : '') + ' ' + staff.type }}</option>
+                                                            <template v-for="units, division in users" :key="division+'_div'">
+                                                                <template v-for="dbusers, unit in units" :key="division+'_'+unit+'_unit'">
+                                                                    <template v-for="user in dbusers" :key="user.id+'_user'">
+                                                                        <option 
+                                                                            v-if="userMatchDivision(user, key) && !project.selectedStaffs.includes(getActiveProfileId(user.profiles)) || parseInt(staff.profile_id) == getActiveProfileId(user.profiles)" 
+                                                                            :value="getActiveProfileId(user.profiles)">
+                                                                            {{user.firstname + ' ' +user.lastname }} {{setTitleShort(user.profiles)}}
+                                                                        </option>
+                                                                    </template>
+                                                                </template>
+                                                            </template>
+                                                        </select>
+                                                        <label for="floatingInput">{{((staff.type == 'Leader') ? 'Project' : '') + ' ' + staff.type }}</label>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group row mb-3">
-                                    <div :class="'mb-2 col-sm-'+ ((units.length > 0 && subunits.length > 0) ? 4 : (units.length > 0) ? 6 : 12 )">
-                                        <div class="form-floating">
-                                            <select class="form-select" id="Division" v-model="form.division_id" @change="divChange()">
-                                                <option value="" selected hidden disabled>Select Division</option>
-                                                <option :value="division.id" v-for="division in divisions" :key="division.id+'_divOption'">{{division.name}}</option>
-                                            </select>
-                                            <label for="Division">Division</label>
-                                        </div>
-                                    </div>
-                                    <div :class="'mb-2 col-sm-' + (subunits.length > 0 ? 4 : 6)" v-if="units.length > 0">
-                                        <div class="form-floating">
-                                            <select class="form-select" id="Unit" v-model="form.unit_id" @change="unitChange()">
-                                                <option value="" selected hidden disabled>Select Unit</option>
-                                                <option :value="unit.id" v-for="unit in units" :key="unit.id+'_unitOption'">{{unit.name}}</option>
-                                                <option value="0">N/A</option>
-                                            </select>
-                                            <label for="Unit">Unit</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-4" v-if="subunits.length > 0">
-                                        <div class="form-floating">
-                                            <select class="form-select" id="Subunit" v-model="form.subunit_id" @change="subuChange()">
-                                                <option value="" selected hidden disabled>Select Sub-Unit</option>
-                                                <option :value="subunit.id" v-for="subunit in subunits" :key="subunit.id+'_subuOption'">{{subunit.name}}</option>
-                                                <option value="0">N/A</option>
-                                            </select>
-                                            <label for="Subunit">Sub-Unit</label>
-                                        </div>
-                                    </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button tabindex="-1" style="min-width: 100px;" class="btn btn-outline-secondary rounded-pill me-2" @click="formshow = false">Cancel</button>
+                                    <button style="min-width: 100px;" class="btn rounded-pill" :class="form.id == '' ? 'btn-success' : 'btn-primary'" @click="submitForm()">{{(form.id == '') ? 'Submit' : 'Save Changes'}}</button>
                                 </div>
-                                <div class="d-flex justify-content-end mb-2" v-if="form.id == ''">
-                                    <button tabindex="-1" class="btn btn-sm btn-secondary" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
-                                </div>
-                                <div class="form-group row mb-3">
-                                    <div :class="form.id ? 'col-sm-12' : 'col-sm-6'" class="mb-3" v-for="project, key in form.projects" :key="key+'_title'">
-                                        <div class="card shadow">
+                            </div>
+                            <div v-else>
+                                <div class="row flex-row-reverse">
+                                    <div class="col-sm-3">
+                                        <div class="card shadow mb-3">
                                             <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <strong>Project</strong>
-                                                    <div>
-                                                        <button tabindex="-1" class="btn btn-sm btn-secondary me-1" @click="addSubproject(key)"><i class="fas fa-plus"></i></button>
-                                                        <button tabindex="-1" class="btn btn-sm btn-danger" @click="removeProject(project)" v-if="form.id == ''"><i class="fas fa-trash-alt"></i> </button>
-                                                    </div>
-                                                </div>
                                                 <div class="form-floating mb-3">
-                                                    <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="project.title">
-                                                    <label for="floatingInput">Project  Title</label>
+                                                    <select class="form-select" id="DisplayType" v-model="displaytype" @change="displayTypeChange()">
+                                                        <option value="division">Division</option>
+                                                        <option value="program">Program</option>
+                                                    </select>
+                                                    <label for="DisplayType">Type</label>
                                                 </div>
-                                                <strong v-if="project.subprojects.length > 0">Sub-Project/s</strong>
-                                                <div class="form-floating ms-4 mb-3 position-relative" v-for="subp, skey in project.subprojects" :key="skey+'_subproject'">
-                                                    <button tabindex="-1" class="btn btn-outline-danger border-0 rounded-0 h-100 btn-sm position-absolute top-0 end-0" @click="removeSubproject(key, subp)"><i class="far fa-times"></i></button>
-                                                    <input type="text" class="form-control" id="floatingInput" placeholder="text" v-model="subp.title">
-                                                    <label for="floatingInput">Sub-Project Title</label>
-                                                </div>
-                                                <strong>Description</strong>
-                                                <div class="form-floating mb-3">
-                                                    <textarea class="form-control" id="floatingInput" placeholder=" " style="height: 100px" v-model="project.description"></textarea>
-                                                    <label for="floatingInput">Brief Description</label>
-                                                </div>
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <strong>Staff</strong>
-                                                    <div>
-                                                        <button tabindex="-1" class="btn btn-sm btn-success me-1" @click="addStaff(key)"><i class="fas fa-user-plus"></i></button>
+                                                <template v-if="displaytype == 'division'">
+                                                    <div class="form-floating mb-3">
+                                                        <select class="form-select" id="Division">
+                                                            <option :value="0">Any Division</option>
+                                                            <option :value="division.id" v-for="division in divisions" :key="division.id+'_divOption'">{{division.name}}</option>
+                                                        </select>
+                                                        <label for="Division">Division</label>
                                                     </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="form-floating mb-3">
+                                                        <select class="form-select" id="Program">
+                                                            <option :value="0">Any Program</option>
+                                                            <option :value="program.id" v-for="program in programs" :key="program.id+'_divOption'">{{program.title}}</option>
+                                                        </select>
+                                                        <label for="Program">Program</label>
+                                                    </div>
+                                                </template>
+                                                <div class="d-flex justify-content-end">
+                                                    <button class="btn btn-sm btn-primary">Sync <i class="fas fa-sync"></i></button>
                                                 </div>
-                                                <div class="form-floating mb-3 position-relative" :class="staff.type == 'Encoder' ? 'ms-4' : ''" v-for="staff, skey in project.staffs" :key="key+'_staff_'+skey">
-                                                    <button class="btn btn-sm btn-outline-danger border-0 rounded-0 position-absolute h-100 end-0 top-0" @click="removeStaff(key, staff)" v-if="staff.type == 'Encoder'"><i class="far fa-times"></i></button>
-                                                    <select class="form-control" v-model="staff.profile_id" @change="staffChange($event, key)">
-                                                        <option :value="0" selected hidden disabled>Select {{((staff.type == 'Leader') ? 'Project' : '') + ' ' + staff.type }}</option>
-                                                        <template v-for="units, division in users" :key="division+'_div'">
-                                                            <template v-for="dbusers, unit in units" :key="division+'_'+unit+'_unit'">
-                                                                <template v-for="user in dbusers" :key="user.id+'_user'">
-                                                                    <option 
-                                                                        v-if="userMatchDivision(user, key) && !project.selectedStaffs.includes(getActiveProfileId(user.profiles)) || parseInt(staff.profile_id) == getActiveProfileId(user.profiles)" 
-                                                                        :value="getActiveProfileId(user.profiles)">
-                                                                        {{user.firstname + ' ' +user.lastname }} {{setTitleShort(user.profiles)}}
-                                                                    </option>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = false"><i class="fas fa-arrow-left"></i></button>
+                                            <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
+                                        </div>
+                                        <div class="table-container">
+                                            <table class="table table-sm table-bordered table-hover align-middle">
+                                                <caption>List of Project Titles</caption>
+                                                <thead class="position-sticky bg-white shadow" style="top: -1px;">
+                                                    <tr>
+                                                        <th>Project Title</th>
+                                                        <th style="min-width: 120px">Staff/s</th>
+                                                        <th style="min-width: 80px">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template v-for="first, fkey in projects" :key="fkey+'_first'">
+                                                        <tr>
+                                                            <td colspan="3" :style="displaytype == 'division' ? 'background: orange' : ''" :class="displaytype == 'program' ? 'bg-success text-white' : ''"><strong>{{fkey}}</strong></td>
+                                                        </tr>
+                                                        <template v-for="second, skey in first" :key="skey+'_second'">
+                                                            <tr v-if="skey !=''">
+                                                                <td colspan="3"><div class="ms-2"><strong>{{skey}}</strong></div></td>
+                                                            </tr>
+                                                            <template v-for="third, tkey in second" :key="tkey+'_third'">
+                                                                <tr v-if="tkey != ''">
+                                                                    <td colspan="3"><div class="ms-3"><strong>{{tkey}}</strong></div></td>
+                                                                </tr>
+                                                                <template v-for="project in third" :key="project.id+'_project'">
+                                                                    <tr>
+                                                                        <td><div class="ms-4">{{project.title}}</div></td>
+                                                                        <td>{{project.project_leader}}
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            <button @click="editForm(project)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
+                                                                            <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr v-for="subproject in project.subprojects" :key="subproject.id+'_subproj'">
+                                                                        <td colspan="3"><div class="ms-5">{{subproject.title}}</div></td>
+                                                                    </tr>
                                                                 </template>
                                                             </template>
                                                         </template>
-                                                    </select>
-                                                    <label for="floatingInput">{{((staff.type == 'Leader') ? 'Project' : '') + ' ' + staff.type }}</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-end mt-3">
-                                <button tabindex="-1" style="min-width: 100px;" class="btn btn-outline-secondary rounded-pill me-2" @click="formshow = false">Cancel</button>
-                                <button style="min-width: 100px;" class="btn rounded-pill" :class="form.id == '' ? 'btn-success' : 'btn-primary'" @click="submitForm()">{{(form.id == '') ? 'Submit' : 'Save Changes'}}</button>
-                            </div>
-                        </div>
-                        <div v-else>
-                            <div class="row flex-row-reverse">
-                                <div class="col-sm-3">
-                                    <div class="card shadow mb-3">
-                                        <div class="card-body">
-                                            <div class="form-floating mb-3">
-                                                <select class="form-select" id="DisplayType" v-model="displaytype" @change="displayTypeChange()">
-                                                    <option value="division">Division</option>
-                                                    <option value="program">Program</option>
-                                                </select>
-                                                <label for="DisplayType">Type</label>
-                                            </div>
-                                            <template v-if="displaytype == 'division'">
-                                                <div class="form-floating mb-3">
-                                                    <select class="form-select" id="Division">
-                                                        <option :value="0">Any Division</option>
-                                                        <option :value="division.id" v-for="division in divisions" :key="division.id+'_divOption'">{{division.name}}</option>
-                                                    </select>
-                                                    <label for="Division">Division</label>
-                                                </div>
-                                            </template>
-                                            <template v-else>
-                                                <div class="form-floating mb-3">
-                                                    <select class="form-select" id="Program">
-                                                        <option :value="0">Any Program</option>
-                                                        <option :value="program.id" v-for="program in programs" :key="program.id+'_divOption'">{{program.title}}</option>
-                                                    </select>
-                                                    <label for="Program">Program</label>
-                                                </div>
-                                            </template>
-                                            <div class="d-flex justify-content-end">
-                                                <button class="btn btn-sm btn-primary">Sync <i class="fas fa-sync"></i></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-9">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = false"><i class="fas fa-arrow-left"></i></button>
-                                        <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
-                                    </div>
-                                    <div class="table-container">
-                                        <table class="table table-sm table-bordered table-hover align-middle">
-                                            <caption>List of Project Titles</caption>
-                                            <thead class="position-sticky bg-white shadow" style="top: -1px;">
-                                                <tr>
-                                                    <th>Project Title</th>
-                                                    <th style="min-width: 120px">Staff/s</th>
-                                                    <th style="min-width: 80px">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <template v-for="first, fkey in projects" :key="fkey+'_first'">
-                                                    <tr>
-                                                        <td colspan="3" :style="displaytype == 'division' ? 'background: orange' : ''" :class="displaytype == 'program' ? 'bg-success text-white' : ''"><strong>{{fkey}}</strong></td>
-                                                    </tr>
-                                                    <template v-for="second, skey in first" :key="skey+'_second'">
-                                                        <tr v-if="skey !=''">
-                                                            <td colspan="3"><div class="ms-2"><strong>{{skey}}</strong></div></td>
-                                                        </tr>
-                                                        <template v-for="third, tkey in second" :key="tkey+'_third'">
-                                                            <tr v-if="tkey != ''">
-                                                                <td colspan="3"><div class="ms-3"><strong>{{tkey}}</strong></div></td>
-                                                            </tr>
-                                                            <template v-for="project in third" :key="project.id+'_project'">
-                                                                <tr>
-                                                                    <td><div class="ms-4">{{project.title}}</div></td>
-                                                                    <td>{{project.project_leader}}
-                                                                    </td>
-                                                                    <td class="text-center">
-                                                                        <button @click="editForm(project)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                                                        <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr v-for="subproject in project.subprojects" :key="subproject.id+'_subproj'">
-                                                                    <td colspan="3"><div class="ms-5">{{subproject.title}}</div></td>
-                                                                </tr>
-                                                            </template>
-                                                        </template>
                                                     </template>
-                                                </template>
-                                            </tbody>
-                                        </table>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -566,7 +568,7 @@ h3>a,h6>a{
 }
 
 .table-container{
-    max-height: 80vh;
+    max-height: calc(100vh - 180px);;
     overflow: auto;
 }
 th{
@@ -574,6 +576,12 @@ th{
 }
 
 .content{
+    overflow-x: hidden;
+}
+#main-container{
+    height: calc(100vh - 135px);
+    padding: 0 10px;
+    overflow: auto;
     overflow-x: hidden;
 }
 </style>

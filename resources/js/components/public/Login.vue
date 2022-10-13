@@ -51,14 +51,30 @@ export default {
         ...mapActions('user', ['login']),
         submit(){
             this.loading = true
-            this.login(this.form).then(res => {
-                if(!res.data.success){
-                    this.error = res.data.message
-                    this.form.password = ''
-                }
+            if(this.validated()){
+                this.login(this.form).then(res => {
+                    if(!res.data.success){
+                        this.error = res.data.message
+                        this.form.password = ''
+                    }
+                    this.loading = false
+                })
+            }
+            else{
                 this.loading = false
+            }
+        },
+        validated(){
+            if(this.form.email == ''){ this.toastMsg('warning', 'Email empty'); return false }
+            if(this.form.password == ''){ this.toastMsg('warning', 'Password empty'); return false }
+            return true
+        },
+        toastMsg(icon, msg){
+            toast.fire({
+                icon: icon,
+                title: msg
             })
-        }
+        },
     }
 }
 </script>

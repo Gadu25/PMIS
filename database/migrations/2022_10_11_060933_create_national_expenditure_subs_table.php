@@ -13,13 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('annex_one_funds', function (Blueprint $table) {
+        Schema::create('national_expenditure_subs', function (Blueprint $table) {
             $table->id();
             $table->float('amount', 12, 2);
-            $table->integer('year');
-            $table->bigInteger('fundable_id');
-            $table->string('fundable_type');
-            $table->string('type');
+            $table->boolean('isAdded')->default(false);
+            $table->foreignId('national_expenditure_id')->constrained('national_expenditures')->cascadeOnDelete();
+            $table->foreignId('subproject_id')->constrained('subprojects')->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('annex_one_funds');
+        Schema::dropIfExists('national_expenditure_subs');
     }
 };

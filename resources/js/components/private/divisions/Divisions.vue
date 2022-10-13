@@ -50,8 +50,12 @@ export default {
 }
 </script>
 <style scoped>
-.accordion-body{
-    max-height: 50vh;
+.accordion{
+    max-height: calc(100vh - 165px);
     overflow: auto;
 }
+/* .accordion-body{ */
+    /* max-height: 50vh; */
+    /* overflow: auto; */
+/* } */
 </style>

@@ -17,10 +17,14 @@ class NationalExpenditure extends Model
     ];
 
     public function project(){
-        return $this->hasOne(Project::class, 'project_id');
+        return $this->belongsTo(Project::class);
     }
 
     public function workshop(){
-        return $this->hasOne(Workshop::class, 'workshop_id');
+        return $this->belongsTo(Workshop::class);
+    }
+
+    public function subs(){
+        return $this->hasMany(NationalExpenditureSub::class);
     }
 }

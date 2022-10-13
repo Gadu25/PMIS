@@ -121,7 +121,7 @@
                     <div class="modal-body overflow-auto" style="max-height: calc(100vh - 300px)">
                         <div class="border-bottom pb-2 mb-3" v-for="lib, key in profile.libs" :key="lib.id">
                             <strong>
-                                {{key == 0 ? (lib.status == 'Approved' ? 'As Approved' : 'LIB Status: ' + lib.status) : key + getOrdinalSuffix(key) + ' Ammendment'}} 
+                                {{key == 0 ? (lib.status == 'Approved' ? 'As Approved' : 'LIB Status: ' + lib.status) : key + getOrdinalSuffix(key) + ' Amendment'}} 
                                 <span v-if="lib.date_approved">({{lib.date_approved}})</span>
                             </strong>
                             <div class=" p-2 mb-3 rounded shadow" v-for="history in lib.histories" :key="history.id">

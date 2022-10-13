@@ -11,12 +11,45 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
+                <tbody>
+                    <template v-for="sources, div in annexones" :key="div">
+                        <tr class="fw-bold" style="background: orange">
+                            <td colspan="2">{{div}}</td>
+                        </tr>
+                        <template v-for="headers, source in sources" :key="source">
+                            <tr v-if="div != 'STSD'">
+                                <td colspan="2">{{source}}</td>
+                            </tr>
+                            <template v-for="annexones, header in headers" :key="header">
+                                <tr class="fw-bold">
+                                    <td colspan="2">{{header}}</td>
+                                </tr>
+                                <template v-for="annexone in annexones" :key="annexone.id">
+                                    <tr>
+                                        <td><div class="ms-1">{{annexone.project.title}}</div></td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-primary me-1" @click="editForm(annexone)"><i class="far fa-pencil-alt"></i></button>
+                                            <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
+                        </template>
+                        
+                    </template>
+                </tbody>
             </table>
         </div>
     </div>
     <div v-else>
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between mb-2">
             <button class="btn btn-sm btn-outline-secondary" @click="hideForm()"><i class="fas fa-times"></i> Close</button>
+            <button class="btn btn-sm btn-primary"><i class="fas fa-save"></i> Save changes</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <TableHead />
+            </table>
         </div>
     </div>
     <div class="modal fade" id="modal" tabindex="-1">
@@ -26,7 +59,7 @@
                     <h5 class="modal-title">
                         {{formpart <= 1 ? '1. Project Filters' : '2. Annex 1 Details'}}
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
                 </div>
                 <div class="modal-body">
                     <template v-if="formpart == 1">
@@ -164,6 +197,7 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import { dragscroll } from 'vue-dragscroll'
+import TableHead from './TableHead.vue'
 export default {
     name: 'Form',
     emits: ['clicked'],
@@ -171,11 +205,15 @@ export default {
     directives: {
         dragscroll: dragscroll,
     },
+    components: {
+        TableHead
+    },
     data(){
         return {
             editmode: false,
             formshow: false,
             form: {
+                id: '',
                 program_id: '',
                 subprogram_id: '',
                 cluster_id: '',
@@ -184,7 +222,8 @@ export default {
                 subunit_id: '',
                 projects: [],
                 source: '',
-                headerType: ''
+                headerType: '',
+                workshop_id: this.$route.params.workshopId
             },
             subprograms: [],
             clusters: [],
@@ -192,7 +231,11 @@ export default {
             subunits: [],
             formpart: 1,
             used: [],
-            processing: false
+            processing: false,
+            form2:{
+                id: '',
+
+            }
         }
     },
     methods: {
@@ -212,6 +255,11 @@ export default {
             this.subunits = []
             this.used = []
             this.formpart = 1
+        },
+        editForm(annexone){
+            this.formshow = true
+            this.childClick()
+            // console.log(annexone)
         },
         addProject(){
             this.form.projects.push({
@@ -264,8 +312,14 @@ export default {
             await this.formValidated(this.form)
                 .then(res => {
                     this.toastMsg('success', res)
-                    this.processing = false
-                    
+                    this.saveAnnexOne(this.form).then(res => {
+                        var icon = res.errors ? 'error' : 'success'
+                        this.toastMsg(icon, res.message)
+                        this.processing = false
+                        if(!res.errors){
+                            this.$refs.Close.click()
+                        }
+                    })
                 })
                 .catch((err) => {
                     var icon = err == 'Cancelled' ? 'info' : 'warning'
@@ -339,25 +393,28 @@ export default {
         changeProgram(){
             var program = this.programs.find(elem => elem.id == this.form.program_id)
             this.subprograms = program.subprograms
+            this.clusters = []
             this.form.subprogram_id = ''
             this.form.cluster_id = ''
         },
         changeSubprogram(){
+            this.clusters = []
+            this.form.cluster_id = ''
             var subprogram = this.subprograms.find(elem => elem.id == this.form.subprogram_id)
             if(subprogram){ this.clusters = subprogram.clusters }
-            this.form.cluster_id = ''
         },
         changeDivision(){
-            var division = this.divisions.find(elem => elem.id == this.form.division_id)
-            this.units = division.units
             this.subunits = []
             this.form.unit_id = ''
             this.form.subunit_id = ''
+            var division = this.divisions.find(elem => elem.id == this.form.division_id)
+            this.units = division.units
         },
         changeUnit(){
+            this.form.subunit_id = ''
+            this.subunits = []
             var unit = this.units.find(elem => elem.id == this.form.unit_id)
             if(unit){ this.subunits = unit.subunits }
-            this.form.subunit_id = ''
         },
         toastMsg(icon, msg){
             toast.fire({
@@ -383,10 +440,12 @@ export default {
     },
     computed:{
         ...mapGetters('workshop', ['getOptions']),
+        ...mapGetters('annexone', ['getAnnexOnes']),
         divisions(){ return this.getOptions.divisions },
         programs(){ return this.getOptions.programs },
         projects(){ return this.getOptions.projects },
-        usedprojects(){ return this.getOptions.used_projects }
+        usedprojects(){ return this.getOptions.used_projects },
+        annexones(){ return this.getAnnexOnes }
     },
     created(){
         if(this.getOptions.length == 0){

@@ -1,7 +1,7 @@
 <template>
     <div class="row flex-wrap-reverse">
         <div class="position-relative" :class="toggle ? 'col-sm-9' : 'col-sm-12'">
-            <button v-if="!toggle" @click="toggle = !toggle" style="z-index: 99" class="btn btn-sm btn-secondary bg-gradient position-absolute end-0"><i class="fas fa-arrow-left"></i></button>
+            <button v-if="!toggle && !formshow" @click="toggle = !toggle" style="z-index: 99" class="btn btn-sm btn-secondary bg-gradient position-absolute end-0"><i class="fas fa-arrow-left"></i></button>
             <div v-if="!editmode" class="card border-0 shadow rounded-0">
                 <div class="card-body">
                     <div :style="'font-size:' + fontsize" class="d-flex justify-content-end fw-bold">Annex 1</div>
@@ -55,6 +55,7 @@ export default {
         return {
             fontsize: '12px',
             toggle: true,
+            prev: false,
             formshow: false,
         }
     },
@@ -62,6 +63,8 @@ export default {
         ...mapActions('division', ['fetchDivisions']),
         childClicked(){
             this.formshow = !this.formshow
+            this.prev = this.formshow ? this.toggle : this.prev
+            this.toggle = this.formshow ? false : this.prev
             this.childClick()
         },
         childClick(){

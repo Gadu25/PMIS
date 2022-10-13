@@ -8,7 +8,6 @@
                 <div class="col-sm-10">
                     <div class="d-flex justify-content-end mb-3">
                         <button class="btn btn-sm bg-gradient shadow-none" @click="editmode = !editmode" :class="editmode ? 'btn-outline-primary' : 'btn-success'">{{!editmode ? 'Edit' : 'View'}} mode</button>
-                        <!-- <button class="btn btn-sm btn-success bg-gradient shadow-none" @click="addProject()"><i class="fas fa-plus"></i> Project</button> -->
                     </div>
                     <div class="table-responsive mb-2 shadow-lg">
                         <table class="table table-sm table-bordered">
@@ -19,11 +18,10 @@
                                     <th :style="'width: ' +  (!editmode ? '50%' : 'calc(50% - 150px) !important')">NEP</th>
                                     <th style="width: 140px" v-if="editmode">
                                         Actions
-                                        <!-- <button class="btn btn-sm btn-success bg-gradient h-100 w-100 border-0 shadow-none rounded-0" @click="addProject()"><i class="fas fa-plus"></i> Project</button> -->
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="align-middle">
                                 <template v-for="division in form.divisions" :key="division.divCode">
                                     <tr style="background: orange">
                                         <td colspan="3"><strong>{{division.divCode}}</strong></td>
@@ -41,11 +39,11 @@
                                                         <option :value="proj.id" v-if="(!used.includes(proj.id) || proj.id == project.project_id) && proj.division_id == division.divId">{{proj.title}}</option>
                                                     </template>
                                                 </select>
-                                                <span v-else>project title</span>
+                                                <span v-else>{{project.project_title}}</span>
                                             </td>
-                                            <td>
+                                            <td class="text-end">
                                                 <input type="text" class="form-control text-end" v-model="project.amount" v-money="money" @change="amountCheck(project)" v-if="editmode">
-                                                <span v-else> nep</span>
+                                                <span v-else>{{formatAmount(project.amount)}}</span>
                                             </td>
                                             <td v-if="editmode">
                                                 <button class="btn btn-sm" :class="[project.editmode ? 'w-75' : 'w-50', project.id ? 'btn-outline-primary' : 'btn-outline-success']" 
@@ -53,50 +51,40 @@
                                                         type: 'single', 
                                                         project: project,
                                                         division_id: division.divId
-                                                    }) : project.editmode = !project.editmode">
+                                                    }) : editForm(project)">
                                                     <span v-if="project.editmode">
                                                         <i class="far fa-lg" :class="project.id ? 'fa-save' : 'fa-plus'"></i> <strong> {{project.id ? 'Save' : 'Add'}}</strong>
                                                     </span>
                                                     <i class="far fa-lg" :class="project.id ? 'fa-pencil-alt' : 'fa-plus'" v-else></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-danger" :class="project.editmode ? 'w-25' : 'w-50'" 
-                                                    @click="project.editmode ? project.editmode = !project.editmode : removeProject(division, project)">
+                                                    @click="project.editmode ? removeEdit(project) : removeProject(division, project)">
                                                     <i class="far fa-trash-alt fa-lg" v-if="!project.editmode"></i>
                                                     <i class="far fa-times fa-lg" v-else></i>
                                                 </button>
                                             </td>
                                         </tr>
+                                        <template v-for="sub, subKey in project.subs" :key="subKey">
+                                            <tr :id="editmode ? 'input' : ''" v-if="editmode || sub.id">
+                                                <td :class="project.isAdded ? 'bg-success' : 'bg-secondary'"></td>
+                                                <td><span class="ms-1">{{sub.subprojectTitle}}</span></td>
+                                                <td class="text-end">
+                                                    <input type="text" class="form-control text-end" v-model="sub.amount" v-money="money" @change="amountCheck(sub)" v-if="editmode">
+                                                    <span v-else>{{sub.amount}}</span>
+                                                </td>
+                                                <td v-if="editmode"></td>
+                                            </tr>
+                                        </template>
                                     </template>
                                 </template>
                             </tbody>
                         </table>
                     </div>
-                    <div class="d-flex justify-content-end" v-if="editmode">
+                    <div class="d-flex justify-content-end" v-if="editmode && editCount > 1">
                         <button class="btn btn-primary bg-gradient rounded-pill" style="min-width: 120px" @click="submitForm({type: 'multiple'})"><i class="far fa-save"></i> Save all</button>
                     </div>
                 </div>
             </div>
-            <!-- Modal -->
-            <!-- <div class="modal fade" id="modal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">{{editmode ? 'Edit' : 'New'}} Project/s</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="d-flex justify-content-end mb-3">
-                                <button class="btn btn-sm btn-success bg-gradient" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
-                            </div>
-
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary">Save changes</button>
-                        </div>
-                    </div>
-                </div>
-            </div> -->
         </template>
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
     </div>
@@ -134,6 +122,7 @@ export default {
                     }
                 ],
             },
+            editCount: 0,
             used: [],
             money: {
                 decimal: '.',
@@ -147,27 +136,27 @@ export default {
     },
     methods: {
         ...mapActions('workshop', ['fetchWorkshop', 'fetchOptions']),
-        ...mapActions('nep', ['fetchNationalExpenditures', 'saveNationalExpenditure']),
+        ...mapActions('nep', ['fetchNationalExpenditures', 'saveNationalExpenditure', 'deleteNationalExpenditure']),
         newForm(){
             this.editmode = false
-            // this.form.projects = [{
-            //     id: '',
-            //     project_id: '',
-            //     amount: 0,
-            //     workshop_id: this.$route.params.workshopId,
-            //     isAdded: false,
-            //     editmode: false
-            // }]
         },
-        editForm(){
-
+        editForm(project){
+            project.editmode = !project.editmode
+            this.editCount++
+        },
+        removeEdit(project){
+            project.editmode = !project.editmode
+            this.editCount--
         },
         submitForm(savingOptions){
-            // console.log(savingOptions)
             if(this.checkForm(savingOptions)){
                 this.form.savingOptions = savingOptions
                 this.saveNationalExpenditure(this.form).then(res => {
-                    // console.log(res)
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
+                    if(!res.errors){
+                        this.setForm()
+                    }
                 })
             }
         },
@@ -200,6 +189,8 @@ export default {
                 amount: 0,
                 workshop_id: this.$route.params.workshopId,
                 isAdded: false,
+                subprojects: [],
+                subs: [],
                 editmode: false
             })
         },
@@ -211,6 +202,16 @@ export default {
                     project.amount = 0
                     project.isAdded = false
                     project.editmode = false
+                }
+                if(project.id){
+                    this.swalConfirmCancel('Are you sure', 'This is not irreversible').then(res => {
+                        if(res){
+                            this.used.remove(project.project_id)
+                            this.deleteNationalExpenditure(project.id).then(res => {
+                                this.setForm()
+                            })
+                        }
+                    })
                 }
             }
             else{
@@ -226,6 +227,21 @@ export default {
             if(!this.used.includes(projectId)){
                 this.used.push(projectId)
             }
+            var project = this.projects.find(elem => elem.id == projectId)
+            var subprojects = project.subprojects
+            // var division = this.form.divisions.find(elem => elem.divId == division)
+            project = division.projects.find(elem => elem.project_id == projectId)
+            project.subs = []
+            for(let subproject of subprojects){
+                project.subs.push({
+                    id: '',
+                    subprojectTitle: subproject.title,
+                    subproject_id: subproject.id,
+                    isAdded: false,
+                    amount: 0
+                })
+            }
+            console.log(project)
             this.checkSelectedProject(division)
         },
         checkSelectedProject(division){
@@ -237,27 +253,47 @@ export default {
             }
         },
         setForm(){
-            // divisions: [
-            //     {
-            //         divCode: '',
-            //         divId: '',
-            //         projects: [{
-            //             id: '',
-            //             project_id: '',
-            //             amount: 0,
-            //             workshop_id: this.$route.params.workshopId,
-            //             isAdded: false,
-            //             editmode: false
-            //         }]
-            //     }
-            // ],
+            this.editCount = 0
             this.form.divisions = []
             for(let division of this.divisions){
-                this.form.divisions.push({
+                var temp = {
                     divCode: division.code,
                     divId: division.id,
                     projects: []
-                })
+                }
+                var projects = []
+                for(let item of division.items){
+                    var tempItem = {
+                        id: item.id,
+                        project_id: item.project_id,
+                        project_title: item.project.title,
+                        amount: item.amount,
+                        workshop_id: item.workshop_id,
+                        isAdded: item.isAdded,
+                        subs: [],
+                        editmode: false
+                    }
+                    for(let subproject of item.project.subprojects){
+                        tempItem.subs.push({
+                            id: '',
+                            subproject_id: subproject.id,
+                            subprojectTitle: subproject.title,
+                            amount: 0,
+                            isAdded: false,
+                            editmode: false
+                        })
+                    }
+                    for(let sub of item.subs){
+                        var tempSub = tempItem.subs.find(elem => elem.subproject_id == sub.subproject_id)
+                        tempSub.id = sub.id
+                        tempSub.amount = sub.amount
+                        tempSub.isAdded = sub.isAdded
+                    }
+                    projects.push(tempItem)
+                    this.used.push(item.project_id)
+                }
+                temp.projects = projects
+                this.form.divisions.push(temp)
             }
         },
         toastMsg(icon, msg){
@@ -281,6 +317,10 @@ export default {
                 })
             return result
         },
+        formatAmount(amount){
+            amount = parseFloat(amount.replaceAll(',', ''))
+            return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0 })
+        },
     },
     created(){
         var workshopId = this.$route.params.workshopId
@@ -295,9 +335,10 @@ export default {
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop', 'getOptions']),
+        ...mapGetters('nep', ['getNationalExpenditures',]),
         workshop(){ return this.getWorkshop },
         projects(){ return this.getOptions.projects },
-        divisions(){ return this.getOptions.divisions }
+        divisions(){ return this.getNationalExpenditures }
         
     }
 }

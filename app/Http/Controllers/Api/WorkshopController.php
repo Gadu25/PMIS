@@ -32,6 +32,7 @@ use App\Models\CommonIndicator;
 use App\Models\CommonIndicatorSub;
 
 use App\Models\NationalExpenditure;
+use App\Models\NationalExpenditureSub;
 
 use App\Models\History;
 use App\Models\Notification;
@@ -1006,7 +1007,40 @@ class WorkshopController extends Controller
     public function storeAnnexOne(Request $request){
         DB::beginTransaction();
         try {
+            $workshopId = $request['workshop_id'];
+            $workshop = Workshop::findOrFail($request['workshop_id']);
+            $startDate = explode('-', $workshop->start);
+            $workshopYear = (int)$startDate[0];
+            foreach($request['projects'] as $project){
+                $projectId = $project['project_id'];
+                $annexone = new AnnexOne;
+                $annexone->source_of_funds = $request['source'];
+                $annexone->header_type = $request['headerType'];
+                $annexone->workshop_id = $workshopId;
+                $annexone->project_id = $projectId;
+                $annexone->save();
 
+                // Check for NEP
+                $nationalexpenditure = NationalExpenditure::with('subs')
+                    ->where('workshop_id', $workshopId)
+                    ->where('project_id', $projectId)->get();
+                
+                if(sizeof($nationalexpenditure)>0){
+                    $nationalexpenditure = $nationalexpenditure[0];
+                    $annexonefund = new AnnexOneFund;
+                    $annexonefund->amount = $nationalexpenditure->amount;
+                    $annexonefund->year = $workshopYear+1;
+                    $annexonefund->type = 'NEP';
+                    $annexone->funds()->save($annexonefund);
+                }
+                // Check for previous year workshop for (proposed columns)
+
+
+            }
+
+            // Save
+            DB::commit();
+            return ['message' => 'Projects saved!', 'annexones' => []];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -1039,7 +1073,17 @@ class WorkshopController extends Controller
     }
 
     public function getAnnexOne($workshopId){
-
+        $divisions = Division::orderBy('id', 'asc')->get();
+        $annexones = AnnexOne::with(['subs.subproject', 'funds', 'project'])
+            ->where('workshop_id', $workshopId)
+            ->get()->sortBy('project.division_id');
+        foreach($annexones as $annexone){
+            $annexone->header = ($annexone->header_type == 'Subprogram') ? $annexone->project->subprogram->title_short : 
+                                (($annexone->header_type == 'Unit') ? ($annexone->project->subunit_id) ? $annexone->project->subunit->name : $annexone->project->unit->name : 'None');
+            
+        }
+        $grouped = $annexones->groupBy(['project.division.code','source_of_funds','header']);
+        return $grouped;
     }
 
     public function publishAnnexOneProjects($workshopId){
@@ -1179,21 +1223,41 @@ class WorkshopController extends Controller
     }
 
     public function getWorkshopNeps($workshopId){
-        return NationalExpenditure::where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+        $neps = NationalExpenditure::with(['project.subprojects', 'subs.subproject'])->where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+        $grouped = $neps->groupBy('project.division_id');
+
+        $divisions = Division::orderBy('id', 'asc')->get();
+        foreach($divisions as $division){
+            $items = $grouped->has($division->id) ? $grouped[$division->id] : [];
+            $division->items = $items;
+        }
+
+        return $divisions;
     }
 
     public function storeNep(Request $request){
         DB::beginTransaction();
         try {
-            return $request;
-            // $single = $request['savingOptions']
-            // $nationalexpenditure = new NationalExpenditure;
-            // $nationalexpenditure->project_id = $single['project_id'];
-            // $nationalexpenditure->workshop_id = $single['workshop_id'];
-            // $nationalexpenditure->workshop_id = $this->formatAmount($single['amount']);
-            
+            $project = $request['project'];
+            $nationalexpenditure = new NationalExpenditure;
+            $nationalexpenditure->project_id = $project['project_id'];
+            $nationalexpenditure->workshop_id = $project['workshop_id'];
+            $nationalexpenditure->amount = $this->formatAmount($project['amount']);
+            $nationalexpenditure->save();
+
+            foreach($project['subs'] as $sub){
+                $amount = $this->formatAmount($sub['amount']);
+                if($amount > 0){
+                    $nationalexpendituresub = new NationalExpenditureSub;
+                    $nationalexpendituresub->national_expenditure_id = $nationalexpenditure->id;
+                    $nationalexpendituresub->subproject_id = $sub['subproject_id'];
+                    $nationalexpendituresub->amount = $amount;
+                    $nationalexpendituresub->save();
+                }
+            }
+
             DB::commit();
-            return ['message' => 'Added', 'neps' => []];
+            return ['message' => 'Added National Expenditure', 'neps' => $this->getWorkshopNeps($project['workshop_id'])];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -1204,16 +1268,30 @@ class WorkshopController extends Controller
     public function updateNep(Request $request, $id){
         DB::beginTransaction();
         try {
-            return $request;
-            // $single = $request['savingOptions']
-            // if($single )
-            // $nationalexpenditure = new NationalExpenditure;
-            // $nationalexpenditure->project_id = $single['project_id'];
-            // $nationalexpenditure->workshop_id = $single['workshop_id'];
-            // $nationalexpenditure->workshop_id = $this->formatAmount($single['amount']);
+            $project = $request['project'];
+            $nationalexpenditure = NationalExpenditure::findOrFail($id);
+            $nationalexpenditure->project_id = $project['project_id'];
+            $nationalexpenditure->workshop_id = $project['workshop_id'];
+            $nationalexpenditure->amount = $this->formatAmount($project['amount']);
+            $nationalexpenditure->save();
+            
+            foreach($project['subs'] as $sub){
+                $amount = $this->formatAmount($sub['amount']);
+                if($amount > 0){
+                    $nationalexpendituresub = $sub['id'] ? NationalExpenditureSub::findOrFail($sub['id']) : new NationalExpenditureSub;
+                    $nationalexpendituresub->national_expenditure_id = $nationalexpenditure->id;
+                    $nationalexpendituresub->subproject_id = $sub['subproject_id'];
+                    $nationalexpendituresub->amount = $amount;
+                    $nationalexpendituresub->save();
+                }
+                if($amount == 0 && $sub['id']){
+                    $nationalexpendituresub = NationalExpenditureSub::findOrFail($sub['id']);
+                    $nationalexpendituresub->delete();
+                }
+            }
             
             DB::commit();
-            return ['message' => 'Added', 'neps' => []];
+            return ['message' => 'Updated National Expenditure', 'neps' => $this->getWorkshopNeps($project['workshop_id'])];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -1224,16 +1302,39 @@ class WorkshopController extends Controller
     public function updateNeps(Request $request){
         DB::beginTransaction();
         try {
-            return $request;
-            // $single = $request['savingOptions']
-            // if($single )
-            // $nationalexpenditure = new NationalExpenditure;
-            // $nationalexpenditure->project_id = $single['project_id'];
-            // $nationalexpenditure->workshop_id = $single['workshop_id'];
-            // $nationalexpenditure->workshop_id = $this->formatAmount($single['amount']);
+            $workshopId = '';
+            foreach($request['divisions'] as $division){
+                foreach($division['projects'] as $project){
+                    if($project['editmode']){
+                        $nationalexpenditure = $project['id'] ? NationalExpenditure::findOrFail($project['id']) : new NationalExpenditure;
+                        $nationalexpenditure->project_id = $project['project_id'];
+                        $nationalexpenditure->workshop_id = $project['workshop_id'];
+                        $nationalexpenditure->amount = $this->formatAmount($project['amount']);
+                        $nationalexpenditure->save();
+                        
+                        foreach($project['subs'] as $sub){
+                            $amount = $this->formatAmount($sub['amount']);
+                            if($amount > 0){
+                                $nationalexpendituresub = $sub['id'] ? NationalExpenditureSub::findOrFail($sub['id']) : new NationalExpenditureSub;
+                                $nationalexpendituresub->national_expenditure_id = $nationalexpenditure->id;
+                                $nationalexpendituresub->subproject_id = $sub['subproject_id'];
+                                $nationalexpendituresub->amount = $amount;
+                                $nationalexpendituresub->save();
+                            }
+                            if($amount == 0 && $sub['id']){
+                                $nationalexpendituresub = NationalExpenditureSub::findOrFail($sub['id']);
+                                $nationalexpendituresub->delete();
+                            }
+                        }
+                    }
+                    if($workshopId == ''){
+                        $workshopId = $project['workshop_id'];
+                    }
+                }
+            }
             
             DB::commit();
-            return ['message' => 'Added', 'neps' => []];
+            return ['message' => 'National Expenditures saved!', 'neps' => $this->getWorkshopNeps($workshopId)];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -1243,7 +1344,9 @@ class WorkshopController extends Controller
     }
 
     public function destoryNep($id){
-
+        $nationalexpenditure = NationalExpenditure::findOrFail($id);
+        $nationalexpenditure->delete();
+        return ['neps' => $this->getWorkshopNeps($nationalexpenditure->workshop_id)];
     }
 
     // Common Functions

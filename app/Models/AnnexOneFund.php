@@ -9,8 +9,8 @@ class AnnexOneFund extends Model
 {
     use HasFactory;
     
-    protected $fillables = [
-        'amount', 'year', 'fundable_id', 'fundable_type'
+    protected $fillable = [
+        'amount', 'year', 'fundable_id', 'fundable_type', 'type'
     ];
 
     public function fundable(){
