@@ -43,9 +43,14 @@ export default {
         divisions(){ return this.getDivisions }
     },
     created(){
-        this.fetchDivisions().then(res => {
+        if(this.divisions.length == 0){
+            this.fetchDivisions().then(res => {
+                this.loading = false
+            })
+        }
+        else{
             this.loading = false
-        })
+        }
     }
 }
 </script>

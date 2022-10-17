@@ -83,7 +83,8 @@ class UserController extends Controller
             $user->lastname = $request['lastname'];
             $user->email = $request['email'];
             if($request['password'] != ''){
-                $user->password = bcrypt($request['password']);
+                $newpassword = bcrypt($request['password']);
+                $user->password = $newpassword;
             }
             $user->division_id = $request['division_id'];
             $user->unit_id = ($request['unit_id'] == 0) ? null : $request['unit_id'];
@@ -115,7 +116,7 @@ class UserController extends Controller
             $id = ($request['isSynced']) ? $user->division_id : null;
             
             DB::commit();
-            return ['message' => 'User added!', 'users' => $this->getUsers($id)];
+            return ['message' => 'User saved!', 'users' => $this->getUsers($id)];
         }
         catch (\Exception $e){
             DB::rollback();

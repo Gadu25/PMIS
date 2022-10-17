@@ -17,7 +17,7 @@ class NationalExpenditureSub extends Model
     ];
 
     public function nep(){
-        return $this->belongsTo(NationalExpenditure::class);
+        return $this->belongsTo(NationalExpenditure::class, 'national_expenditure_id');
     }
 
     public function subproject(){

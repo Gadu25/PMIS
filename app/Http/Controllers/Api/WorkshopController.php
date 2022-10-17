@@ -1023,24 +1023,47 @@ class WorkshopController extends Controller
                 // Check for NEP
                 $nationalexpenditure = NationalExpenditure::with('subs')
                     ->where('workshop_id', $workshopId)
+                    ->where('isAdded', false)
                     ->where('project_id', $projectId)->get();
-                
-                if(sizeof($nationalexpenditure)>0){
-                    $nationalexpenditure = $nationalexpenditure[0];
+                $nationalexpenditure = sizeof($nationalexpenditure) > 0 ? $nationalexpenditure[0] : [];
+                if($nationalexpenditure){
                     $annexonefund = new AnnexOneFund;
                     $annexonefund->amount = $nationalexpenditure->amount;
                     $annexonefund->year = $workshopYear+1;
                     $annexonefund->type = 'NEP';
                     $annexone->funds()->save($annexonefund);
+
+                    $nationalexpenditure->isAdded = true;
+                    $nationalexpenditure->save();
                 }
-                // Check for previous year workshop for (proposed columns)
+                // Check for revised and last from previous year workshop for (proposed columns)
 
+                // Save subprojects
+                foreach($project['subprojectIds'] as $subId){
+                    $annexonesub = new AnnexOneSub;
+                    $annexonesub->subproject_id = $subId;
+                    $annexonesub->annex_one_id = $annexone->id;
+                    $annexonesub->save();
 
+                    // Check for NEP
+                    $nationalexpendituresub = $this->getNepSub($subId, $request['workshop_id']);
+
+                    if($nationalexpendituresub){
+                        $annexonefund = new AnnexOneFund;
+                        $annexonefund->amount = $nationalexpendituresub->amount;
+                        $annexonefund->year = $workshopYear+1;
+                        $annexonefund->type = 'NEP';
+                        $annexonesub->funds()->save($annexonefund);
+
+                        $nationalexpendituresub->isAdded = true;
+                        $nationalexpendituresub->save();
+                    }
+                }
             }
 
             // Save
             DB::commit();
-            return ['message' => 'Projects saved!', 'annexones' => []];
+            return ['message' => 'Projects saved!', 'annexones' => $this->getAnnexOne($request['workshop_id'])];
         }
         catch(\Exception $e){
             DB::rollback();
@@ -1051,13 +1074,74 @@ class WorkshopController extends Controller
     public function updateAnnexOne(Request $request, $id){
         DB::beginTransaction();
         try {
+            $annexone = AnnexOne::findOrFail($id);
+            $annexone->source_of_funds = $request['source'];
+            $annexone->header_type = $request['headerType'];
+            $annexone->save();
 
+            $initialSubs = $annexone->subs;
+
+            $workshopId = $annexone->workshop_id;
+            $workshop = Workshop::findOrFail($workshopId);
+            $startDate = explode('-', $workshop->start);
+            $workshopYear = (int)$startDate[0];
+
+            $project = $request['project'];
+            foreach($project['subprojectIds'] as $subId){
+                $inSubs = false;
+                foreach($project['subs'] as $sub){
+                    if(!$inSubs){
+                        $inSubs = $sub['subproject_id'] == $subId;
+                    }
+                }
+                if(!$inSubs){
+                    $annexonesub = new AnnexOneSub;
+                    $annexonesub->subproject_id = $subId;
+                    $annexonesub->annex_one_id = $annexone->id;
+                    $annexonesub->save();
+                    // Check for NEP
+                    $nationalexpendituresub = $this->getNepSub($subId, $workshopId);
+
+                    if($nationalexpendituresub){
+                        $annexonefund = new AnnexOneFund;
+                        $annexonefund->amount = $nationalexpendituresub->amount;
+                        $annexonefund->year = $workshopYear+1;
+                        $annexonefund->type = 'NEP';
+                        $annexonesub->funds()->save($annexonefund);
+
+                        $nationalexpendituresub->isAdded = true;
+                        $nationalexpendituresub->save();
+                    }
+                }
+            }
+            foreach($initialSubs as $ini){
+                if(!in_array($ini->subproject_id, $project['subprojectIds'])){
+                    $ini->delete();
+                    $nationalexpendituresub = $this->getNepSub($ini->subproject_id, $workshopId, true);
+                    if($nationalexpendituresub){
+                        $nationalexpendituresub->isAdded = false;
+                        $nationalexpendituresub->save();
+                    }
+                    $ini->funds()->delete();
+                }
+            }
+            DB::commit();
+            return ['message' => 'Projects saved!', 'annexones' => $this->getAnnexOne($workshopId)];
         }
         catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
 
+    }
+
+    private function getNepSub($id, $workshopId, $isAdded = false){
+        $sub = NationalExpenditureSub::where('subproject_id', $id)
+            ->where('isAdded', $isAdded)
+            ->whereHas('nep', function($q) use($workshopId){
+                $q->where('workshop_id', $workshopId);
+            })->get();
+        return sizeof($sub) > 0 ? $sub[0] : [];
     }
 
     public function destroyAnnexOne($id){
@@ -1074,7 +1158,7 @@ class WorkshopController extends Controller
 
     public function getAnnexOne($workshopId){
         $divisions = Division::orderBy('id', 'asc')->get();
-        $annexones = AnnexOne::with(['subs.subproject', 'funds', 'project'])
+        $annexones = AnnexOne::with(['subs.subproject', 'subs.funds', 'funds', 'project.subprojects', 'project.leader', 'project.encoders'])
             ->where('workshop_id', $workshopId)
             ->get()->sortBy('project.division_id');
         foreach($annexones as $annexone){
@@ -1367,7 +1451,7 @@ class WorkshopController extends Controller
             array_push($projectsIds, $annexone->project_id);
         }
         if($annex == 'one' || $annex == 'nep'){
-            $projects = Project::with('subprojects')->orderBy('id', 'asc')->whereNotIn('id', $ids)->get();
+            $projects = Project::with('subprojects', 'leader', 'encoders')->orderBy('id', 'asc')->whereNotIn('id', $ids)->get();
             // foreach($projects as $project){
             //     $project->subprojects;
             // }

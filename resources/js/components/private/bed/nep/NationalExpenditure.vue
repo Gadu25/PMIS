@@ -15,7 +15,7 @@
                                 <tr class="">
                                     <th style="width: 1px"></th>
                                     <th :style="'width: ' +  (!editmode ? '50%' : 'calc(50% - 150px) !important')">Programs / Projects / Activities</th>
-                                    <th :style="'width: ' +  (!editmode ? '50%' : 'calc(50% - 150px) !important')">NEP</th>
+                                    <th :style="'width: ' +  (!editmode ? '50%' : '30%')">NEP</th>
                                     <th style="width: 140px" v-if="editmode">
                                         Actions
                                     </th>
@@ -42,8 +42,8 @@
                                                 <span v-else>{{project.project_title}}</span>
                                             </td>
                                             <td class="text-end">
-                                                <input type="text" class="form-control text-end" v-model="project.amount" v-money="money" @change="amountCheck(project)" v-if="editmode">
-                                                <span v-else>{{formatAmount(project.amount)}}</span>
+                                                <input type="text" class="form-control text-end" v-model="project.amount" v-money="money" @change="amountCheck(project)" v-if="editmode && project.editmode">
+                                                <span v-else class="me-1">{{formatAmount(project.amount)}}</span>
                                             </td>
                                             <td v-if="editmode">
                                                 <button class="btn btn-sm" :class="[project.editmode ? 'w-75' : 'w-50', project.id ? 'btn-outline-primary' : 'btn-outline-success']" 
@@ -57,8 +57,10 @@
                                                     </span>
                                                     <i class="far fa-lg" :class="project.id ? 'fa-pencil-alt' : 'fa-plus'" v-else></i>
                                                 </button>
+                                                <!-- <button class="btn btn-sm btn-outline-danger" :class="project.editmode ? 'w-25' : 'w-50'" 
+                                                    @click="removeProject(division, project)"> -->
                                                 <button class="btn btn-sm btn-outline-danger" :class="project.editmode ? 'w-25' : 'w-50'" 
-                                                    @click="project.editmode ? removeEdit(project) : removeProject(division, project)">
+                                                    @click="project.editmode && project.id ? removeEdit(project) : removeProject(division, project)">
                                                     <i class="far fa-trash-alt fa-lg" v-if="!project.editmode"></i>
                                                     <i class="far fa-times fa-lg" v-else></i>
                                                 </button>
@@ -66,11 +68,11 @@
                                         </tr>
                                         <template v-for="sub, subKey in project.subs" :key="subKey">
                                             <tr :id="editmode ? 'input' : ''" v-if="editmode || sub.id">
-                                                <td :class="project.isAdded ? 'bg-success' : 'bg-secondary'"></td>
+                                                <td :class="sub.isAdded ? 'bg-success' : 'bg-secondary'"></td>
                                                 <td><span class="ms-1">{{sub.subprojectTitle}}</span></td>
                                                 <td class="text-end">
-                                                    <input type="text" class="form-control text-end" v-model="sub.amount" v-money="money" @change="amountCheck(sub)" v-if="editmode">
-                                                    <span v-else>{{sub.amount}}</span>
+                                                    <input type="text" class="form-control text-end" v-model="sub.amount" v-money="money" @change="amountCheck(sub)" v-if="editmode && project.editmode">
+                                                    <span v-else class="me-1">{{formatAmount(sub.amount)}}</span>
                                                 </td>
                                                 <td v-if="editmode"></td>
                                             </tr>
@@ -191,8 +193,9 @@ export default {
                 isAdded: false,
                 subprojects: [],
                 subs: [],
-                editmode: false
+                editmode: true
             })
+            this.editCount++
         },
         removeProject(division, project){
             if(project.project_id){
@@ -201,7 +204,8 @@ export default {
                     project.project_id = ''
                     project.amount = 0
                     project.isAdded = false
-                    project.editmode = false
+                    project.editmode = true
+                    project.subs = []
                 }
                 if(project.id){
                     this.swalConfirmCancel('Are you sure', 'This is not irreversible').then(res => {
@@ -241,7 +245,6 @@ export default {
                     amount: 0
                 })
             }
-            console.log(project)
             this.checkSelectedProject(division)
         },
         checkSelectedProject(division){

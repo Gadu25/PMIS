@@ -9,9 +9,68 @@
                         <h6 :style="'font-size:' + fontsize" class="mb-0 fw-bold">SEI Annual Planning Workshop</h6>
                         <h6 :style="'font-size:' + fontsize" class="fw-bold">{{workshop.date}}</h6>
                     </div>
-                    <div class="table-responsive" v-dragscroll>
+                    <div class="table-responsive" id="main-container" v-dragscroll>
                         <table class="table table-sm table-bordered" :style="'font-size:' + fontsize">
-                            <TableHead />
+                            <TableHead :forPrint="exportmode" />
+                            <tbody class="align-middle">
+                                <template v-for="sources, div in annexones" :key="div">
+                                    <tr>
+                                        <td colspan="14" class="fw-bold" style="background: orange;">{{div}}</td>
+                                    </tr>
+                                    <template v-for="headers, source in sources" :key="source">
+                                        <tr v-if="div != 'STSD'" class="fw-bold text-danger" style="background: yellow;">
+                                            <td>{{source}}</td>
+                                            <td class="text-end" v-for="num in 13" :key="num">
+                                                {{ setSourceFund(num, headers) }}
+                                            </td>
+                                        </tr>
+                                        <template v-for="items, header in headers" :key="header">
+                                            <tr class="fw-bold">
+                                                <td>{{header}}</td>
+                                                <td class="text-end" v-for="num in 13" :key="num">
+                                                    {{ setHeaderFund(num, items) }}
+                                                </td>
+                                            </tr>
+                                            <template v-for="item in items" :key="item.id">
+                                                <tr>
+                                                    <td><div class="ms-1">{{item.project.title}}</div></td>
+                                                    <td class="text-end" v-for="num in 13" :key="num">
+                                                        {{ setFund(num, item.funds) }}
+                                                    </td>
+                                                </tr>
+                                                <template v-for="subitem in item.subs" :key="subitem">
+                                                    <tr>
+                                                        <td><div class="ms-3">{{subitem.subproject.title}}</div></td>
+                                                        <td class="text-end" v-for="num in 13" :key="num">
+                                                            {{ setFund(num, subitem.funds) }}
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </template>
+                                        </template>
+                                        <template v-if="div == 'STSD'">
+                                            <tr style="background: #7aa9cf;" class="fw-bold">
+                                                <td class="stsdtotals">Total 2A1</td>
+                                                <td class="text-end" v-for="num in 13" :key="num">
+
+                                                </td>
+                                            </tr>
+                                            <tr style="background: #b4c867;" class="fw-bold">
+                                                <td class="stsdtotals">Less AC</td>
+                                                <td class="text-end" v-for="num in 13" :key="num">
+
+                                                </td>
+                                            </tr>
+                                            <tr style="background: #7aa9cf;" class="fw-bold">
+                                                <td class="stsdtotals">Total for 2A2</td>
+                                                <td class="text-end" v-for="num in 13" :key="num">
+
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                </template>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -57,6 +116,7 @@ export default {
             toggle: true,
             prev: false,
             formshow: false,
+            exportmode: false
         }
     },
     methods: {
@@ -70,12 +130,73 @@ export default {
         childClick(){
             this.$emit('clicked')
         },
+        setFund(num, funds){
+            var amount = 0
+            if(num == 1){
+                // GAA 1
+                var fund = funds.find(elem => elem.type == 'GAA')
+                amount = fund ? fund.amount : 0
+            }
+            if(num == 2 || num == 5 || num == 7 || num == 9 || num == 11){
+                // Proposed 2 5 7 9 11
+                var fund = funds.find(elem => elem.type == 'Proposed')
+                amount = fund ? fund.amount : 0
+            }
+            if(num == 3){
+                // NEP 3
+                var fund = funds.find(elem => elem.type == 'NEP')
+                amount = fund ? fund.amount : 0
+            }
+            if(num == 4 || num == 6 || num == 8 || num == 10 || num == 12){
+                // Revised 4 6 8 10 12
+                var fund = funds.find(elem => elem.type == 'Revised')
+                amount = fund ? fund.amount : 0
+            }
+            if(num == 13){
+                // Last 13
+                var fund = funds.find(elem => elem.type == 'Last')
+                amount = fund ? fund.amount : 0
+            }
+            return amount > 0 ? this.formatAmount(amount) : ''
+        },
+        setHeaderFund(num, items){
+            var amount = 0
+            for(let item of items){
+                var fund = this.setFund(num, item.funds)
+                if(fund != ''){
+                    amount = amount + this.strToFloat(fund)
+                }
+            }
+            return amount > 0 ? this.formatAmount(amount) : ''
+        },
+        setSourceFund(num, headers){
+            var amount = 0
+            for(let header in headers){
+                var items = headers[header]
+                var fund = this.setHeaderFund(num, items)
+                if(fund != ''){
+                    amount = amount + this.strToFloat(fund)
+                }
+            }
+            
+            return amount > 0 ? this.formatAmount(amount) : ''
+        },
+        formatAmount(amount){
+            amount = parseFloat(amount.toString().replaceAll(',', ''))
+            return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0 })
+        },
+        strToFloat(num){
+            let strNum = num.toString().replace(/\,/g,'')
+            return Math.abs(parseFloat(strNum))
+        },
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
         ...mapGetters('division', ['getDivisions']),
+        ...mapGetters('annexone', ['getAnnexOnes']),
         workshop(){ return this.getWorkshop },
         divisions(){ return this.getDivisions },
+        annexones(){ return this.getAnnexOnes },
     },
     created(){
         if(this.divisions.length == 0){
@@ -87,3 +208,16 @@ export default {
     },
 }
 </script>
+<style scoped>
+#main-container{
+    height: calc(100vh - 300px);
+    overflow: auto;
+}
+#main-container>table{
+    min-width: 1500px;
+}
+.stsdtotals{
+    height: 60px;
+    text-align: center;
+}
+</style>

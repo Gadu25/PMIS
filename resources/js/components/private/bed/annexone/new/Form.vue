@@ -18,7 +18,7 @@
                         </tr>
                         <template v-for="headers, source in sources" :key="source">
                             <tr v-if="div != 'STSD'">
-                                <td colspan="2">{{source}}</td>
+                                <td colspan="2" style="background: yellow;" class="text-danger fw-bold text-center">{{source}}</td>
                             </tr>
                             <template v-for="annexones, header in headers" :key="header">
                                 <tr class="fw-bold">
@@ -28,9 +28,15 @@
                                     <tr>
                                         <td><div class="ms-1">{{annexone.project.title}}</div></td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-primary me-1" @click="editForm(annexone)"><i class="far fa-pencil-alt"></i></button>
-                                            <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                            <template v-if="formMatchProject(annexone.project)">
+                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-primary mb-1" data-bs-target="#modal" data-bs-toggle="modal" @click="editForm(annexone)"><i class="far fa-pencil-alt"></i> Info</button><br>
+                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-warning mb-1" @click="editFormTable(annexone)"><i class="far fa-pencil-alt"></i> Table</button><br>
+                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-danger"><i class="far fa-trash-alt"></i> Project</button>
+                                            </template>
                                         </td>
+                                    </tr>
+                                    <tr v-for="sub in annexone.subs" :key="sub.id">
+                                        <td colspan="2"><div class="ms-2">{{sub.subproject.title}}</div></td>
                                     </tr>
                                 </template>
                             </template>
@@ -46,9 +52,25 @@
             <button class="btn btn-sm btn-outline-secondary" @click="hideForm()"><i class="fas fa-times"></i> Close</button>
             <button class="btn btn-sm btn-primary"><i class="fas fa-save"></i> Save changes</button>
         </div>
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered">
+        <div class="table-responsive" v-dragscroll>
+            <table class="table table-sm table-bordered" style="font-size: 12px; min-width: 1500px">
                 <TableHead />
+                <tbody class="align-middle ">
+                    <tr>
+                        <td>{{form2.title}}</td>
+                        <td v-for="fund, fkey in form2.funds" :key="fkey" class="text-end" :style="fund.type == 'Revised' || fund.type == 'Last' ? 'padding: 0; height: 1px' : 'font-size: 16px'">
+                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="fund.type == 'Revised' || fund.type == 'Last'" v-model="fund.amount" v-money="money">
+                            <span v-else>{{fund.amount == 0 ? '' : formatAmount(fund.amount)}}</span>
+                        </td>
+                    </tr>
+                    <tr v-for="sub in form2.subs" :key="sub.id">
+                        <td>{{sub.title}}</td>
+                        <td v-for="fund, fkey in sub.funds" :key="fkey" class="text-end" :style="fund.type == 'Revised' || fund.type == 'Last' ? 'padding: 0; height: 1px' : 'font-size: 16px'">
+                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="fund.type == 'Revised' || fund.type == 'Last'" v-model="fund.amount" v-money="money">
+                            <span v-else>{{fund.amount == 0 ? '' : formatAmount(fund.amount)}}</span>
+                        </td>
+                    </tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -57,12 +79,13 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        {{formpart <= 1 ? '1. Project Filters' : '2. Annex 1 Details'}}
+                        <!-- {{formpart <= 1 ? '1. Project Filters' : '2. Annex 1 Details'}} -->
+                        {{editmode ? 'Edit' : 'New'}} Annex 1 Project/s
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <template v-if="formpart == 1">
+                    <!-- <template v-if="formpart == 1">
                         <div class="form-group row">
                             <div :class="setColumn('division')">
                                 <div class="form-floating mb-3">
@@ -125,8 +148,8 @@
                                 </div>
                             </div>
                         </div>
-                    </template>
-                    <template v-if="formpart == 2">
+                    </template> -->
+                    <!-- <template v-if="formpart == 2"> -->
                         <div class="form-group row">
                             <div class="col-sm-7">
                                 <div class="form-floating mb-3">
@@ -156,14 +179,14 @@
                         <div class="d-flex justify-content-between mb-2" >
                             <div id="tooltip">
                                 <i class="far fa-question-circle fa-lg"></i>
-                                <span id="tooltiptext">Projects shown on select options are based on selected filters during the first part of the form. Check your selected project filters or contact your System Administrator for further clarifications.</span>
+                                <!-- <span id="tooltiptext">Projects shown on select options are based on selected filters during the first part of the form. Check your selected project filters or contact your System Administrator for further clarifications.</span> -->
                             </div>
-                            <button class="btn btn-sm btn-success bg-gradient" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
+                            <button class="btn btn-sm btn-success bg-gradient" v-if="!editmode" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
                         </div>
                         <div class="overflow-auto" style="max-height: 50vh;">
                             <div class="position-relative" v-for="fp, key in form.projects" :key="key">
                                 <div class="form-floating mb-3">
-                                    <button class="btn btn-sm btn-outline-danger border-0 shadow-none position-absolute end-0" @click="removeProject(fp)"><i class="fas fa-times"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger border-0 shadow-none position-absolute end-0" v-if="form.projects.length > 1" @click="removeProject(fp)"><i class="fas fa-times"></i></button>
                                     <select class="form-select" id="floatingSelect" @change="changeProject(fp)" v-model="fp.project_id">
                                         <option value="" hidden disabled selected>Select Project</option>
                                         <template v-for="project in projects" :key="project.id">
@@ -182,13 +205,26 @@
                                     </div>
                                 </div>
                             </div>
+                            <div v-if="editmode">
+                                <p><strong>Project: </strong>{{form.project.title}}</p>
+                                <div class="d-flex flex-wrap px-2" v-if="form.project.subprojects.length > 0">
+                                    <div class="w-100"><strong>Subprojects</strong></div>
+                                    <div class="form-check w-50" v-for="subproject in form.project.subprojects" :key="subproject.id">
+                                        <input class="form-check-input" type="checkbox" :value="subproject.id" :id="subproject.title" v-model="form.project.subprojectIds">
+                                        <label class="form-check-label" :for="subproject.title">
+                                            {{subproject.title}}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </template>
+                    <!-- </template> -->
                 </div>
                 <div class="modal-footer">
-                    <button class="btn bg-gradient shadow-none btn-outline-primary rounded-circle" id="circle-btn" @click="formpart = 1">1</button>
-                    <button class="btn bg-gradient shadow-none rounded-circle" id="circle-btn" @click="nextPart()" :class="formpart <= 1 ? 'btn-outline-secondary' : 'btn-outline-primary'">2</button>
-                    <button class="btn bg-gradient shadow-none rounded-pill" :class="formpart <= 1 ? 'btn-secondary' : 'btn-primary'" style="min-width: 100px" @click="formpart <= 1 ? nextPart() : submitForm()">{{formpart <= 1 ? 'Next' : 'Submit'}}</button>
+                    <button class="btn bg-gradient rounded-pill" :class="editmode ? 'btn-primary' : 'btn-success'" style="min-width: 100px" @click="submitForm()">{{editmode ? 'Save changes' : 'Submit'}}</button>
+                    <!-- <button class="btn bg-gradient shadow-none btn-outline-primary rounded-circle" id="circle-btn" @click="formpart = 1">1</button> -->
+                    <!-- <button class="btn bg-gradient shadow-none rounded-circle" id="circle-btn" @click="nextPart()" :class="formpart <= 1 ? 'btn-outline-secondary' : 'btn-outline-primary'">2</button> -->
+                    <!-- <button class="btn bg-gradient shadow-none rounded-pill" :class="formpart <= 1 ? 'btn-secondary' : 'btn-primary'" style="min-width: 100px" @click="formpart <= 1 ? nextPart() : submitForm()">{{formpart <= 1 ? 'Next' : 'Submit'}}</button> -->
                 </div>
             </div>
         </div>
@@ -197,6 +233,7 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import { dragscroll } from 'vue-dragscroll'
+import { VMoney } from 'v-money'
 import TableHead from './TableHead.vue'
 export default {
     name: 'Form',
@@ -204,6 +241,7 @@ export default {
     setup({emit}){},
     directives: {
         dragscroll: dragscroll,
+        money: VMoney
     },
     components: {
         TableHead
@@ -213,53 +251,151 @@ export default {
             editmode: false,
             formshow: false,
             form: {
+                // program_id: '',
+                // subprogram_id: '',
+                // cluster_id: '',
+                // division_id: '',
+                // unit_id: '',
+                // subunit_id: '',
                 id: '',
-                program_id: '',
-                subprogram_id: '',
-                cluster_id: '',
-                division_id: '',
-                unit_id: '',
-                subunit_id: '',
                 projects: [],
+                project: {
+                    id: '',
+                    title: '',
+                    subs: [],
+                    subprojects: [],
+                    subprojectIds: []
+                },
                 source: '',
                 headerType: '',
                 workshop_id: this.$route.params.workshopId
             },
-            subprograms: [],
-            clusters: [],
-            units: [],
-            subunits: [],
-            formpart: 1,
+            // subprograms: [],
+            // clusters: [],
+            // units: [],
+            // subunits: [],
+            // formpart: 2,
             used: [],
             processing: false,
             form2:{
                 id: '',
-
-            }
+                title: '',
+                funds: [],
+                subs: []
+            },
+            money: {
+                decimal: '.',
+                thousands: ',',
+                prefix: '',
+                suffix: '',
+                precision: 0,
+                masked: false /* doesn't work with directive */
+            },
         }
     },
     methods: {
         ...mapActions('workshop', ['fetchOptions']),
         ...mapActions('annexone', ['fetchAnnexOnes', 'saveAnnexOne']),
         newForm(){
-            this.form.program_id = ''
-            this.form.subprogram_id = ''
-            this.form.cluster_id = ''
-            this.form.division_id = ''
-            this.form.unit_id = ''
-            this.form.subunit_id = ''
+            this.editmode = false
             this.form.projects = []
-            this.subprograms = []
-            this.clusters = []
-            this.units = []
-            this.subunits = []
+            this.form.id = ''
+            this.form.source = ''
+            this.form.headerType = ''
+            this.form.project = {}
             this.used = []
-            this.formpart = 1
+            this.addProject()
         },
         editForm(annexone){
+            this.editmode = true
+            this.form.id = annexone.id
+            this.form.source = annexone.source_of_funds
+            this.form.headerType = annexone.header_type
+            this.form.projects = []
+            
+            var project = annexone.project
+            this.form.project.id = project.id
+            this.form.project.title = project.title
+            this.form.project.subprojects = project.subprojects
+            this.form.project.subprojectIds = []
+            this.form.project.subs = annexone.subs
+            for(let sub of annexone.subs){
+                this.form.project.subprojectIds.push(sub.subproject_id)
+            }
+        },
+        editFormTable(annexone){
             this.formshow = true
+            this.form2.id = annexone.id
+            this.form2.title = annexone.project.title
+            this.form2.funds = [
+                {id: '', type: 'GAA',      amount: 0, year: 0},
+                {id: '', type: 'Proposed', amount: 0, year: 0},
+                {id: '', type: 'NEP',      amount: 0, year: 0},
+                {id: '', type: 'Revised',  amount: 0, year: 0},
+                {id: '', type: 'Proposed', amount: 0, year: 0},
+                {id: '', type: 'Revised',  amount: 0, year: 0},
+                {id: '', type: 'Proposed', amount: 0, year: 0},
+                {id: '', type: 'Revised',  amount: 0, year: 0},
+                {id: '', type: 'Proposed', amount: 0, year: 0},
+                {id: '', type: 'Revised',  amount: 0, year: 0},
+                {id: '', type: 'Proposed', amount: 0, year: 0},
+                {id: '', type: 'Revised',  amount: 0, year: 0},
+                {id: '', type: 'Last',     amount: 0, year: 0},
+            ]
+            this.form2.subs = []
+            var ctr = 1
+            for(let fund of this.form2.funds){
+                fund.year = this.workshopYear + (ctr == 1 ? 0 : 
+                    ctr > 1 && ctr < 5 ? 1 :
+                    ctr == 5 || ctr == 6 ? 2 : 
+                    ctr == 7 || ctr == 8 ? 3 : 
+                    ctr == 9 || ctr == 10 ? 4 : 
+                    ctr == 11 || ctr == 12 ? 5 : 6)
+                ctr++
+                var dbfund = annexone.funds.find(elem => elem.type == fund.type && elem.year == fund.year)
+                if(dbfund){
+                    fund.id = dbfund.id
+                    fund.amount = dbfund.amount
+                }
+            }
+            for(let sub of annexone.subs){
+                var temp = {
+                    id: sub.id,
+                    title: sub.subproject.title,
+                    funds: [
+                        {id: '', type: 'GAA',      amount: 0, year: 0},
+                        {id: '', type: 'Proposed', amount: 0, year: 0},
+                        {id: '', type: 'NEP',      amount: 0, year: 0},
+                        {id: '', type: 'Revised',  amount: 0, year: 0},
+                        {id: '', type: 'Proposed', amount: 0, year: 0},
+                        {id: '', type: 'Revised',  amount: 0, year: 0},
+                        {id: '', type: 'Proposed', amount: 0, year: 0},
+                        {id: '', type: 'Revised',  amount: 0, year: 0},
+                        {id: '', type: 'Proposed', amount: 0, year: 0},
+                        {id: '', type: 'Revised',  amount: 0, year: 0},
+                        {id: '', type: 'Proposed', amount: 0, year: 0},
+                        {id: '', type: 'Revised',  amount: 0, year: 0},
+                        {id: '', type: 'Last',     amount: 0, year: 0},
+                    ]
+                }
+                ctr = 1
+                for(let fund of temp.funds){
+                    fund.year = this.workshopYear + (ctr == 1 ? 0 : 
+                        ctr > 1 && ctr < 5 ? 1 :
+                        ctr == 5 || ctr == 6 ? 2 : 
+                        ctr == 7 || ctr == 8 ? 3 : 
+                        ctr == 9 || ctr == 10 ? 4 : 
+                        ctr == 11 || ctr == 12 ? 5 : 6)
+                    ctr++
+                    var dbfund = sub.funds.find(elem => elem.type == fund.type && elem.year == fund.year)
+                    if(dbfund){
+                        fund.id = dbfund.id
+                        fund.amount = dbfund.amount
+                    }
+                }
+                this.form2.subs.push(temp)
+            }
             this.childClick()
-            // console.log(annexone)
         },
         addProject(){
             this.form.projects.push({
@@ -309,24 +445,36 @@ export default {
         },
         async submitForm(){
             this.processing = true
-            await this.formValidated(this.form)
-                .then(res => {
-                    this.toastMsg('success', res)
-                    this.saveAnnexOne(this.form).then(res => {
-                        var icon = res.errors ? 'error' : 'success'
-                        this.toastMsg(icon, res.message)
-                        this.processing = false
-                        if(!res.errors){
-                            this.$refs.Close.click()
-                        }
+            if(!this.editmode){
+                await this.formValidated(this.form)
+                    .then(res => {
+                        this.toastMsg('info', 'Saving...')
+                        this.saveAnnexOne(this.form).then(res => {
+                            var icon = res.errors ? 'error' : 'success'
+                            this.toastMsg(icon, res.message)
+                            this.processing = false
+                            if(!res.errors){
+                                this.$refs.Close.click()
+                            }
+                        })
                     })
-                })
-                .catch((err) => {
-                    var icon = err == 'Cancelled' ? 'info' : 'warning'
-                    var msg  = err == 'Cancelled' ? 'Form submission cancelled' : err
-                    this.toastMsg(icon, msg)
+                    .catch((err) => {
+                        var icon = err == 'Cancelled' ? 'info' : 'warning'
+                        var msg  = err == 'Cancelled' ? 'Form submission cancelled' : err
+                        this.toastMsg(icon, msg)
+                        this.processing = false
+                    })
+            }
+            if(this.editmode){
+                this.saveAnnexOne(this.form).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
                     this.processing = false
+                    if(!res.errors){
+                        this.$refs.Close.click()
+                    }
                 })
+            }
         },
         hideForm(){
             this.formshow = false
@@ -340,36 +488,37 @@ export default {
             if(this.form.program_id == ''){ this.toastMsg('warning', 'Please select a Program'); return false }
             this.formpart++
         },
-        setColumn(type){
-            var array  = type == 'program' || type == 'subprogram' ? this.subprograms : this.units
-            var array2 = type == 'program' || type == 'subprogram' ? this.clusters    : this.subunits
-            if(type == 'program' || type == 'division'){
-                return array.length == 0 ? 'col-sm-12' : array2.length == 0 ? 'col-sm-6' : 'col-sm-4'
-            }
-            if(type == 'subprogram' || type == 'unit'){
-                return array2.length == 0 ? 'col-sm-6' : 'col-sm-4'
-            }
-        },
+        // setColumn(type){
+        //     var array  = type == 'program' || type == 'subprogram' ? this.subprograms : this.units
+        //     var array2 = type == 'program' || type == 'subprogram' ? this.clusters    : this.subunits
+        //     if(type == 'program' || type == 'division'){
+        //         return array.length == 0 ? 'col-sm-12' : array2.length == 0 ? 'col-sm-6' : 'col-sm-4'
+        //     }
+        //     if(type == 'subprogram' || type == 'unit'){
+        //         return array2.length == 0 ? 'col-sm-6' : 'col-sm-4'
+        //     }
+        // },
         formMatchProject(project){
-            var projectIds = {
-                division_id:   project.division_id,
-                unit_id:       project.unit_id,
-                subunit_id:    project.subunit_id,
-                program_id:    project.program_id,
-                subprogram_id: project.subprogram_id,
-                cluster_id:    project.cluster_id
+            var leaderId = project.leader.profile_id
+            var encoderIds = []
+            for(let enconder of project.encoders){
+                encoderIds.push(enconder.profile_id)
             }
-            var form = this.form
-            var formIds = {
-                division_id:   form.division_id,
-                unit_id:       form.unit_id       === '' ? null : form.unit_id,
-                subunit_id:    form.subunit_id    === '' ? null : form.subunit_id,
-                program_id:    form.program_id,
-                subprogram_id: form.subprogram_id === '' ? null : form.subprogram_id,
-                cluster_id:    form.cluster_id    === '' ? null : form.cluster_id
+            var profileId = this.user.active_profile.id
+            var state = leaderId == profileId
+            if(!state){
+                state = encoderIds.includes(profileId)
             }
-            
-            return JSON.stringify(projectIds) === JSON.stringify(formIds)
+            for(let div in this.annexones){
+                for(let source in this.annexones[div]){
+                    for(let header in this.annexones[div][source]){
+                        if(project.id == this.annexones[div][source][header].project_id){
+                            this.used.push(project.id)
+                        }
+                    }
+                }
+            }
+            return state
         },
         checkSelectedProject(){
             for(let projectId of this.used){
@@ -389,32 +538,6 @@ export default {
                 this.used.push(projectId)
             }
             this.checkSelectedProject()
-        },
-        changeProgram(){
-            var program = this.programs.find(elem => elem.id == this.form.program_id)
-            this.subprograms = program.subprograms
-            this.clusters = []
-            this.form.subprogram_id = ''
-            this.form.cluster_id = ''
-        },
-        changeSubprogram(){
-            this.clusters = []
-            this.form.cluster_id = ''
-            var subprogram = this.subprograms.find(elem => elem.id == this.form.subprogram_id)
-            if(subprogram){ this.clusters = subprogram.clusters }
-        },
-        changeDivision(){
-            this.subunits = []
-            this.form.unit_id = ''
-            this.form.subunit_id = ''
-            var division = this.divisions.find(elem => elem.id == this.form.division_id)
-            this.units = division.units
-        },
-        changeUnit(){
-            this.form.subunit_id = ''
-            this.subunits = []
-            var unit = this.units.find(elem => elem.id == this.form.unit_id)
-            if(unit){ this.subunits = unit.subunits }
         },
         toastMsg(icon, msg){
             toast.fire({
@@ -437,15 +560,23 @@ export default {
                 })
             return result
         },
+        formatAmount(amount){
+            amount = parseFloat(amount.replaceAll(',', ''))
+            return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0 })
+        },
     },
     computed:{
         ...mapGetters('workshop', ['getOptions']),
         ...mapGetters('annexone', ['getAnnexOnes']),
+        ...mapGetters('user', ['getAuthUser']),
+        ...mapGetters('workshop', ['getWorkshop']),
         divisions(){ return this.getOptions.divisions },
         programs(){ return this.getOptions.programs },
         projects(){ return this.getOptions.projects },
         usedprojects(){ return this.getOptions.used_projects },
-        annexones(){ return this.getAnnexOnes }
+        annexones(){ return this.getAnnexOnes },
+        user(){ return this.getAuthUser },
+        workshopYear(){ return parseInt(this.getWorkshop.year) }
     },
     created(){
         if(this.getOptions.length == 0){
@@ -493,5 +624,9 @@ export default {
   visibility: visible;
   display: block;
   transition: all 0.3s ease-in;
+}
+
+.form-control#fund:focus{
+    background: rgba(173, 216, 230, 0.3);
 }
 </style>

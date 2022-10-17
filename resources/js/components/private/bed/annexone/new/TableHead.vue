@@ -1,7 +1,7 @@
 <template>
-    <thead class="text-center align-middle">
+    <thead class="text-center align-middle " :class="!forPrint ? 'position-sticky top-0 transparint shadow-lg' : ''">
         <tr>
-            <th rowspan="4">Programs / Projects / Activities</th>
+            <th rowspan="4" style="width: 15% !important;">Programs / Projects / Activities</th>
             <th colspan="13">Budgetary Requirements</th>
         </tr>
         <tr>
@@ -12,7 +12,7 @@
         </tr>
         <tr>
             <th colspan="2">Proposal to DBM</th>
-            <th v-for="num in 4" :key="num" :colspan="num == 4 ? '1' : '2'">{{workshopYear+num}}</th>
+            <th v-for="num in 4" :key="num" :colspan="num == 4 ? '1' : '2'">{{workshopYear+num+2}}</th>
         </tr>
         <tr>
             <th>GAA</th>
@@ -38,11 +38,18 @@ export default {
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
         workshopYear(){ return parseInt(this.getWorkshop.year) }
+    },
+    props: {
+        forPrint: Boolean
     }
 }
 </script>
 <style scoped>
 th {
-    width: 7.14% !important;
+    width: 6.538% !important;
+    /* box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; */
+}
+.transparint{
+    background: rgba(255, 255, 255, 0.9);
 }
 </style>
