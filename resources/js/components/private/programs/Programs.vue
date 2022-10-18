@@ -348,8 +348,10 @@ export default {
                 this.saveProject(this.form).then(res => {
                     var icon = res.errors ? 'error' : 'success'
                     this.toastMsg(icon, res.message)
-                    this.formshow = false
-                    this.displayTypeChange()
+                    if(!res.errors){
+                        this.formshow = false
+                        this.displayTypeChange()
+                    }
                 })
             }
         },

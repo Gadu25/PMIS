@@ -26,7 +26,7 @@
                                     <tr style="background: orange">
                                         <td colspan="3"><strong>{{division.divCode}}</strong></td>
                                         <td v-if="editmode" class="p-0" style="height: 1px;">
-                                            <button class="btn btn-sm btn-success bg-gradient h-100 w-100 border-0 shadow-none rounded-0" @click="addProject(division)"><i class="fas fa-plus"></i> Project</button>
+                                            <button class="btn btn-sm btn-success bg-gradient h-100 w-100 border-0 shadow-none rounded-0" tabindex="-1" @click="addProject(division)"><i class="fas fa-plus"></i> Project</button>
                                         </td>
                                     </tr>
                                     <template v-for="project, key in division.projects" :key="key">
@@ -46,7 +46,7 @@
                                                 <span v-else class="me-1">{{formatAmount(project.amount)}}</span>
                                             </td>
                                             <td v-if="editmode">
-                                                <button class="btn btn-sm" :class="[project.editmode ? 'w-75' : 'w-50', project.id ? 'btn-outline-primary' : 'btn-outline-success']" 
+                                                <button class="btn btn-sm" tabindex="-1" style="min-height: 36px;" :class="[project.editmode ? 'w-75' : 'w-50', project.id ? 'btn-outline-primary' : 'btn-outline-success']" 
                                                     @click="project.editmode ? submitForm({
                                                         type: 'single', 
                                                         project: project,
@@ -59,7 +59,7 @@
                                                 </button>
                                                 <!-- <button class="btn btn-sm btn-outline-danger" :class="project.editmode ? 'w-25' : 'w-50'" 
                                                     @click="removeProject(division, project)"> -->
-                                                <button class="btn btn-sm btn-outline-danger" :class="project.editmode ? 'w-25' : 'w-50'" 
+                                                <button class="btn btn-sm btn-outline-danger" tabindex="-1" :class="project.editmode ? 'w-25' : 'w-50'" 
                                                     @click="project.editmode && project.id ? removeEdit(project) : removeProject(division, project)">
                                                     <i class="far fa-trash-alt fa-lg" v-if="!project.editmode"></i>
                                                     <i class="far fa-times fa-lg" v-else></i>

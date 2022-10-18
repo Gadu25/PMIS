@@ -54,7 +54,7 @@
         </div>
         <div class="table-responsive" v-dragscroll>
             <table class="table table-sm table-bordered" style="font-size: 12px; min-width: 1500px">
-                <TableHead />
+                <TableHead :forPrint="true" />
                 <tbody class="align-middle ">
                     <tr>
                         <td>{{form2.title}}</td>
@@ -628,5 +628,9 @@ export default {
 
 .form-control#fund:focus{
     background: rgba(173, 216, 230, 0.3);
+}
+
+.table-responsive{
+    height: calc(100vh - 212px);
 }
 </style>

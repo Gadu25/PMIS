@@ -14,12 +14,15 @@
                             <TableHead :forPrint="exportmode" />
                             <tbody class="align-middle">
                                 <template v-for="sources, div in annexones" :key="div">
-                                    <tr>
-                                        <td colspan="14" class="fw-bold" style="background: orange;">{{div}}</td>
+                                    <tr class="fw-bold" style="background: orange;">
+                                        <td>{{div}}</td>
+                                        <td class="text-end" v-for="num in 13" :key="num">
+                                            {{ setDivisionFund(num, sources, div) }}
+                                        </td>
                                     </tr>
                                     <template v-for="headers, source in sources" :key="source">
                                         <tr v-if="div != 'STSD'" class="fw-bold text-danger" style="background: yellow;">
-                                            <td>{{source}}</td>
+                                            <td class="text-center">{{source}}</td>
                                             <td class="text-end" v-for="num in 13" :key="num">
                                                 {{ setSourceFund(num, headers) }}
                                             </td>
@@ -28,7 +31,7 @@
                                             <tr class="fw-bold">
                                                 <td>{{header}}</td>
                                                 <td class="text-end" v-for="num in 13" :key="num">
-                                                    {{ setHeaderFund(num, items) }}
+                                                    {{ isSubprogram(items) ? setHeaderFund(num, items) : '' }}
                                                 </td>
                                             </tr>
                                             <template v-for="item in items" :key="item.id">
@@ -47,24 +50,32 @@
                                                     </tr>
                                                 </template>
                                             </template>
+                                            <template v-if="!isSubprogram(items)">
+                                                <tr style="background: green;" class="fw-bold">
+                                                    <td class="text-center">Sub-Total</td>
+                                                    <td class="text-end" v-for="num in 13" :key="num">
+                                                        {{ setHeaderFund(num, items) }}
+                                                    </td>
+                                                </tr>
+                                            </template>
                                         </template>
                                         <template v-if="div == 'STSD'">
                                             <tr style="background: #7aa9cf;" class="fw-bold">
                                                 <td class="stsdtotals">Total 2A1</td>
                                                 <td class="text-end" v-for="num in 13" :key="num">
-
+                                                    {{ setSourceFund(num, headers) }}
                                                 </td>
                                             </tr>
                                             <tr style="background: #b4c867;" class="fw-bold">
                                                 <td class="stsdtotals">Less AC</td>
                                                 <td class="text-end" v-for="num in 13" :key="num">
-
+                                                    {{ setBySource(num, 'AC') }}
                                                 </td>
                                             </tr>
                                             <tr style="background: #7aa9cf;" class="fw-bold">
                                                 <td class="stsdtotals">Total for 2A2</td>
                                                 <td class="text-end" v-for="num in 13" :key="num">
-
+                                                    {{ setBySource(num, '2A2') }}
                                                 </td>
                                             </tr>
                                         </template>
@@ -130,6 +141,11 @@ export default {
         childClick(){
             this.$emit('clicked')
         },
+        isSubprogram(items){
+            for(let item of items){
+                return item.header_type == 'Subprogram'
+            }
+        },
         setFund(num, funds){
             var amount = 0
             if(num == 1){
@@ -179,6 +195,43 @@ export default {
                 }
             }
             
+            return amount > 0 ? this.formatAmount(amount) : ''
+        },
+        setBySource(num, src){
+            var amount = 0
+            var annexones = this.annexones
+            for(let div in annexones){
+                var sources = annexones[div]
+                for(let source in sources){
+                    if(source.includes(src)){
+                        var header = sources[source]
+                        for(let head in header){
+                            var items = header[head]
+                            for(let item of items){
+                                var fund = this.setFund(num, item.funds)
+                                if(fund != ''){
+                                    amount = amount + this.strToFloat(fund)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return amount > 0 ? this.formatAmount(amount) : ''
+        },
+        setDivisionFund(num, data, division){
+            var amount = 0
+            for(let source in data){
+                for(let header in data[source]){
+                    for(let item of data[source][header]){
+                        var fund = this.setFund(num, item.funds)
+                        if(fund != ''){
+                            amount = amount + this.strToFloat(fund)
+                        }
+                    }
+                }
+            }
+            amount = division == 'STSD' ? amount - this.strToFloat(this.setBySource(num, 'AC')) : amount
             return amount > 0 ? this.formatAmount(amount) : ''
         },
         formatAmount(amount){
