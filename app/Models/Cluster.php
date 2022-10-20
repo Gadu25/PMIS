@@ -16,4 +16,8 @@ class Cluster extends Model
     public function subprogram(){
         return $this->belongsTo(Subprogram::class, 'subprogram_id');
     }
+    
+    public function projects(){
+        return $this->hasMany(Project::class);
+    }
 }

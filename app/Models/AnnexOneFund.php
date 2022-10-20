@@ -16,4 +16,12 @@ class AnnexOneFund extends Model
     public function fundable(){
         return $this->morphTo();
     }
+
+    // public function annexone(){
+    //     return $this->morphTo('fundable')->where('fundable_type', 'App\Models\AnnexOne');
+    // }
+    
+    // public function annexonesub(){
+    //     return $this->morphTo('fundable')->where('fundable_type', 'App\Models\AnnexOneSub');
+    // }
 }

@@ -92,6 +92,7 @@ Route::prefix('/workshop')->group(function(){
     Route::prefix('/annex-one')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexOne']);
         Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexOne']);
+        Route::middleware('auth:sanctum')->put('/table/{id}', [WorkshopController::class, 'updateAnnexOneTable']);
         Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyAnnexOne']);
         Route::middleware('auth:sanctum')->get('/{workshopId}', [WorkshopController::class, 'getAnnexOne']);
         Route::middleware('auth:sanctum')->post('/publish/{workshopId}', [WorkshopController::class, 'publishAnnexOneProjects']);

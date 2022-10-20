@@ -23,6 +23,15 @@ const actions = {
         }
         return response.data
     },
+    async updateAnnexOne({commit}, form){
+        const response = await axios.put('/api/workshop/annex-one/table/'+form.id, form).then(res => {
+            if(res.data.annexones){
+                commit('setAnnexOnes', res.data.annexones)
+            }
+            return res.data
+        })
+        return response
+    },
     async deleteAnnexOne({commit}, id){
         const response = await axios.delete('/api/workshop/annex-one/'+id).then(res => {
             if(!res.data.errors){

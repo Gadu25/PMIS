@@ -31,7 +31,7 @@
                                             <template v-if="formMatchProject(annexone.project)">
                                                 <button style="width: 80px;" class="btn btn-sm shadow-none btn-primary mb-1" data-bs-target="#modal" data-bs-toggle="modal" @click="editForm(annexone)"><i class="far fa-pencil-alt"></i> Info</button><br>
                                                 <button style="width: 80px;" class="btn btn-sm shadow-none btn-warning mb-1" @click="editFormTable(annexone)"><i class="far fa-pencil-alt"></i> Table</button><br>
-                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-danger"><i class="far fa-trash-alt"></i> Project</button>
+                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-danger" @click="removeAnnexOne(annexone)"><i class="far fa-trash-alt"></i> Project</button>
                                             </template>
                                         </td>
                                     </tr>
@@ -50,7 +50,7 @@
     <div v-else>
         <div class="d-flex justify-content-between mb-2">
             <button class="btn btn-sm btn-outline-secondary" @click="hideForm()"><i class="fas fa-times"></i> Close</button>
-            <button class="btn btn-sm btn-primary"><i class="fas fa-save"></i> Save changes</button>
+            <button class="btn btn-sm btn-primary" @click="submitForm2()"><i class="fas fa-save"></i> Save changes</button>
         </div>
         <div class="table-responsive" v-dragscroll>
             <table class="table table-sm table-bordered" style="font-size: 12px; min-width: 1500px">
@@ -58,14 +58,14 @@
                 <tbody class="align-middle ">
                     <tr>
                         <td>{{form2.title}}</td>
-                        <td v-for="fund, fkey in form2.funds" :key="fkey" class="text-end" :style="fund.type == 'Revised' || fund.type == 'Last' ? 'padding: 0; height: 1px' : 'font-size: 16px'">
-                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="fund.type == 'Revised' || fund.type == 'Last'" v-model="fund.amount" v-money="money">
-                            <span v-else>{{fund.amount == 0 ? '' : formatAmount(fund.amount)}}</span>
+                        <td v-for="fund, fkey in form2.funds" :key="fkey" class="text-end" :style="isForInput(fund.type, form2.subs) ? 'padding: 0; height: 1px' : ''">
+                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="isForInput(fund.type, form2.subs)" v-model="fund.amount" v-money="money">
+                            <span class="me-2" v-else>{{fund.amount == 0 ? '' : formatAmount(fund.amount = getTotal(fkey, form2.subs, fund.amount))}}</span>
                         </td>
                     </tr>
                     <tr v-for="sub in form2.subs" :key="sub.id">
-                        <td>{{sub.title}}</td>
-                        <td v-for="fund, fkey in sub.funds" :key="fkey" class="text-end" :style="fund.type == 'Revised' || fund.type == 'Last' ? 'padding: 0; height: 1px' : 'font-size: 16px'">
+                        <td><div class="ms-2">{{sub.title}}</div></td>
+                        <td v-for="fund, fkey in sub.funds" :key="fkey" class="text-end" :style="fund.type == 'Revised' || fund.type == 'Last' ? 'padding: 0; height: 1px' : ''">
                             <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="fund.type == 'Revised' || fund.type == 'Last'" v-model="fund.amount" v-money="money">
                             <span v-else>{{fund.amount == 0 ? '' : formatAmount(fund.amount)}}</span>
                         </td>
@@ -295,7 +295,20 @@ export default {
     },
     methods: {
         ...mapActions('workshop', ['fetchOptions']),
-        ...mapActions('annexone', ['fetchAnnexOnes', 'saveAnnexOne']),
+        ...mapActions('annexone', ['fetchAnnexOnes', 'saveAnnexOne', 'updateAnnexOne', 'deleteAnnexOne']),
+        removeAnnexOne(annexone){
+            this.swalConfirmCancel('Are you sure?', 'You will data of this project for this workshop').then(res => {
+                if(res){
+                    this.deleteAnnexOne(annexone.id).then(res => {
+                        var icon = res.errors ? 'error' : 'success'
+                        this.toastMsg(icon, res.message)
+                        if(!res.errors){
+                            this.used.remove(annexone.project_id)
+                        }
+                    })
+                }
+            })
+        },
         newForm(){
             this.editmode = false
             this.form.projects = []
@@ -303,7 +316,7 @@ export default {
             this.form.source = ''
             this.form.headerType = ''
             this.form.project = {}
-            this.used = []
+            // this.used = []
             this.addProject()
         },
         editForm(annexone){
@@ -343,21 +356,7 @@ export default {
                 {id: '', type: 'Last',     amount: 0, year: 0},
             ]
             this.form2.subs = []
-            var ctr = 1
-            for(let fund of this.form2.funds){
-                fund.year = this.workshopYear + (ctr == 1 ? 0 : 
-                    ctr > 1 && ctr < 5 ? 1 :
-                    ctr == 5 || ctr == 6 ? 2 : 
-                    ctr == 7 || ctr == 8 ? 3 : 
-                    ctr == 9 || ctr == 10 ? 4 : 
-                    ctr == 11 || ctr == 12 ? 5 : 6)
-                ctr++
-                var dbfund = annexone.funds.find(elem => elem.type == fund.type && elem.year == fund.year)
-                if(dbfund){
-                    fund.id = dbfund.id
-                    fund.amount = dbfund.amount
-                }
-            }
+            this.setFormFunds(this.form2.funds, annexone.funds)
             for(let sub of annexone.subs){
                 var temp = {
                     id: sub.id,
@@ -378,24 +377,38 @@ export default {
                         {id: '', type: 'Last',     amount: 0, year: 0},
                     ]
                 }
-                ctr = 1
-                for(let fund of temp.funds){
-                    fund.year = this.workshopYear + (ctr == 1 ? 0 : 
-                        ctr > 1 && ctr < 5 ? 1 :
-                        ctr == 5 || ctr == 6 ? 2 : 
-                        ctr == 7 || ctr == 8 ? 3 : 
-                        ctr == 9 || ctr == 10 ? 4 : 
-                        ctr == 11 || ctr == 12 ? 5 : 6)
-                    ctr++
-                    var dbfund = sub.funds.find(elem => elem.type == fund.type && elem.year == fund.year)
-                    if(dbfund){
-                        fund.id = dbfund.id
-                        fund.amount = dbfund.amount
-                    }
-                }
+                this.setFormFunds(temp.funds, sub.funds)
                 this.form2.subs.push(temp)
             }
             this.childClick()
+        },
+        setFormFunds(funds, dbfunds){
+            var ctr = 1
+            for(let fund of funds){
+                fund.year = this.workshopYear + 
+                    (ctr == 1 ? 0 : 
+                    ctr > 1 && ctr < 5 ? 1 :
+                    ctr == 5 || ctr == 6 ? 2 : 
+                    ctr == 7 || ctr == 8 ? 3 : 
+                    ctr == 9 || ctr == 10 ? 4 : 
+                    ctr == 11 || ctr == 12 ? 5 : 6)
+                ctr++
+                var dbfund = dbfunds.find(elem => elem.type == fund.type && elem.year == fund.year)
+                if(dbfund){
+                    fund.id = dbfund.id
+                    fund.amount = dbfund.amount
+                }
+            }
+        },
+        isForInput(type, subs){
+            return (type == 'Revised' || type == 'Last') && subs.length == 0
+        },
+        getTotal(key, subs, fund){
+            var amount = 0
+            for(let sub of subs){
+                amount = amount + this.strToFloat(sub.funds[key].amount)
+            }
+            return subs.length > 0 ? amount : fund
         },
         addProject(){
             this.form.projects.push({
@@ -476,6 +489,15 @@ export default {
                 })
             }
         },
+        submitForm2(){
+            this.updateAnnexOne(this.form2).then(res => {
+                var icon = res.errors ? 'error' : 'success'
+                this.toastMsg(icon, res.message)
+                if(!res.errors){
+                    this.hideForm()
+                }
+            })
+        },
         hideForm(){
             this.formshow = false
             this.childClick()
@@ -483,11 +505,11 @@ export default {
         childClick(){
             this.$emit('clicked')
         },
-        nextPart(){
-            if(this.form.division_id == ''){ this.toastMsg('warning', 'Please select a Division'); return false }
-            if(this.form.program_id == ''){ this.toastMsg('warning', 'Please select a Program'); return false }
-            this.formpart++
-        },
+        // nextPart(){
+        //     if(this.form.division_id == ''){ this.toastMsg('warning', 'Please select a Division'); return false }
+        //     if(this.form.program_id == ''){ this.toastMsg('warning', 'Please select a Program'); return false }
+        //     this.formpart++
+        // },
         // setColumn(type){
         //     var array  = type == 'program' || type == 'subprogram' ? this.subprograms : this.units
         //     var array2 = type == 'program' || type == 'subprogram' ? this.clusters    : this.subunits
@@ -512,8 +534,10 @@ export default {
             for(let div in this.annexones){
                 for(let source in this.annexones[div]){
                     for(let header in this.annexones[div][source]){
-                        if(project.id == this.annexones[div][source][header].project_id){
-                            this.used.push(project.id)
+                        for(let item of this.annexones[div][source][header]){
+                            if(project.id == item.project_id && !this.used.includes(project.id)){
+                                this.used.push(project.id)
+                            }
                         }
                     }
                 }
@@ -524,12 +548,12 @@ export default {
             for(let projectId of this.used){
                 var project = this.form.projects.find(elem => elem.project_id == projectId)
                 if(!project){
-                    this.used.remove(projectId)
+                    // this.used.remove(projectId)
                 }
             }
         },
         changeProject(formproject){
-            var projects = this.editmode ? this.usedprojects : this.projects
+            var projects = this.projects
             var projectId = formproject.project_id
             var project = projects.find(elem => elem.id == projectId)
             formproject.projectTitle = project.title
@@ -561,19 +585,22 @@ export default {
             return result
         },
         formatAmount(amount){
-            amount = parseFloat(amount.replaceAll(',', ''))
+            amount = parseFloat(amount.toString().replaceAll(',', ''))
             return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0 })
+        },
+        strToFloat(num){
+            let strNum = num.toString().replace(/\,/g,'')
+            return Math.abs(parseFloat(strNum))
         },
     },
     computed:{
-        ...mapGetters('workshop', ['getOptions']),
         ...mapGetters('annexone', ['getAnnexOnes']),
         ...mapGetters('user', ['getAuthUser']),
-        ...mapGetters('workshop', ['getWorkshop']),
-        divisions(){ return this.getOptions.divisions },
-        programs(){ return this.getOptions.programs },
+        ...mapGetters('workshop', ['getWorkshop', 'getOptions']),
+        // divisions(){ return this.getOptions.divisions },
+        // programs(){ return this.getOptions.programs },
         projects(){ return this.getOptions.projects },
-        usedprojects(){ return this.getOptions.used_projects },
+        // usedprojects(){ return this.getOptions.used_projects },
         annexones(){ return this.getAnnexOnes },
         user(){ return this.getAuthUser },
         workshopYear(){ return parseInt(this.getWorkshop.year) }
@@ -626,6 +653,9 @@ export default {
   transition: all 0.3s ease-in;
 }
 
+.form-control#fund{
+    font-size: 12px;
+}
 .form-control#fund:focus{
     background: rgba(173, 216, 230, 0.3);
 }

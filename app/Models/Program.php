@@ -16,4 +16,8 @@ class Program extends Model
     public function subprograms(){
         return $this->hasMany(Subprogram::class);
     }
+    
+    public function projects(){
+        return $this->hasMany(Project::class);
+    }
 }

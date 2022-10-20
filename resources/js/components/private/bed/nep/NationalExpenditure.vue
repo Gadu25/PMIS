@@ -321,7 +321,7 @@ export default {
             return result
         },
         formatAmount(amount){
-            amount = parseFloat(amount.replaceAll(',', ''))
+            amount = parseFloat(amount.toString().replaceAll(',', ''))
             return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0 })
         },
     },

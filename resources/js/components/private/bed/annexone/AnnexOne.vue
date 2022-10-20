@@ -19,7 +19,7 @@
 </template>
 <script>
 import Display from './new/Display.vue'
-import Form from './new/Form.vue'
+// import Form from './new/Form.vue'
 import { mapGetters, mapActions } from 'vuex'
 export default {
     name: 'AnnexOne',

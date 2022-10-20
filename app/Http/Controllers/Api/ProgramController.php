@@ -9,12 +9,7 @@ use App\Models\Program;
 class ProgramController extends Controller
 {
     public function index(){
-        $programs = Program::orderBy('id', 'asc')->get();
-        foreach($programs as $program){
-            foreach($program->subprograms as $subprogram){
-                $subprogram->clusters;
-            }
-        }
+        $programs = Program::with('projects', 'subprograms.projects', 'subprograms.clusters.projects')->orderBy('id', 'asc')->get();
         return $programs;
     }
 }

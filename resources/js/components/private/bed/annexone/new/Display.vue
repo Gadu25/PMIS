@@ -38,7 +38,7 @@
                                                 <tr>
                                                     <td><div class="ms-1">{{item.project.title}}</div></td>
                                                     <td class="text-end" v-for="num in 13" :key="num">
-                                                        {{ setFund(num, item.funds) }}
+                                                        {{ setFund(num, item.funds, item.subs) }}
                                                     </td>
                                                 </tr>
                                                 <template v-for="subitem in item.subs" :key="subitem">
@@ -89,19 +89,76 @@
             <Form @clicked="childClicked()" v-else />
         </div>
         <div class="col-sm-3" v-if="toggle && !formshow">
-            <div class="card border-0 shadow">
+            <div class="card border-0 shadow mb-3">
                 <div class="card-body">
                     <button @click="toggle = !toggle" class="btn btn-sm btn-secondary bg-gradient float-end"><i class="fas fa-arrow-right"></i></button>
                     <h4>Filters</h4>
                     <div class="form-floating mb-2">
                         <select class="form-select" id="floatingSelect" aria-label="Floating label select example">
-                            <option value="0" selected>All Division</option>
+                            <option :value="0" selected>All Division</option>
                             <option :value="division.id" v-for="division in divisions" :key="division.id">{{division.name}}</option>
                         </select>
                         <label for="floatingSelect">Division</label>
                     </div>
                     <div class="d-flex justify-content-end">
                         <button class="btn btn-sm btn-primary bg-gradient"><i class="fas fa-sync"></i> Sync</button>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-sm btn-warning bg-gradient" data-bs-target="#modal" data-bs-toggle="modal">Publish Projects</button>
+            </div>
+        </div>
+        <div class="modal fade" id="modal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Publish Projects</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <button class="btn btn-sm btn-success float-end"><i class="fas fa-plus"></i></button>
+                        <p class="fw-bold">Annex F Special Case <i class="far fa-question-circle"></i></p><hr>
+                        <div class="mb-2 border-bottom" v-for="specialcase, key in cases" :key="key">
+                            <div class="form-floating mb-3">
+                                <select class="form-select" id="Programs" v-model="specialcase.program_id" @change="changeProgram(key)">
+                                    <option value="" disabled hidden selected>Select Program</option>
+                                    <option :value="program.id" v-for="program in programs" :key="program.id">{{program.title}}</option>
+                                </select>
+                                <label for="Programs">Programs</label>
+                            </div>
+                            <div class="form-group row" v-if="specialcase.subprograms.length > 0">
+                                <div :class="specialcase.clusters.length == 0 ? 'col-sm-12' : 'col-sm-6'">
+                                    <div class="form-floating mb-3">
+                                        <select class="form-select" id="SubPrograms" v-model="specialcase.subprogram_id" @change="changeSubprogram(key)">
+                                            <option value="" disabled hidden selected>Select Sub-Program</option>
+                                            <option :value="subprogram.id" v-for="subprogram in specialcase.subprograms" :key="subprogram.id">{{specialcase.program_id == 1 ? subprogram.title_short : subprogram.title}}</option>
+                                            <option :value="null">Not Applicable</option>
+                                        </select>
+                                        <label for="SubPrograms">Sub-Programs</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6" v-if="specialcase.clusters.length > 0">
+                                    <div class="form-floating mb-3">
+                                        <select class="form-select" id="Clusters" v-model="specialcase.cluster_id" @change="changeCluster(key)">
+                                            <option value="" disabled hidden selected>Select Clusters</option>
+                                            <option :value="cluster.id" v-for="cluster in specialcase.clusters" :key="cluster.id">{{cluster.title}}</option>
+                                            <option :value="null">Not Applicable</option>
+                                        </select>
+                                        <label for="Clusters">Clusters</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <pre>
+                                    {{specialcase.projects}}
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
+                        <button type="button" class="btn btn-success bg-gradient">Publish Projects</button>
                     </div>
                 </div>
             </div>
@@ -127,11 +184,45 @@ export default {
             toggle: true,
             prev: false,
             formshow: false,
-            exportmode: false
+            exportmode: false,
+            cases: [{
+                program_id: '',
+                subprogram_id: '',
+                cluster_id: '',
+                projects: [],
+                projectIds: [],
+                subprograms: [],
+                clusters: [],
+            }]
         }
     },
     methods: {
         ...mapActions('division', ['fetchDivisions']),
+        ...mapActions('program', ['fetchPrograms']),
+        changeProgram(key){
+            var form = this.cases[key]
+            var program = this.programs.find(elem => elem.id == form.program_id)
+            form.subprogram_id = ''
+            form.cluster_id = ''
+            form.subprograms = program.subprograms
+            form.clusters = []
+            form.projectIds = []
+            form.projects = program.projects
+        },
+        changeSubprogram(key){
+            var form = this.cases[key]
+            var subprogram = form.subprograms.find(elem => elem.id == form.subprogram_id)
+            form.cluster_id = ''
+            form.clusters = subprogram ? subprogram.clusters : []
+            form.projectIds = []
+            form.projects = subprogram ? subprogram.projects : []
+        },
+        changeCluster(key){
+            var form = this.cases[key]
+            var cluster = form.clusters.find(elem => elem.id == form.cluster_id)
+            form.projectIds = []
+            form.projects = cluster ? cluster.projects : []
+        },
         childClicked(){
             this.formshow = !this.formshow
             this.prev = this.formshow ? this.toggle : this.prev
@@ -146,39 +237,64 @@ export default {
                 return item.header_type == 'Subprogram'
             }
         },
-        setFund(num, funds){
+        subAmount(subs, type, year){
+            var amount = 0
+            for(let sub of subs){
+                var fund = sub.funds.find(elem => elem.type == type && elem.year == year)
+                amount = fund ? amount + this.strToFloat(fund.amount) : amount
+            }
+            return amount
+        },
+        setFund(num, funds, subs = []){
+            var year = parseInt(this.workshop.year)
+            var workshopYear = year + (num == 1 ? 0 : 
+                    num > 1   && num < 5 ? 1 :
+                    num == 5  || num == 6 ? 2 : 
+                    num == 7  || num == 8 ? 3 : 
+                    num == 9  || num == 10 ? 4 : 
+                    num == 11 || num == 12 ? 5 : 6)
             var amount = 0
             if(num == 1){
                 // GAA 1
                 var fund = funds.find(elem => elem.type == 'GAA')
-                amount = fund ? fund.amount : 0
+                var orig = fund ? fund.amount : 0
+                amount = this.subAmount(subs, 'GAA', workshopYear)
+                amount = subs.length > 0 ? amount : orig
             }
             if(num == 2 || num == 5 || num == 7 || num == 9 || num == 11){
                 // Proposed 2 5 7 9 11
-                var fund = funds.find(elem => elem.type == 'Proposed')
-                amount = fund ? fund.amount : 0
+                var fund = funds.find(elem => elem.type == 'Proposed' && elem.year == workshopYear)
+                var orig = fund ? fund.amount : 0
+                amount = this.subAmount(subs, 'Proposed', workshopYear)
+                amount = subs.length > 0 ? amount : orig
             }
             if(num == 3){
                 // NEP 3
                 var fund = funds.find(elem => elem.type == 'NEP')
-                amount = fund ? fund.amount : 0
+                var orig = fund ? fund.amount : 0
+                amount = this.subAmount(subs, 'NEP', workshopYear)
+                amount = subs.length > 0 ? amount : orig
             }
             if(num == 4 || num == 6 || num == 8 || num == 10 || num == 12){
                 // Revised 4 6 8 10 12
-                var fund = funds.find(elem => elem.type == 'Revised')
-                amount = fund ? fund.amount : 0
+                var fund = funds.find(elem => elem.type == 'Revised' && elem.year == workshopYear)
+                var orig = fund ? fund.amount : 0
+                amount = this.subAmount(subs, 'Revised', workshopYear)
+                amount = subs.length > 0 ? amount : orig
             }
             if(num == 13){
                 // Last 13
                 var fund = funds.find(elem => elem.type == 'Last')
-                amount = fund ? fund.amount : 0
+                var orig = fund ? fund.amount : 0
+                amount = this.subAmount(subs, 'Last', workshopYear)
+                amount = subs.length > 0 ? amount : orig
             }
             return amount > 0 ? this.formatAmount(amount) : ''
         },
         setHeaderFund(num, items){
             var amount = 0
             for(let item of items){
-                var fund = this.setFund(num, item.funds)
+                var fund = this.setFund(num, item.funds, item.subs)
                 if(fund != ''){
                     amount = amount + this.strToFloat(fund)
                 }
@@ -208,7 +324,7 @@ export default {
                         for(let head in header){
                             var items = header[head]
                             for(let item of items){
-                                var fund = this.setFund(num, item.funds)
+                                var fund = this.setFund(num, item.funds, item.subs)
                                 if(fund != ''){
                                     amount = amount + this.strToFloat(fund)
                                 }
@@ -224,7 +340,7 @@ export default {
             for(let source in data){
                 for(let header in data[source]){
                     for(let item of data[source][header]){
-                        var fund = this.setFund(num, item.funds)
+                        var fund = this.setFund(num, item.funds, item.subs)
                         if(fund != ''){
                             amount = amount + this.strToFloat(fund)
                         }
@@ -246,14 +362,19 @@ export default {
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
         ...mapGetters('division', ['getDivisions']),
+        ...mapGetters('program', ['getPrograms']),
         ...mapGetters('annexone', ['getAnnexOnes']),
         workshop(){ return this.getWorkshop },
         divisions(){ return this.getDivisions },
+        programs(){ return this.getPrograms },
         annexones(){ return this.getAnnexOnes },
     },
     created(){
         if(this.divisions.length == 0){
             this.fetchDivisions()
+        }
+        if(this.programs.length == 0){
+            this.fetchPrograms()
         }
     },
     props: {
