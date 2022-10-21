@@ -41,8 +41,8 @@ const actions = {
         })
         return response
     },
-    async publishAnnexOneProjects({commit}, workshopId){
-        const response = await axios.post('/api/workshop/annex-one/publish/'+workshopId).then(res => {
+    async publishProjects({commit}, form){
+        const response = await axios.post('/api/workshop/annex-one/publish/'+form.workshop_id, form).then(res => {
             return res.data
         })
         return response

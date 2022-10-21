@@ -936,33 +936,6 @@ class WorkshopController extends Controller
     //     }
     // }
 
-    // private function saveAnnexECommonIndicator($annexe, $commonindicator){
-    //     $performanceindicator = new PerformanceIndicator;
-    //     $performanceindicator->description = $commonindicator->description;
-    //     $performanceindicator->common = true;
-    //     $annexe->indicators()->save($performanceindicator);
-    //     $performanceindicator->tags()->sync([$commonindicator->tags[0]->id]);
-
-    //     $tempTags = [];
-    //     foreach($commonindicator->subindicators as $sub){
-    //         $tag = $sub->tags[0];
-    //         if(!in_array($tag->name, $tempTags)){
-    //             $annexesub = new AnnexESub;
-    //             $annexesub->annex_e_id = $annexe->id;
-    //             $annexesub->temp_title = $tag->name;
-    //             $annexesub->save();
-
-    //             array_push($tempTags, $tag->name);
-    //         }
-
-    //         $performanceindicator = new PerformanceIndicator;
-    //         $performanceindicator->description = $sub->description;
-    //         $performanceindicator->common = true;
-    //         $annexesub->indicators()->save($performanceindicator);
-    //         $performanceindicator->tags()->sync([$tag->id]);
-    //     }
-    // }
-
     // private function saveFunds($parent, $data, $year, $update = false, $isSub = false){
     //     $cols = ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7'];
     //     $amounts = [];
@@ -1123,7 +1096,7 @@ class WorkshopController extends Controller
             $startDate = explode('-', $workshop->start);
             $workshopYear = (int)$startDate[0];
             $prevWorkshop = Workshop::where('start', 'like', '%'.($workshopYear-1).'%')->get();
-            $prevWorkshop = $prevWorkshop[0];
+            $prevWorkshop = sizeof($prevWorkshop) > 0 ? $prevWorkshop[0] : [];
             $project = $request['project'];
             $projectId = $annexone->project_id;
             foreach($project['subprojectIds'] as $subId){
@@ -1212,7 +1185,7 @@ class WorkshopController extends Controller
             
             $nep = NationalExpenditure::where('workshop_id', $workshopId)
                 ->where('project_id', $annexone->project_id)->get();
-            if(sizeof($nep)){
+            if(sizeof($nep) > 0){
                 $nep = $nep[0];
                 $nep->isAdded = false;
                 $nep->save();
@@ -1260,16 +1233,105 @@ class WorkshopController extends Controller
         return $grouped;
     }
 
-    public function publishAnnexOneProjects($workshopId){
+    public function publishAnnexOneProjects(Request $request, $workshopId){
         DB::beginTransaction();
         try {
+            $ids = [];
+            $workshop = Workshop::findOrFail($workshopId);
+            $startDate = explode('-', $workshop->start);
+            $workshopYear = (int)$startDate[0];
+            $years = [$workshopYear+1, $workshopYear+2];
+            foreach($years as $year){
+                foreach($request['cases'] as $case){
+                    $annexf = new AnnexF;
+                    $annexf->workshop_id = $workshopId;
+                    $annexf->status = 'Draft';
+                    $annexf->year = $year;
+                    $annexf->save();
+                    $annexf->projects()->sync($case['projectIds']);
+                    foreach($case['projectIds'] as $id){
+                        array_push($ids, $id);
+                    }
+                }
+                $commonindicators = CommonIndicator::with('tags')
+                    ->where('workshop_id', $workshopId)
+                    ->where('year', $year)
+                    ->where('type', 'Performance')->get();
+                    
+                $annexones = AnnexOne::with('subs')->where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+                foreach($annexones as $annexone){
+                    $annexe = new AnnexE;
+                    $annexe->workshop_id = $workshopId;
+                    $annexe->project_id = $annexone->project_id;
+                    $annexe->status = 'Draft';
+                    $annexe->year = $year;
+                    $annexe->save();
+                    $project = $annexe->project;
 
+                    foreach($commonindicators as $commonindicator){
+                        if($commonindicator->program_id == $project->program_id && $commonindicator->subprogram_id === $project->subprogram_id && $commonindicator->cluster_id === $project->cluster_id){
+                            $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+                        }
+                    }
+
+                    if(!in_array($annexone->project_id, $ids)){
+                        $annexf = new AnnexF;
+                        $annexf->workshop_id = $workshopId;
+                        $annexf->status = 'Draft';
+                        $annexf->year = $year;
+                        $annexf->save();
+                        $annexf->projects()->sync([$annexone->project_id]);
+                    }
+                    foreach($annexone->subs as $annexonesub){
+                        $annexesub = new AnnexESub;
+                        $annexesub->annex_e_id = $annexe->id;
+                        $annexesub->subproject_id = $annexonesub->subproject_id;
+                        $annexesub->save();
+
+                        $annexfsub = new AnnexFSub;
+                        $annexfsub->annex_f_id = $annexf->id;
+                        $annexfsub->subproject_id = $annexonesub->subproject_id;
+                        $annexfsub->save();
+                    }
+                }  
+            }
+
+            DB::commit();
+            return ['message' => 'Projects Published'];
         }
         catch(\Exception $e){
             DB::rollback();
             return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
         }
     } 
+
+    private function saveAnnexECommonIndicator($annexe, $commonindicator){
+        $performanceindicator = new PerformanceIndicator;
+        $performanceindicator->description = $commonindicator->description;
+        $performanceindicator->common = true;
+        $annexe->indicators()->save($performanceindicator);
+        $performanceindicator->tags()->sync([$commonindicator->tags[0]->id]);
+
+        $tempTags = [];
+        foreach($commonindicator->subindicators as $sub){
+            $tag = $sub->tags[0];
+            if(!in_array($tag->name, $tempTags)){
+                $annexesub = new AnnexESub;
+                $annexesub->annex_e_id = $annexe->id;
+                $annexesub->temp_title = $tag->name;
+                $annexesub->save();
+
+                array_push($tempTags, $tag->name);
+            }
+
+            $performanceindicator = new PerformanceIndicator;
+            $performanceindicator->description = $sub->description;
+            $performanceindicator->common = true;
+            $annexesub->indicators()->save($performanceindicator);
+            $performanceindicator->tags()->sync([$tag->id]);
+        }
+    }
+
     // Used in Form 2 - Table
     private function saveFund($parent, $funds){
         foreach($funds as $fund){

@@ -117,48 +117,53 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <button class="btn btn-sm btn-success float-end"><i class="fas fa-plus"></i></button>
+                        <!-- Temporary disabled other functionalities for other Programs, this is to focus on the only Program 1 RA 10612 and RA 7687/ 2067. This can be further improved -->
+                        <!-- <button class="btn btn-sm btn-success float-end"><i class="fas fa-plus"></i></button> -->
                         <p class="fw-bold">Annex F Special Case <i class="far fa-question-circle"></i></p><hr>
-                        <div class="mb-2 border-bottom" v-for="specialcase, key in cases" :key="key">
+                        <div class="mb-2 border-bottom" v-for="specialcase, key in form.cases" :key="key">
                             <div class="form-floating mb-3">
                                 <select class="form-select" id="Programs" v-model="specialcase.program_id" @change="changeProgram(key)">
                                     <option value="" disabled hidden selected>Select Program</option>
-                                    <option :value="program.id" v-for="program in programs" :key="program.id">{{program.title}}</option>
+                                    <template v-for="program in programs" :key="program.id">
+                                        <option :value="program.id" v-if="program.id == 1">{{program.title}}</option>
+                                    </template>
                                 </select>
                                 <label for="Programs">Programs</label>
                             </div>
                             <div class="form-group row" v-if="specialcase.subprograms.length > 0">
-                                <div :class="specialcase.clusters.length == 0 ? 'col-sm-12' : 'col-sm-6'">
+                                <!-- <div :class="specialcase.clusters.length == 0 ? 'col-sm-12' : 'col-sm-6'"> -->
+                                <div class="col-sm-12">
                                     <div class="form-floating mb-3">
                                         <select class="form-select" id="SubPrograms" v-model="specialcase.subprogram_id" @change="changeSubprogram(key)">
                                             <option value="" disabled hidden selected>Select Sub-Program</option>
                                             <option :value="subprogram.id" v-for="subprogram in specialcase.subprograms" :key="subprogram.id">{{specialcase.program_id == 1 ? subprogram.title_short : subprogram.title}}</option>
-                                            <option :value="null">Not Applicable</option>
                                         </select>
                                         <label for="SubPrograms">Sub-Programs</label>
                                     </div>
                                 </div>
-                                <div class="col-sm-6" v-if="specialcase.clusters.length > 0">
+                                <!-- <div class="col-sm-6" v-if="specialcase.clusters.length > 0">
                                     <div class="form-floating mb-3">
                                         <select class="form-select" id="Clusters" v-model="specialcase.cluster_id" @change="changeCluster(key)">
                                             <option value="" disabled hidden selected>Select Clusters</option>
                                             <option :value="cluster.id" v-for="cluster in specialcase.clusters" :key="cluster.id">{{cluster.title}}</option>
-                                            <option :value="null">Not Applicable</option>
                                         </select>
                                         <label for="Clusters">Clusters</label>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <div>
-                                <pre>
-                                    {{specialcase.projects}}
-                                </pre>
+                                <div class="form-check" v-for="project in specialcase.projects" :key="project.id">
+                                    <input class="form-check-input" type="checkbox" :value="project.id" :id="project.id+'project'+key" v-model="specialcase.projectIds">
+                                    <label class="form-check-label" :for="project.id+'project'+key">
+                                        {{project.title}}
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
-                        <button type="button" class="btn btn-success bg-gradient">Publish Projects</button>
+                        <button type="button" class="btn btn-success bg-gradient" @click="publish()">Publish Projects</button>
                     </div>
                 </div>
             </div>
@@ -185,22 +190,39 @@ export default {
             prev: false,
             formshow: false,
             exportmode: false,
-            cases: [{
-                program_id: '',
-                subprogram_id: '',
-                cluster_id: '',
-                projects: [],
-                projectIds: [],
-                subprograms: [],
-                clusters: [],
-            }]
+            form: {
+                workshop_id: this.$route.params.workshopId,
+                cases: [{
+                    program_id: '',
+                    subprogram_id: 2,
+                    cluster_id: '',
+                    projects: [],
+                    projectIds: [],
+                    subprograms: [],
+                    clusters: [],
+                }]
+            }
         }
     },
     methods: {
         ...mapActions('division', ['fetchDivisions']),
         ...mapActions('program', ['fetchPrograms']),
+        ...mapActions('annexone', ['publishProjects']),
+        publish(){
+            this.swalConfirmCancel('Are you sure?', 'This action is irreversible and can be done only one time per workshop').then(result=>{
+                if(result){
+                    this.publishProjects(this.form).then(res => {
+                        var icon = res.errors ? 'error' : 'success'
+                        this.toastMsg(icon, res.message)
+                        if(!res.errors){
+                            this.$refs.Close.click()
+                        }
+                    })
+                }
+            })
+        },
         changeProgram(key){
-            var form = this.cases[key]
+            var form = this.form.cases[key]
             var program = this.programs.find(elem => elem.id == form.program_id)
             form.subprogram_id = ''
             form.cluster_id = ''
@@ -210,7 +232,7 @@ export default {
             form.projects = program.projects
         },
         changeSubprogram(key){
-            var form = this.cases[key]
+            var form = this.form.cases[key]
             var subprogram = form.subprograms.find(elem => elem.id == form.subprogram_id)
             form.cluster_id = ''
             form.clusters = subprogram ? subprogram.clusters : []
@@ -218,7 +240,7 @@ export default {
             form.projects = subprogram ? subprogram.projects : []
         },
         changeCluster(key){
-            var form = this.cases[key]
+            var form = this.form.cases[key]
             var cluster = form.clusters.find(elem => elem.id == form.cluster_id)
             form.projectIds = []
             form.projects = cluster ? cluster.projects : []
@@ -319,6 +341,8 @@ export default {
             for(let div in annexones){
                 var sources = annexones[div]
                 for(let source in sources){
+                    console.log(source)
+                    console.log(src)
                     if(source.includes(src)){
                         var header = sources[source]
                         for(let head in header){
@@ -357,6 +381,27 @@ export default {
         strToFloat(num){
             let strNum = num.toString().replace(/\,/g,'')
             return Math.abs(parseFloat(strNum))
+        },
+        toastMsg(icon, msg){
+            toast.fire({
+                icon: icon,
+                title: msg
+            })
+        },
+        async swalConfirmCancel(title, message){
+            const result = await swal.fire({
+                title: title,
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Continue!',
+                reverseButtons: true
+                }).then((result) => {
+                    return result.isConfirmed
+                })
+            return result
         },
     },
     computed: {
