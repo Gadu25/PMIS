@@ -3,9 +3,9 @@
         <tr>
             <td><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
             <td :class="checkUserDivision(item.projects) ? 'btns' : ''">
-                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" v-if="inUserRole('annex_f_edit_details') && checkUserDivision(item.projects) && (item.status == 'Draft' ? isUserProjectLeader(item.projects) : true )"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button>    
+                <button class="btn btn-sm btn-primary bg-gradient mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" v-if="inUserRole('annex_f_edit_details') && checkUserDivision(item.projects) && (item.status == 'Draft' ? isUserProjectLeader(item.projects) : true )"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button><br> 
                 <!-- <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
-                <button class="btn btn-sm btn-outline-secondary mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"  v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                <button class="btn btn-sm btn-warning bg-gradient mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"  v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
 
             </td>
         </tr>
@@ -65,7 +65,7 @@ export default {
             var project = projects[0]
             if(project.leader){
                 state = this.authuser.active_profile.id == project.leader.profile_id
-                console.log(project.leader)
+                // console.log(project.leader)
             }
             return state
         },
@@ -86,10 +86,12 @@ export default {
 </script>
 <style scoped>
 .btns{
-    display: flex;
+    text-align: center;
+    /* display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    height: 100%; */
 
 }
 .btns>button{

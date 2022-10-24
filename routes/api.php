@@ -91,6 +91,7 @@ Route::prefix('/workshop')->group(function(){
 
     Route::prefix('/annex-one')->group(function(){
         Route::middleware('auth:sanctum')->post('/', [WorkshopController::class, 'storeAnnexOne']);
+        Route::middleware('auth:sanctum')->post('/filtered', [WorkshopController::class, 'filteredAnnexOne']);
         Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'updateAnnexOne']);
         Route::middleware('auth:sanctum')->put('/table/{id}', [WorkshopController::class, 'updateAnnexOneTable']);
         Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroyAnnexOne']);
@@ -121,7 +122,7 @@ Route::prefix('/workshop')->group(function(){
     Route::middleware('auth:sanctum')->put('/{id}', [WorkshopController::class, 'update']);
     Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroy']);
 });
-Route::get('/export/{workshopId}/{annex}/{status}/{type}/{id1}/{id2}/{id}', [WorkshopController::class, 'exportxlsx']);
+Route::get('/export/{workshopId}/{annex}/{status}/{type}/{id1}/{id2}/{id}/{year}', [WorkshopController::class, 'exportxlsx']);
 
 Route::prefix('/tag')->group(function(){
     Route::middleware('auth:sanctum')->get('/', [TagController::class, 'index']);

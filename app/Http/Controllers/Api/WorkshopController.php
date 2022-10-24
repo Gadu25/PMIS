@@ -191,7 +191,10 @@ class WorkshopController extends Controller
                 'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
                 'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns'])
                 ->where('status', $request['status'])
-                ->where('workshop_id', $request['workshopId'])->get();
+                ->where('year', $request['year'])
+                ->where('workshop_id', $request['workshopId'])
+                ->orderBy('id', 'asc')
+                ->get();
             $grouped = $annexes->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']);
 
             $query = CommonIndicator::query();
@@ -202,7 +205,9 @@ class WorkshopController extends Controller
             }
             $commonindicators = $query->with(['details', 'tags', 'subindicators.details'])
                 ->whereNot('type', 'Performance')
+                ->where('year', $request['year'])
                 ->where('workshop_id', $request['workshopId'])
+                ->orderBy('id', 'asc')
                 ->get();
             $cigrouped = $commonindicators->groupBy(['program_id', 'subprogram_id', 'cluster_id']);
 
@@ -272,7 +277,7 @@ class WorkshopController extends Controller
 
             if($statchange){
                 if($initialStatus != 'New' || $status == 'For Review'){
-                    $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id;
+                    $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id.'?year='.$annexe->year;
                     $message = $this->sendNotification($annexe->project, $status, 'Annex E', $link);
                     $subject = $subject.$message;
                 }
@@ -424,6 +429,7 @@ class WorkshopController extends Controller
                 $query->where('id', $tagId);
             })
             ->where('workshop_id', $annexe->workshop_id)
+            ->where('year', $annexe->year)
             ->whereNot('type', 'Performance')->get();
 
         $commonindicatorsubs = CommonIndicatorSub::with('tags', 'commonindicator')
@@ -431,7 +437,8 @@ class WorkshopController extends Controller
                 $query->where('id', $tagId);
             })
             ->whereHas('commonindicator', function($query) use($annexe){
-                $query->where('workshop_id', $annexe->workshop_id);
+                $query->where('workshop_id', $annexe->workshop_id)
+                ->where('year', $annexe->year);
             })->get();
 
         foreach($commonindcators as $commonindicator){
@@ -585,6 +592,7 @@ class WorkshopController extends Controller
             });
             $annexfs = $query->with(['projects.subprogram', 'projects.leader', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
                 ->where('workshop_id', $request['workshopId'])
+                ->where('year', $request['year'])
                 ->where('status', $request['status'])->get();
             
             $grouped = $annexfs->groupBy(['projects.0.program_id', 'projects.0.subprogram_id', 'projects.0.cluster_id']);
@@ -1220,14 +1228,28 @@ class WorkshopController extends Controller
     }
 
     public function getAnnexOne($workshopId){
-        $divisions = Division::orderBy('id', 'asc')->get();
+        // $divisions = Division::orderBy('id', 'asc')->get();
         $annexones = AnnexOne::with(['subs.subproject', 'subs.funds', 'funds', 'project.subprojects', 'project.leader', 'project.encoders'])
             ->where('workshop_id', $workshopId)
             ->get()->sortBy('project.division_id');
         foreach($annexones as $annexone){
             $annexone->header = ($annexone->header_type == 'Subprogram') ? $annexone->project->subprogram->title_short : 
                                 (($annexone->header_type == 'Unit') ? ($annexone->project->subunit_id) ? $annexone->project->subunit->name : $annexone->project->unit->name : 'None');
-            
+        }
+        $grouped = $annexones->groupBy(['project.division.code','source_of_funds','header']);
+        return $grouped;
+    }
+
+    public function filteredAnnexOne(Request $request){
+        $divisionId = $request['division_id'];
+        $annexones = AnnexOne::with(['subs.subproject', 'subs.funds', 'funds', 'project.subprojects', 'project.leader', 'project.encoders'])
+            ->where('workshop_id', $request['workshop_id'])
+            ->whereHas('project', function($q) use($divisionId){
+                if($divisionId != 0){ $q->where('division_id', $divisionId); }
+            })->get()->sortBy('project.division_id');
+        foreach($annexones as $annexone){
+            $annexone->header = ($annexone->header_type == 'Subprogram') ? $annexone->project->subprogram->title_short : 
+                                (($annexone->header_type == 'Unit') ? ($annexone->project->subunit_id) ? $annexone->project->subunit->name : $annexone->project->unit->name : 'None');
         }
         $grouped = $annexones->groupBy(['project.division.code','source_of_funds','header']);
         return $grouped;
@@ -1236,13 +1258,22 @@ class WorkshopController extends Controller
     public function publishAnnexOneProjects(Request $request, $workshopId){
         DB::beginTransaction();
         try {
+            // Comments here are for future developments
             $ids = [];
+
             $workshop = Workshop::findOrFail($workshopId);
             $startDate = explode('-', $workshop->start);
             $workshopYear = (int)$startDate[0];
             $years = [$workshopYear+1, $workshopYear+2];
-            foreach($years as $year){
+            // Fetch previous year workshop
+            // $prevWorkshop = Workshop::where from previous year
+            // $prevWorkshopId = $prevWorkshop->id;
+            foreach($years as $key => $year){
                 foreach($request['cases'] as $case){
+                    // Execute on $key == 0
+                    // Fetch annex f from previous workshop with the same project ids
+                    // $prevWorkshopAnnexF = AnnexF:: where workshop_id = $prevWorkshopId AND same projects
+                    // Gather activities and funds then save it to the new Annex F Item
                     $annexf = new AnnexF;
                     $annexf->workshop_id = $workshopId;
                     $annexf->status = 'Draft';
@@ -1267,14 +1298,17 @@ class WorkshopController extends Controller
                     $annexe->year = $year;
                     $annexe->save();
                     $project = $annexe->project;
-
+                    // Fetch Annex E from previous workshop for the same project
                     foreach($commonindicators as $commonindicator){
+                        // Check for matching indicator description from previous Annex E project performance indicators and current common indicators
+                        // If an indicator is found, use the details of previous Annex E project performance indicators else use current common indicators
                         if($commonindicator->program_id == $project->program_id && $commonindicator->subprogram_id === $project->subprogram_id && $commonindicator->cluster_id === $project->cluster_id){
                             $this->saveAnnexECommonIndicator($annexe, $commonindicator);
                         }
                     }
 
                     if(!in_array($annexone->project_id, $ids)){
+                        // Check previous workshop again
                         $annexf = new AnnexF;
                         $annexf->workshop_id = $workshopId;
                         $annexf->status = 'Draft';
@@ -1283,11 +1317,13 @@ class WorkshopController extends Controller
                         $annexf->projects()->sync([$annexone->project_id]);
                     }
                     foreach($annexone->subs as $annexonesub){
+                        // Check previous workshop again
                         $annexesub = new AnnexESub;
                         $annexesub->annex_e_id = $annexe->id;
                         $annexesub->subproject_id = $annexonesub->subproject_id;
                         $annexesub->save();
 
+                        // Check previous workshop again
                         $annexfsub = new AnnexFSub;
                         $annexfsub->annex_f_id = $annexf->id;
                         $annexfsub->subproject_id = $annexonesub->subproject_id;
@@ -1848,10 +1884,10 @@ class WorkshopController extends Controller
     }
 
     // Export
-    public function exportxlsx($workshopId, $annex, $status, $filter, $id1, $id2, $id3){ // $annex = E or F
+    public function exportxlsx($workshopId, $annex, $status, $filter, $id1, $id2, $id3, $year){ // $annex = E or F
         $workshop = Workshop::findOrFail($workshopId);
         $this->formatWorkshop($workshop);
-        $year = (int) $workshop['year'];
+        $year = (int) $year;
 
 
         $data = [];
@@ -1860,8 +1896,7 @@ class WorkshopController extends Controller
             array_push($data, $head);
         }
 
-        $xlsxbody = $this->xlsxbody($annex, $workshopId, $status, $filter, $id1, $id2, $id3);
-
+        $xlsxbody = $this->xlsxbody($annex, $workshopId, $status, $filter, $id1, $id2, $id3, $year);
         foreach($xlsxbody['body'] as $body){
             array_push($data, $body);
         }
@@ -1899,9 +1934,9 @@ class WorkshopController extends Controller
                 [null],
                 ['<middle><center><b>Program/Project</b></center></middle>', 
                  '<middle><center><b>Performance Indicators</b></center></middle>', 
-                 '<middle><center><b>Previous Year Accomplishments<br> CY '.$year.'</b></center></middle>', null , 
-                 '<middle><center><b><wraptext>CY '.($year+1).'<br> Physical Targets</wraptext></b></center></middle>',
-                 '<middle><center><b>CY '.($year+1).' Quarterly Physical Targets</b></center></middle>'],
+                 '<middle><center><b>Previous Year Accomplishments<br> CY '.($year-1).'</b></center></middle>', null , 
+                 '<middle><center><b><wraptext>CY '.$year.'<br> Physical Targets</wraptext></b></center></middle>',
+                 '<middle><center><b>CY '.$year.' Quarterly Physical Targets</b></center></middle>'],
                 [null, null,
                 '<middle><center><b>Actual</b></center></middle>',
                 '<middle><center><b>Estimate</b></center></middle>', null,
@@ -1928,9 +1963,9 @@ class WorkshopController extends Controller
             $header = [
                 ['Department of Science and Technology', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, '<b>Annex F</b>'],
                 ['<b>SCIENCE EDUCATION INSTITUE</b>'],
-                ['<style bgcolor="#FFFF00"><b>Schedule of FY '.($year+1).' Project Implementation'],
+                ['<style bgcolor="#FFFF00"><b>Schedule of FY '.$year.' Project Implementation'],
                 [null],
-                ['<middle><center><wraptext>Project Name / Activity</wraptext></center></middle>', '<middle><center><wraptext>Total Target (P"000)</wraptext></center></middle>', '<center>'.$year.'</center>', null, null, '<center>'.($year+1).'</center>', null, null, null, null, null, null, null, null, null, null, null, '<middle><center>Total</center><middle>', '<middle><center>Remarks</center></middle>'],
+                ['<middle><center><wraptext>Project Name / Activity</wraptext></center></middle>', '<middle><center><wraptext>Total Target (P"000)</wraptext></center></middle>', '<center>'.($year-1).'</center>', null, null, '<center>'.$year.'</center>', null, null, null, null, null, null, null, null, null, null, null, '<middle><center>Total</center><middle>', '<middle><center>Remarks</center></middle>'],
                 [null, null, '<center>4th</center>', null, null, '<center>1st</center>', null, null, '<center>2nd</center>', null, null, '<center>3rd</center>', null, null, '<center>4th</center>', null, null, null, null],
                 [null, null, '<center>Oct</center>', '<center>Nov</center>', '<center>Dec</center>', '<center>Jan</center>', '<center>Feb</center>', '<center>Mar</center>', '<center>Apr</center>', '<center>May</center>', '<center>Jun</center>', '<center>Jul</center>', '<center>Aug</center>', '<center>Sep</center>', '<center>Oct</center>', '<center>Nov</center>', '<center>Dec</center>', null, null]
             ];
@@ -1952,7 +1987,7 @@ class WorkshopController extends Controller
         return ['header' => $header, 'mergedcells' => $mergedcells];
     }
 
-    private function xlsxbody($annex, $workshopId, $status, $filter, $id1, $id2, $id3){
+    private function xlsxbody($annex, $workshopId, $status, $filter, $id1, $id2, $id3, $year){
         $body = []; $mergedcells = [];
         $programs = Program::with('subprograms.clusters')->get();
         $query = $annex == 'annex-e' ? AnnexE::query() : AnnexF::query();
@@ -1973,7 +2008,7 @@ class WorkshopController extends Controller
                 'histories.profile.user', 'funds', 'activities', 
                 'subs.activities', 'subs.funds', 'subs.subproject']);
 
-        $items = $query->where('workshop_id', $workshopId)->where('status', $status)->get();
+        $items = $query->where('workshop_id', $workshopId)->where('status', $status)->where('year', $year)->get();
         $grouped = $annex == 'annex-e' ? 
             $items->groupBy(['project.program_id', 'project.subprogram_id', 'project.cluster_id']) :
             $items->groupBy(['projects.0.program_id', 'projects.0.subprogram_id', 'projects.0.cluster_id']);
@@ -1989,6 +2024,7 @@ class WorkshopController extends Controller
             }
             $commonindicators = $query->with(['details', 'tags', 'subindicators.details'])
                 ->whereNot('type', 'Performance')
+                ->where('year', $year)
                 ->where('workshop_id', $workshopId)
                 ->get();
             $cigrouped = $commonindicators->groupBy(['program_id', 'subprogram_id', 'cluster_id']);

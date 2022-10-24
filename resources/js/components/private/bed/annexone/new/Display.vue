@@ -3,7 +3,7 @@
         <div class="position-relative" :class="toggle ? 'col-sm-9' : 'col-sm-12'">
             <button v-if="!toggle && !formshow" @click="toggle = !toggle" style="z-index: 99" class="btn btn-sm btn-secondary bg-gradient position-absolute end-0"><i class="fas fa-arrow-left"></i></button>
             <div v-if="!editmode" class="card border-0 shadow rounded-0">
-                <div class="card-body">
+                <div class="card-body" v-if="!syncing">
                     <div :style="'font-size:' + fontsize" class="d-flex justify-content-end fw-bold">Annex 1</div>
                     <div class="text-center mb-3">
                         <h6 :style="'font-size:' + fontsize" class="mb-0 fw-bold">SEI Annual Planning Workshop</h6>
@@ -85,6 +85,9 @@
                         </table>
                     </div>
                 </div>
+                <div class="card-body p-5 text-center" v-else>
+                    <h1>Data Syncing <i class="far fa-sync fa-spin"></i></h1>
+                </div>
             </div>
             <Form @clicked="childClicked()" v-else />
         </div>
@@ -94,19 +97,19 @@
                     <button @click="toggle = !toggle" class="btn btn-sm btn-secondary bg-gradient float-end"><i class="fas fa-arrow-right"></i></button>
                     <h4>Filters</h4>
                     <div class="form-floating mb-2">
-                        <select class="form-select" id="floatingSelect" aria-label="Floating label select example">
+                        <select class="form-select" id="Division" v-model="division_id">
                             <option :value="0" selected>All Division</option>
                             <option :value="division.id" v-for="division in divisions" :key="division.id">{{division.name}}</option>
                         </select>
-                        <label for="floatingSelect">Division</label>
+                        <label for="Division">Division</label>
                     </div>
                     <div class="d-flex justify-content-end">
-                        <button class="btn btn-sm btn-primary bg-gradient"><i class="fas fa-sync"></i> Sync</button>
+                        <button @click="syncRecords()" class="btn btn-sm btn-primary bg-gradient"><i class="fas fa-sync"></i> Sync</button>
                     </div>
                 </div>
             </div>
             <div class="d-flex justify-content-end">
-                <button class="btn btn-sm btn-warning bg-gradient" data-bs-target="#modal" data-bs-toggle="modal">Publish Projects</button>
+                <button v-if="inUserRoles('annex_one_publish_projects')" class="btn btn-sm btn-warning bg-gradient" data-bs-target="#modal" data-bs-toggle="modal">Publish Projects</button>
             </div>
         </div>
         <div class="modal fade" id="modal" tabindex="-1">
@@ -117,51 +120,56 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <!-- Temporary disabled other functionalities for other Programs, this is to focus on the only Program 1 RA 10612 and RA 7687/ 2067. This can be further improved -->
-                        <!-- <button class="btn btn-sm btn-success float-end"><i class="fas fa-plus"></i></button> -->
-                        <p class="fw-bold">Annex F Special Case <i class="far fa-question-circle"></i></p><hr>
-                        <div class="mb-2 border-bottom" v-for="specialcase, key in form.cases" :key="key">
-                            <div class="form-floating mb-3">
-                                <select class="form-select" id="Programs" v-model="specialcase.program_id" @change="changeProgram(key)">
-                                    <option value="" disabled hidden selected>Select Program</option>
-                                    <template v-for="program in programs" :key="program.id">
-                                        <option :value="program.id" v-if="program.id == 1">{{program.title}}</option>
-                                    </template>
-                                </select>
-                                <label for="Programs">Programs</label>
-                            </div>
-                            <div class="form-group row" v-if="specialcase.subprograms.length > 0">
-                                <!-- <div :class="specialcase.clusters.length == 0 ? 'col-sm-12' : 'col-sm-6'"> -->
-                                <div class="col-sm-12">
-                                    <div class="form-floating mb-3">
-                                        <select class="form-select" id="SubPrograms" v-model="specialcase.subprogram_id" @change="changeSubprogram(key)">
-                                            <option value="" disabled hidden selected>Select Sub-Program</option>
-                                            <option :value="subprogram.id" v-for="subprogram in specialcase.subprograms" :key="subprogram.id">{{specialcase.program_id == 1 ? subprogram.title_short : subprogram.title}}</option>
-                                        </select>
-                                        <label for="SubPrograms">Sub-Programs</label>
+                        <template v-if="!workshop.published">
+                            <!-- Temporary disabled other functionalities for other Programs, this is to focus on the only Program 1 RA 10612 and RA 7687/ 2067. This can be further improved -->
+                            <!-- <button class="btn btn-sm btn-success float-end"><i class="fas fa-plus"></i></button> -->
+                            <p class="fw-bold">Annex F Special Case <i class="far fa-question-circle"></i></p><hr>
+                            <div class="mb-2 border-bottom" v-for="specialcase, key in form.cases" :key="key">
+                                <div class="form-floating mb-3">
+                                    <select class="form-select" id="Programs" v-model="specialcase.program_id" @change="changeProgram(key)">
+                                        <option value="" disabled hidden selected>Select Program</option>
+                                        <template v-for="program in programs" :key="program.id">
+                                            <option :value="program.id" v-if="program.id == 1">{{program.title}}</option>
+                                        </template>
+                                    </select>
+                                    <label for="Programs">Programs</label>
+                                </div>
+                                <div class="form-group row" v-if="specialcase.subprograms.length > 0">
+                                    <!-- <div :class="specialcase.clusters.length == 0 ? 'col-sm-12' : 'col-sm-6'"> -->
+                                    <div class="col-sm-12">
+                                        <div class="form-floating mb-3">
+                                            <select class="form-select" id="SubPrograms" v-model="specialcase.subprogram_id" @change="changeSubprogram(key)">
+                                                <option value="" disabled hidden selected>Select Sub-Program</option>
+                                                <option :value="subprogram.id" v-for="subprogram in specialcase.subprograms" :key="subprogram.id">{{specialcase.program_id == 1 ? subprogram.title_short : subprogram.title}}</option>
+                                            </select>
+                                            <label for="SubPrograms">Sub-Programs</label>
+                                        </div>
+                                    </div>
+                                    <!-- <div class="col-sm-6" v-if="specialcase.clusters.length > 0">
+                                        <div class="form-floating mb-3">
+                                            <select class="form-select" id="Clusters" v-model="specialcase.cluster_id" @change="changeCluster(key)">
+                                                <option value="" disabled hidden selected>Select Clusters</option>
+                                                <option :value="cluster.id" v-for="cluster in specialcase.clusters" :key="cluster.id">{{cluster.title}}</option>
+                                            </select>
+                                            <label for="Clusters">Clusters</label>
+                                        </div>
+                                    </div> -->
+                                </div>
+                                <div>
+                                    <div class="form-check" v-for="project in specialcase.projects" :key="project.id">
+                                        <input class="form-check-input" type="checkbox" :value="project.id" :id="project.id+'project'+key" v-model="specialcase.projectIds">
+                                        <label class="form-check-label" :for="project.id+'project'+key">
+                                            {{project.title}}
+                                        </label>
                                     </div>
                                 </div>
-                                <!-- <div class="col-sm-6" v-if="specialcase.clusters.length > 0">
-                                    <div class="form-floating mb-3">
-                                        <select class="form-select" id="Clusters" v-model="specialcase.cluster_id" @change="changeCluster(key)">
-                                            <option value="" disabled hidden selected>Select Clusters</option>
-                                            <option :value="cluster.id" v-for="cluster in specialcase.clusters" :key="cluster.id">{{cluster.title}}</option>
-                                        </select>
-                                        <label for="Clusters">Clusters</label>
-                                    </div>
-                                </div> -->
                             </div>
-                            <div>
-                                <div class="form-check" v-for="project in specialcase.projects" :key="project.id">
-                                    <input class="form-check-input" type="checkbox" :value="project.id" :id="project.id+'project'+key" v-model="specialcase.projectIds">
-                                    <label class="form-check-label" :for="project.id+'project'+key">
-                                        {{project.title}}
-                                    </label>
-                                </div>
-                            </div>
+                        </template>
+                        <div v-else class="text-center p-5">
+                            <h3>Projects already published</h3>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" v-if="!workshop.published">
                         <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
                         <button type="button" class="btn btn-success bg-gradient" @click="publish()">Publish Projects</button>
                     </div>
@@ -201,13 +209,25 @@ export default {
                     subprograms: [],
                     clusters: [],
                 }]
-            }
+            },
+            division_id: 0,
+            syncing: false
         }
     },
     methods: {
         ...mapActions('division', ['fetchDivisions']),
         ...mapActions('program', ['fetchPrograms']),
-        ...mapActions('annexone', ['publishProjects']),
+        ...mapActions('annexone', ['publishProjects', 'fetchFilteredAnnexOne']),
+        syncRecords(){
+            this.syncing = true
+            var filter = {
+                workshop_id: this.$route.params.workshopId,
+                division_id: this.division_id
+            }
+            this.fetchFilteredAnnexOne(filter).then(res => {
+                this.syncing = false
+            })
+        },
         publish(){
             this.swalConfirmCancel('Are you sure?', 'This action is irreversible and can be done only one time per workshop').then(result=>{
                 if(result){
@@ -341,8 +361,6 @@ export default {
             for(let div in annexones){
                 var sources = annexones[div]
                 for(let source in sources){
-                    console.log(source)
-                    console.log(src)
                     if(source.includes(src)){
                         var header = sources[source]
                         for(let head in header){
@@ -371,7 +389,7 @@ export default {
                     }
                 }
             }
-            amount = division == 'STSD' ? amount - this.strToFloat(this.setBySource(num, 'AC')) : amount
+            amount = division == 'STSD' ? amount - (this.setBySource(num, 'AC') ? this.strToFloat(this.setBySource(num, 'AC')) : 0) : amount
             return amount > 0 ? this.formatAmount(amount) : ''
         },
         formatAmount(amount){
@@ -381,6 +399,10 @@ export default {
         strToFloat(num){
             let strNum = num.toString().replace(/\,/g,'')
             return Math.abs(parseFloat(strNum))
+        },
+        inUserRoles(code){
+            var role = this.userroles.find(elem => elem.code == code)
+            return (role)
         },
         toastMsg(icon, msg){
             toast.fire({
@@ -409,10 +431,12 @@ export default {
         ...mapGetters('division', ['getDivisions']),
         ...mapGetters('program', ['getPrograms']),
         ...mapGetters('annexone', ['getAnnexOnes']),
+        ...mapGetters('user', ['getAuthUser']),
         workshop(){ return this.getWorkshop },
         divisions(){ return this.getDivisions },
         programs(){ return this.getPrograms },
         annexones(){ return this.getAnnexOnes },
+        userroles(){ return this.getAuthUser.active_profile.roles }
     },
     created(){
         if(this.divisions.length == 0){

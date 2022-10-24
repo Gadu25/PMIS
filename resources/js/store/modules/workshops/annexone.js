@@ -16,6 +16,13 @@ const actions = {
         })
         return response
     },
+    async fetchFilteredAnnexOne({commit}, form){
+        const response = await axios.post('/api/workshop/annex-one/filtered', form).then(res => {
+            commit('setAnnexOnes', res.data)
+            return res.data
+        })
+        return response
+    },
     async saveAnnexOne({commit}, form){
         const response = form.id == '' ? await axios.post('/api/workshop/annex-one', form) : await axios.put('/api/workshop/annex-one/'+form.id, form)
         if(!response.data.errors){

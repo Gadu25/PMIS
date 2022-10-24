@@ -1,11 +1,11 @@
 <template>
-    <thead class="align-middle text-center" :class="!syncing && !printmode ? 'position-sticky top-0 bg-warning' : ''">
+    <thead class="align-middle text-center" :class="!syncing && !printmode ? 'position-sticky top-0 transparint shadow-lg' : ''">
         <tr>
             <th style="width: 11.11%" rowspan="3"><span class="text-nowrap">Program / Project</span></th>
             <th style="width: 11.11%" rowspan="3"><span class="text-nowrap">Performance Indicators (PIs)</span></th>
-            <th colspan="2"><span class="text-nowrap">Previous Year Acccomplishments</span> <br> CY {{parseInt(workshop.year)}}</th>
-            <th rowspan="3">CY {{parseInt(workshop.year) + 1}} <br> <span class="text-nowrap">Physical Targets</span></th>
-            <th colspan="4">CY {{parseInt(workshop.year) + 1}} Quarterly Physical Targets</th>
+            <th colspan="2"><span class="text-nowrap">Previous Year Acccomplishments</span> <br> CY {{year-1}}</th>
+            <th rowspan="3">CY {{year}} <br> <span class="text-nowrap">Physical Targets</span></th>
+            <th colspan="4">CY {{year}} Quarterly Physical Targets</th>
         </tr>
         <tr>
             <th style="width: 11.11%">Actual</th>
@@ -27,7 +27,8 @@ export default {
     name: 'TableHead',
     props: {
         syncing: Boolean,
-        printmode: Boolean
+        printmode: Boolean,
+        year: Number
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop']),
@@ -35,3 +36,8 @@ export default {
     }
 }
 </script>
+<style scoped>
+.transparint{
+    background: rgba(255, 255, 255, 0.9);
+}
+</style>

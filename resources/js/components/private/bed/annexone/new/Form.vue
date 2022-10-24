@@ -1,6 +1,6 @@
 <template>
     <div v-if="!formshow">
-        <div class="d-flex justify-content-end mb-2">
+        <div class="d-flex justify-content-end mb-2" v-if="inUserRoles('annex_one_add')">
             <button class="btn btn-sm btn-success bg-gradient" data-bs-target="#modal" data-bs-toggle="modal" @click="newForm()"><i class="fas fa-plus"></i> Create New</button>
         </div>
         <div class="table-responsive" id="project-list">
@@ -29,9 +29,9 @@
                                         <td><div class="ms-1">{{annexone.project.title}}</div></td>
                                         <td class="text-center">
                                             <template v-if="formMatchProject(annexone.project)">
-                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-primary mb-1" data-bs-target="#modal" data-bs-toggle="modal" @click="editForm(annexone)"><i class="far fa-pencil-alt"></i> Info</button><br>
-                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-warning mb-1" @click="editFormTable(annexone)"><i class="far fa-pencil-alt"></i> Table</button><br>
-                                                <button style="width: 80px;" class="btn btn-sm shadow-none btn-danger" @click="removeAnnexOne(annexone)"><i class="far fa-trash-alt"></i> Project</button>
+                                                <button v-if="inUserRoles('annex_one_edit')" style="width: 80px;" class="btn btn-sm shadow-none btn-primary mb-1" data-bs-target="#modal" data-bs-toggle="modal" @click="editForm(annexone)"><i class="far fa-pencil-alt"></i> Info</button><br>
+                                                <button v-if="inUserRoles('annex_one_edit')" style="width: 80px;" class="btn btn-sm shadow-none btn-warning mb-1" @click="editFormTable(annexone)"><i class="far fa-pencil-alt"></i> Table</button><br>
+                                                <button v-if="inUserRoles('annex_one_delete')" style="width: 80px;" class="btn btn-sm shadow-none btn-danger" @click="removeAnnexOne(annexone)"><i class="far fa-trash-alt"></i> Project</button>
                                             </template>
                                         </td>
                                     </tr>
@@ -584,6 +584,10 @@ export default {
                 })
             return result
         },
+        inUserRoles(code){
+            var role = this.userroles.find(elem => elem.code == code)
+            return (role)
+        },
         formatAmount(amount){
             amount = parseFloat(amount.toString().replaceAll(',', ''))
             return (Math.round(amount * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -603,6 +607,7 @@ export default {
         // usedprojects(){ return this.getOptions.used_projects },
         annexones(){ return this.getAnnexOnes },
         user(){ return this.getAuthUser },
+        userroles(){ return this.getAuthUser.active_profile.roles },
         workshopYear(){ return parseInt(this.getWorkshop.year) }
     },
     created(){

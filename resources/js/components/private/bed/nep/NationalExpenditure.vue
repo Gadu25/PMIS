@@ -6,7 +6,7 @@
         <template v-if="!loading">
             <div class="row justify-content-center">
                 <div class="col-sm-10">
-                    <div class="d-flex justify-content-end mb-3">
+                    <div class="d-flex justify-content-end mb-3" v-if="inUserRoles('nep_editmode')">
                         <button class="btn btn-sm bg-gradient shadow-none" @click="editmode = !editmode" :class="editmode ? 'btn-outline-primary' : 'btn-success'">{{!editmode ? 'Edit' : 'View'}} mode</button>
                     </div>
                     <div class="table-responsive mb-2 shadow-lg">
@@ -26,7 +26,7 @@
                                     <tr style="background: orange">
                                         <td colspan="3"><strong>{{division.divCode}}</strong></td>
                                         <td v-if="editmode" class="p-0" style="height: 1px;">
-                                            <button class="btn btn-sm btn-success bg-gradient h-100 w-100 border-0 shadow-none rounded-0" tabindex="-1" @click="addProject(division)"><i class="fas fa-plus"></i> Project</button>
+                                            <button v-if="inUserRoles('nep_add')" class="btn btn-sm btn-success bg-gradient h-100 w-100 border-0 shadow-none rounded-0" tabindex="-1" @click="addProject(division)"><i class="fas fa-plus"></i> Project</button>
                                         </td>
                                     </tr>
                                     <template v-for="project, key in division.projects" :key="key">
@@ -39,14 +39,14 @@
                                                         <option :value="proj.id" v-if="(!used.includes(proj.id) || proj.id == project.project_id) && proj.division_id == division.divId">{{proj.title}}</option>
                                                     </template>
                                                 </select>
-                                                <span v-else>{{project.project_title}}</span>
+                                                <div v-else class="px-2">{{project.project_title}}</div>
                                             </td>
                                             <td class="text-end">
                                                 <input type="text" class="form-control text-end" v-model="project.amount" v-money="money" @change="amountCheck(project)" v-if="editmode && project.editmode">
-                                                <span v-else class="me-1">{{formatAmount(project.amount)}}</span>
+                                                <span v-else class="px-2">{{formatAmount(project.amount)}}</span>
                                             </td>
                                             <td v-if="editmode">
-                                                <button class="btn btn-sm" tabindex="-1" style="min-height: 36px;" :class="[project.editmode ? 'w-75' : 'w-50', project.id ? 'btn-outline-primary' : 'btn-outline-success']" 
+                                                <button v-if="inUserRoles('nep_edit')" class="btn btn-sm" tabindex="-1" style="min-height: 36px;" :class="[project.editmode ? 'w-75' : 'w-50', project.id ? 'btn-outline-primary' : 'btn-outline-success']" 
                                                     @click="project.editmode ? submitForm({
                                                         type: 'single', 
                                                         project: project,
@@ -59,7 +59,7 @@
                                                 </button>
                                                 <!-- <button class="btn btn-sm btn-outline-danger" :class="project.editmode ? 'w-25' : 'w-50'" 
                                                     @click="removeProject(division, project)"> -->
-                                                <button class="btn btn-sm btn-outline-danger" tabindex="-1" :class="project.editmode ? 'w-25' : 'w-50'" 
+                                                <button v-if="inUserRoles('nep_delete')" class="btn btn-sm btn-outline-danger" tabindex="-1" :class="project.editmode ? 'w-25' : 'w-50'" 
                                                     @click="project.editmode && project.id ? removeEdit(project) : removeProject(division, project)">
                                                     <i class="far fa-trash-alt fa-lg" v-if="!project.editmode"></i>
                                                     <i class="far fa-times fa-lg" v-else></i>
@@ -69,10 +69,10 @@
                                         <template v-for="sub, subKey in project.subs" :key="subKey">
                                             <tr :id="editmode ? 'input' : ''" v-if="editmode || sub.id">
                                                 <td :class="sub.isAdded ? 'bg-success' : 'bg-secondary'"></td>
-                                                <td><span class="ms-1">{{sub.subprojectTitle}}</span></td>
+                                                <td><div class="mx-3 my-1">{{sub.subprojectTitle}}</div></td>
                                                 <td class="text-end">
                                                     <input type="text" class="form-control text-end" v-model="sub.amount" v-money="money" @change="amountCheck(sub)" v-if="editmode && project.editmode">
-                                                    <span v-else class="me-1">{{formatAmount(sub.amount)}}</span>
+                                                    <span v-else class="px-2">{{sub.amount != 0 ? formatAmount(sub.amount) : ''}}</span>
                                                 </td>
                                                 <td v-if="editmode"></td>
                                             </tr>
@@ -83,7 +83,7 @@
                         </table>
                     </div>
                     <div class="d-flex justify-content-end" v-if="editmode && editCount > 1">
-                        <button class="btn btn-primary bg-gradient rounded-pill" style="min-width: 120px" @click="submitForm({type: 'multiple'})"><i class="far fa-save"></i> Save all</button>
+                        <button v-if="inUserRoles('nep_multisave')" class="btn btn-primary bg-gradient rounded-pill" style="min-width: 120px" @click="submitForm({type: 'multiple'})"><i class="far fa-save"></i> Save all</button>
                     </div>
                 </div>
             </div>
@@ -299,6 +299,10 @@ export default {
                 this.form.divisions.push(temp)
             }
         },
+        inUserRoles(code){
+            var role = this.userroles.find(elem => elem.code == code)
+            return (role)
+        },
         toastMsg(icon, msg){
             toast.fire({
                 icon: icon,
@@ -338,10 +342,13 @@ export default {
     },
     computed: {
         ...mapGetters('workshop', ['getWorkshop', 'getOptions']),
-        ...mapGetters('nep', ['getNationalExpenditures',]),
+        ...mapGetters('nep', ['getNationalExpenditures']),
+        ...mapGetters('user', ['getAuthUser']),
         workshop(){ return this.getWorkshop },
         projects(){ return this.getOptions.projects },
-        divisions(){ return this.getNationalExpenditures }
+        divisions(){ return this.getNationalExpenditures },
+        auth(){ return this.getAuthUser },
+        userroles(){ return this.getAuthUser.active_profile.roles }
         
     }
 }

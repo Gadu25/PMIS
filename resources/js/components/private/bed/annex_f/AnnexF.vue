@@ -1,13 +1,13 @@
 <template>
     <div class="px-3 py-4">
         <div class="border-bottom mb-2">
-            <button v-if="!formshow" class="btn btn-sm btn-light float-start" @click="this.$router.back()"><i class="fas fa-arrow-left"></i> Back</button>
+            <button v-if="!formshow" class="btn btn-sm btn-light float-start" @click="this.$router.push('/budget-executive-documents')"><i class="fas fa-arrow-left"></i> Back</button>
             <h4 class="text-center">Annex F</h4>
             <small>Planning Workshop <span v-if="!loading">{{workshop.date}}</span><span v-else>Loading date <i class="fas fa-spinner fa-spin"></i></span></small>
         </div>
         <div class="d-flex justify-content-between mb-2 ">
             <div> <!-- div needed for flex space between  -->
-                <template v-if="!editmode && inUserRole('annex_f_export')">
+                <template v-if="!editmode && inUserRole('annex_f_export') && syncedstatus == 'Submitted'">
                     <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-1" :class="printmode ? 'btn-secondary' : 'btn-outline-secondary'" @click="printmode = !printmode"><i v-if="printmode" class="far fa-arrow-left"></i> Export</button>
                     <button class="btn btn-sm btn-outline-secondary me-1" v-print="'#printMe'" v-if="printmode"><i class="far fa-print"></i> Print or Save as PDF</button>
                     <a v-if="!editmode && exportlink != '' && printmode" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient"><i class="far fa-file-excel"></i> Excel</a>
@@ -87,6 +87,13 @@
                                 <label for="Sub-Unit">Sub-Unit</label>
                             </div>
                         </template>
+                        <div class="form-floating mb-3">
+                            <select class="form-control" id="Year" v-model="filter.year">
+                                <option :value="workshopYear+1">{{workshopYear+1}}</option>
+                                <option :value="workshopYear+2">{{workshopYear+2}}</option>
+                            </select>
+                            <label for="Year">Year</label>
+                        </div>
                         <div class="d-flex justify-content-end">
                             <button class="btn btn-sm btn-primary" v-if="inUserRole('annex_f_sync')" @click="syncRecords()"><i class="far fa-sync" :class="syncing ? 'fa-spin' : ''"></i> Sync</button>
                         </div>
@@ -104,9 +111,9 @@
                             <div class="position-relative" id="printMe">
                                 <div class="d-flex justify-content-between"><small>Department of Science and Technology</small> <small class="fw-bold">Annex F</small></div>
                                 <h6 class="mb-2 fw-bold"><small>SCIENCE EDUCATION INSITITUTE</small></h6>
-                                <h6 class="mb-3 fw-bold" style="background: yellow;"><small>Schedule of FY {{parseInt(workshop.year)+1}} Project Implementation</small></h6>
+                                <h6 class="mb-3 fw-bold" style="background: yellow;"><small>Schedule of FY {{this.syncedyear}} Project Implementation</small></h6>
                                 <div class="table-responsive " :class="printmode ? '' : 'display'" v-dragscroll>
-                                    <Display :printmode="printmode" />
+                                    <Display :printmode="printmode" :year="syncedyear" />
                                 </div>
                                 <span v-if="printmode">Annex F {{syncedstatus}} Projects as of {{this.getDateToday()}}</span>
                             </div>
@@ -165,7 +172,7 @@
                                 </div>
                                 <div class="table-responsive form-details pb-2" v-dragscroll>
                                     <table class="table table-sm table-bordered" style="width: 3000px">
-                                        <TableHead />
+                                        <TableHead :year="syncedyear" />
                                         <tbody>
                                             <tr>
                                                 <td>{{form.title}}</td>
@@ -283,12 +290,14 @@ export default {
             filtershow: true,
             formshow:   false,
             syncedstatus: '',
+            syncedyear: 0,
             filter: {
                 status:   'Draft', type: 'Program',
                 program_id:    '', division_id: '',
                 subprogram_id: '', unit_id: '',
                 cluster_id:    '', subunit_id: '',
-                workshopId: this.$route.params.workshopId
+                workshopId: this.$route.params.workshopId,
+                year: 0
             },
             subprograms: [], //Empty arrays for filter
             clusters:    [],
@@ -322,7 +331,7 @@ export default {
                 precision: 2,
                 masked:    false /* doesn't work with directive */
             },
-            exportlink: ''
+            exportlink: '',
         }
     },
     methods: {
@@ -384,6 +393,7 @@ export default {
                     const items = await this.fetchAnnexFs(this.filter).then(res => {
                         this.syncing = false
                         this.syncedstatus = this.filter.status
+                        this.syncedyear = this.filter.year
                         this.setExportLink(this.filter)
                         return res
                     })
@@ -395,13 +405,13 @@ export default {
             return promise
         },
         setExportLink(options){
-            // /api/export/1/annex-e/New/Program/0/0/0
+            // /api/export/1/annex-e/New/Program/0/0/0/year
             var ids = {
                 one:   options.type == 'Program' ? (options.program_id ? options.program_id : 0)    : (options.division_id ? options.division_id : 0),
                 two:   options.type == 'Program' ? (options.subprogram_id ? options.program_id : 0) : (options.unit_id     ? options.unit_id : 0),
                 three: options.type == 'Program' ? (options.cluster_id ? options.program_id : 0)    : (options.subunit_id  ? options.subunit_id : 0),
             }
-            this.exportlink = '/api/export/'+options.workshopId+'/annex-f/'+options.status+'/'+options.type+'/'+ids.one+'/'+ids.two+'/'+ids.three
+            this.exportlink = '/api/export/'+options.workshopId+'/annex-f/'+options.status+'/'+options.type+'/'+ids.one+'/'+ids.two+'/'+ids.three+'/'+this.syncedyear
         },
         // Form
         childClick(item, title, type){
@@ -655,12 +665,15 @@ export default {
         // Watcher
         checkQueryStr(){
             this.fetchAnnexF(this.$route.query.id).then(res => {
-                this.filter.status = res.status
-                var title = this.setItemTitle(res.projects)
-                this.syncRecords().then(r => {
-                    this.editForm(res, title)
-                    this.editmode = true
-                })
+                if(res){
+                    this.filter.year = res.year
+                    this.filter.status = res.status
+                    var title = this.setItemTitle(res.projects)
+                    this.syncRecords().then(r => {
+                        this.editForm(res, title)
+                        this.editmode = true
+                    })
+                }
             })
         },
         // Roles
@@ -674,6 +687,7 @@ export default {
         annexfs(){ return this.getAnnexFs },
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
+        workshopYear(){ return parseInt(this.getWorkshop.year) },
         ...mapGetters('program', ['getPrograms']),
         programs(){ return this.getPrograms },
         ...mapGetters('division', ['getDivisions']),
@@ -683,6 +697,8 @@ export default {
     },
     created(){
         this.fetchWorkshop(this.$route.params.workshopId).then(res => {
+            this.filter.year = this.filter.year ? this.filter.year : this.workshopYear+1
+            this.syncedyear = this.filter.year
             this.loading = false
         })
         if(this.programs.length == 0){

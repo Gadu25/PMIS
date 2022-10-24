@@ -8,7 +8,7 @@
         <template v-if="!loading">
             <div class="d-flex justify-content-between mb-2">
                 <div>
-                    <template v-if="inUserRole('annex_e_export')">
+                    <template v-if="inUserRole('annex_e_export') && displaysyncstatus == 'Submitted'">
                         <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-1" :class="printmode ? 'btn-secondary' : 'btn-outline-secondary'" @click="printmode = !printmode"><i v-if="printmode" class="far fa-arrow-left"></i> Export</button>
                         <button v-if="!editmode && printmode && annexes.length > 0" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary me-1"><i class="far fa-print"></i> Print or Save as PDF</button>
                         <a v-if="!editmode && exportlink != '' && printmode" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient"><i class="far fa-file-excel"></i> Excel</a>
@@ -88,6 +88,13 @@
                                     <label for="SubUnit">Sub-Unit</label>
                                 </div>
                             </template>
+                            <div class="form-floating mb-3">
+                                <select class="form-control" id="Year" v-model="year">
+                                    <option :value="workshopYear+1">{{workshopYear+1}}</option>
+                                    <option :value="workshopYear+2">{{workshopYear+2}}</option>
+                                </select>
+                                <label for="Year">Year</label>
+                            </div>
                             <div class="d-flex justify-content-end">
                                 <button class="btn btn-sm btn-primary shadow-none" v-if="inUserRole('annex_e_sync')" @click="syncRecords()">{{syncing ? 'Syncing...' : 'Sync'}} <i class="far fa-sync-alt" :class="syncing ? 'fa-spin' : ''"></i></button>
                             </div>
@@ -101,7 +108,7 @@
                         <div class="card border-0 shadow overflow-auto" :style="!printmode ? 'height: calc(100vh - 210px)' : ''">
                             <div class="card-body">
                                 <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
-                                <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" id="printMe"/>
+                                <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" :year="syncedyear" id="printMe"/>
                                 <EmptyTable v-else />
                             </div>
                         </div>
@@ -143,11 +150,11 @@
                                                         <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                         <td class="text-center" :rowspan="item.subs.length + 1">
                                                             <template v-if="checkUserDivision(item.project)">
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                 <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                             </template>
-                                                            <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                            <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                         </td>
                                                     </tr>
                                                 </template>
@@ -175,11 +182,11 @@
                                                             <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                             <td class="text-center" :rowspan="item.subs.length + 1">
                                                                 <template v-if="checkUserDivision(item.project)">
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                     <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                 </template>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                             </td>
                                                         </tr>
                                                         <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -211,11 +218,11 @@
                                                                 <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
                                                                 <td class="text-center" :rowspan="item.subs.length+1">
                                                                     <template v-if="checkUserDivision(item.project)">
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                         <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                     </template>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-outline-secondary me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                                                 </td>
                                                             </tr>
                                                             <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -267,7 +274,7 @@
                     </div>
                     <div class="table-responsive" style="height: calc(100vh - 218px);" v-dragscroll>
                         <table class="table table-sm table-bordered">
-                            <TableHead :syncing="true" :printmode="true" />
+                            <TableHead :syncing="true" :printmode="true" :year="syncedyear" />
                             <tbody>
                                 <tr><td :rowspan="form.indicators.length + 1">{{form.project_title}}</td></tr>
                                 <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
@@ -600,6 +607,8 @@ export default {
             displaytype: 'Program',
             displaystatus: 'Draft',
             displaysyncstatus: 'Draft',
+            year: 0,
+            syncedyear: 0,
             disProg: {
                 program_id: 0,
                 subprogram_id: 0,
@@ -731,18 +740,20 @@ export default {
                 this.subunits = unit.subunits
             }
         },
-        syncRecords(status = null){
+        syncRecords(status = null, year = null){
             this.syncing = true
             var type = this.displaytype
-
             var options = (type == 'Program') ? this.disProg : this.disDiv
             options.type = type
             options.workshopId = this.$route.params.workshopId
+            options.year = year ? year : this.year
             options.status     = status ? status : this.displaystatus
             this.fetchAnnexEs(options).then(res => {
                 this.syncing = false
                 this.displaystatus = options.status
                 this.displaysyncstatus = options.status
+                this.year = year ? year : this.year
+                this.syncedyear = year ? year : this.year
                 this.setExportLink(options)
             })
         },
@@ -753,7 +764,7 @@ export default {
                 two:   options.type == 'Program' ? options.subprogram_id : options.unit_id,
                 three: options.type == 'Program' ? options.cluster_id    : options.subunit_id,
             }
-            this.exportlink = '/api/export/'+options.workshopId+'/annex-e/'+options.status+'/'+options.type+'/'+ids.one+'/'+ids.two+'/'+ids.three
+            this.exportlink = '/api/export/'+options.workshopId+'/annex-e/'+options.status+'/'+options.type+'/'+ids.one+'/'+ids.two+'/'+ids.three+'/'+this.syncedyear
         },
         // Form
         submitForm(status){
@@ -1186,12 +1197,14 @@ export default {
         },
         checkStatus(){
             var status = ''
+            var year = ''
             for(let i = 0; i < this.annexes.length; i++){
                 var prog = this.annexes[i]
                 for(let j = 0; j < prog.items.length; j++){
                     if(status == ''){
                         var item = prog.items[j]
                         status = item.status
+                        year = item.year
                         break
                     }
                 }
@@ -1200,6 +1213,7 @@ export default {
                     for(let k = 0; k < subp.items.length; k++){
                         var item = subp.items[k]
                         status = item.status
+                        year = item.year
                         break
                     }
                     for(let k = 0; k < subp.clusters.length; k++){
@@ -1207,6 +1221,7 @@ export default {
                         for(let l = 0; l < clus.items.length; l++){
                             var item = clus.items[l]
                             status = item.status
+                            year = item.year
                             break
                         }
                     }
@@ -1215,6 +1230,8 @@ export default {
             status = (status == '') ? 'Draft' : status
             this.displaystatus = status
             this.displaysyncstatus = status
+            this.syncedyear = year
+            this.year = year
         },
         setStatusIcon(status){
             return status == 'New' ? 'fa-sparkles text-warning' : 
@@ -1239,10 +1256,12 @@ export default {
         // Watcher
         checkQueryStr(){
             this.fetchAnnexE(this.$route.query.id).then(res => {
-                this.syncRecords(res.status)
-                // console.log(res)
-                this.editForm(res, 'details')
-                this.editmode = true
+                if(res){
+                    this.year = res.year
+                    this.syncRecords(res.status, res.year)
+                    this.editForm(res, 'details')
+                    this.editmode = true
+                }
             })
         },
         // Roles
@@ -1256,6 +1275,7 @@ export default {
         authuser(){ return this.getAuthUser },
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
+        workshopYear(){ return parseInt(this.getWorkshop.year) },
         ...mapGetters('program', ['getPrograms']),
         programs(){ return this.getPrograms },
         ...mapGetters('division', ['getDivisions']),
@@ -1265,6 +1285,8 @@ export default {
     },
     created(){
         this.fetchWorkshop(this.$route.params.workshopId).then(res => {
+            this.year = this.year ? this.year : this.workshopYear+1 
+            this.syncedyear = this.year
             this.loading = false
         })
         if(this.programs.length == 0){
