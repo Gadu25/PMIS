@@ -432,6 +432,23 @@ class WorkshopController extends Controller
             ->where('year', $annexe->year)
             ->whereNot('type', 'Performance')->get();
 
+        foreach($commonindcators as $commonindicator){
+            if($commonindicator->cluster_id === null || $commonindicator->cluster_id == $annexe->project->cluster_id){
+                $details = $commonindicator->details ? IndicatorDetail::findOrFail($commonindicator->details->id) : new IndicatorDetail;
+                foreach($columns as $column){
+                    $details[$column] = $this->formatAmount($details[$column]) + $this->formatAmount($form[$column]) - $this->formatAmount($initialDetails[$column]);
+                    
+                    if(!$withDetails){
+                        $details[$column] = $this->formatAmount($details[$column]) - $this->formatAmount($initialDetails[$column]);
+                    }
+                }
+                $commonindicator->details()->save($details);
+                if(!$this->indicatorHaveDetails($details)){
+                    $commonindicator->details()->delete();
+                }
+            }
+        }
+
         $commonindicatorsubs = CommonIndicatorSub::with('tags', 'commonindicator')
             ->whereHas('tags', function($query) use($tagId){
                 $query->where('id', $tagId);
@@ -441,33 +458,20 @@ class WorkshopController extends Controller
                 ->where('year', $annexe->year);
             })->get();
 
-        foreach($commonindcators as $commonindicator){
-            $details = $commonindicator->details ? IndicatorDetail::findOrFail($commonindicator->details->id) : new IndicatorDetail;
-            foreach($columns as $column){
-                $details[$column] = $this->formatAmount($details[$column]) + $this->formatAmount($form[$column]) - $this->formatAmount($initialDetails[$column]);
-                
-                if(!$withDetails){
-                    $details[$column] = $this->formatAmount($details[$column]) - $this->formatAmount($initialDetails[$column]);
+        foreach($commonindicatorsubs as $commonindicatorsub){
+            if($commonindicatorsub->commonindicator->cluster_id === null || $commonindicatorsub->commonindicator->cluster_id == $annexe->project->cluster_id){
+                $details = $commonindicatorsub->details ? IndicatorDetail::findOrFail($commonindicatorsub->details->id) : new IndicatorDetail;
+                foreach($columns as $column){
+                    $details[$column] = $this->formatAmount($details[$column]) + $this->formatAmount($form[$column]) - $this->formatAmount($initialDetails[$column]);
+                    
+                    if(!$withDetails){
+                        $details[$column] = $this->formatAmount($details[$column]) - $this->formatAmount($initialDetails[$column]);
+                    }
                 }
-            }
-            $commonindicator->details()->save($details);
-            if(!$this->indicatorHaveDetails($details)){
-                $commonindicator->details()->delete();
-            }
-        }
-
-        foreach($commonindicatorsubs as $commonindicator){
-            $details = $commonindicator->details ? IndicatorDetail::findOrFail($commonindicator->details->id) : new IndicatorDetail;
-            foreach($columns as $column){
-                $details[$column] = $this->formatAmount($details[$column]) + $this->formatAmount($form[$column]) - $this->formatAmount($initialDetails[$column]);
-                
-                if(!$withDetails){
-                    $details[$column] = $this->formatAmount($details[$column]) - $this->formatAmount($initialDetails[$column]);
+                $commonindicatorsub->details()->save($details);
+                if(!$this->indicatorHaveDetails($details)){
+                    $commonindicatorsub->details()->delete();
                 }
-            }
-            $commonindicator->details()->save($details);
-            if(!$this->indicatorHaveDetails($details)){
-                $commonindicator->details()->delete();
             }
         }
     }
@@ -1228,7 +1232,6 @@ class WorkshopController extends Controller
     }
 
     public function getAnnexOne($workshopId){
-        // $divisions = Division::orderBy('id', 'asc')->get();
         $annexones = AnnexOne::with(['subs.subproject', 'subs.funds', 'funds', 'project.subprojects', 'project.leader', 'project.encoders'])
             ->where('workshop_id', $workshopId)
             ->get()->sortBy('project.division_id');
@@ -1259,7 +1262,6 @@ class WorkshopController extends Controller
         DB::beginTransaction();
         try {
             // Comments here are for future developments
-            $ids = [];
 
             $workshop = Workshop::findOrFail($workshopId);
             $startDate = explode('-', $workshop->start);
@@ -1269,6 +1271,7 @@ class WorkshopController extends Controller
             // $prevWorkshop = Workshop::where from previous year
             // $prevWorkshopId = $prevWorkshop->id;
             foreach($years as $key => $year){
+                $ids = [];
                 foreach($request['cases'] as $case){
                     // Execute on $key == 0
                     // Fetch annex f from previous workshop with the same project ids
@@ -1289,7 +1292,7 @@ class WorkshopController extends Controller
                     ->where('year', $year)
                     ->where('type', 'Performance')->get();
                     
-                $annexones = AnnexOne::with('subs')->where('workshop_id', $workshopId)->orderBy('id', 'asc')->get();
+                $annexones = AnnexOne::with('subs')->where('workshop_id', $workshopId)->where('is_published', false)->orderBy('id', 'asc')->get();
                 foreach($annexones as $annexone){
                     $annexe = new AnnexE;
                     $annexe->workshop_id = $workshopId;
@@ -1302,9 +1305,11 @@ class WorkshopController extends Controller
                     foreach($commonindicators as $commonindicator){
                         // Check for matching indicator description from previous Annex E project performance indicators and current common indicators
                         // If an indicator is found, use the details of previous Annex E project performance indicators else use current common indicators
-                        if($commonindicator->program_id == $project->program_id && $commonindicator->subprogram_id === $project->subprogram_id && $commonindicator->cluster_id === $project->cluster_id){
-                            $this->saveAnnexECommonIndicator($annexe, $commonindicator);
-                        }
+                        if($commonindicator->program_id == $project->program_id && 
+                            ($commonindicator->subprogram_id === $project->subprogram_id || $commonindicator->subprogram_id === null) && 
+                            ($commonindicator->cluster_id === $project->cluster_id || $commonindicator->cluster_id === null)){
+                                $this->saveAnnexECommonIndicator($annexe, $commonindicator);
+                            }
                     }
 
                     if(!in_array($annexone->project_id, $ids)){
@@ -1328,6 +1333,11 @@ class WorkshopController extends Controller
                         $annexfsub->annex_f_id = $annexf->id;
                         $annexfsub->subproject_id = $annexonesub->subproject_id;
                         $annexfsub->save();
+                    }
+
+                    if($key != 0){
+                        $annexone->is_published = true;
+                        $annexone->save();
                     }
                 }  
             }
@@ -1371,7 +1381,7 @@ class WorkshopController extends Controller
     // Used in Form 2 - Table
     private function saveFund($parent, $funds){
         foreach($funds as $fund){
-            if($fund['type'] == 'Revised' || $fund['type'] == 'Last'){
+            // if($fund['type'] == 'Revised' || $fund['type'] == 'Last'){
                 $amount = $this->formatAmount($fund['amount']);
                 if($amount > 0){
                     $data = $fund['id'] ? AnnexOneFund::findOrFail($fund['id']) : new AnnexOneFund;
@@ -1384,7 +1394,7 @@ class WorkshopController extends Controller
                     $data = AnnexOneFund::findOrFail($fund['id']);
                     $data->delete();
                 }
-            }
+            // }
         }
     }
 

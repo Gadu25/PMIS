@@ -21,7 +21,8 @@
                 <div class="col-sm-3" v-if="filtershow">
                     <div class="card border-0 shadow mb-3">
                         <div class="card-body">
-                            <div class="d-flex justify-content-end mb-2">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Filters</strong>
                                 <button class="btn btn-sm btn-outline-secondary" @click="filtershow = false"><i class="fas fa-arrow-right"></i></button>
                             </div>
                             <div class="form-floating mb-3">
@@ -210,7 +211,7 @@
                                                 </template>
                                                 <template v-for="cluster in subprogram.clusters" :key="'cluster_'+cluster.id">
                                                     <tr v-if="cluster.items.length > 0 && tab == 'performance'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
-                                                    <tr v-if="cluster.commonindicators.length > 0 && tab != 'performace'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
+                                                    <tr v-if="cluster.commonindicators.length > 0 && tab != 'performance'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
                                                     <template v-if="tab == 'performance'">
                                                         <template v-for="item in cluster.items" :key="'cluster-item_'+item.id">
                                                             <tr>
@@ -527,7 +528,7 @@
             <div class="modal-content" v-else>
                 <div class="modal-body">
                     <div class="d-flex justify-content-end mb-3">
-                        <button type="button" ref="closebtn" class="btn-close" style="display: none" data-bs-dismiss="modal" aria-label="close"></button>
+                        <button type="button" ref="closebtn" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button>
                     </div>
                     <div class="form-floating mb-3">
                         <textarea class="form-control" placeholder="Leave a comment here" v-model="form.comment" id="Comment" style="height: 200px"></textarea>

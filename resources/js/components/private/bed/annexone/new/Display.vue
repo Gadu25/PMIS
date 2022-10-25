@@ -28,7 +28,7 @@
                                             </td>
                                         </tr>
                                         <template v-for="items, header in headers" :key="header">
-                                            <tr class="fw-bold">
+                                            <tr class="fw-bold" v-if="header != 'None'">
                                                 <td>{{header}}</td>
                                                 <td class="text-end" v-for="num in 13" :key="num">
                                                     {{ isSubprogram(items) ? setHeaderFund(num, items) : '' }}
@@ -59,7 +59,7 @@
                                                 </tr>
                                             </template>
                                         </template>
-                                        <template v-if="div == 'STSD'">
+                                        <template v-if="div == 'STSD' && division_id == 0">
                                             <tr style="background: #7aa9cf;" class="fw-bold">
                                                 <td class="stsdtotals">Total 2A1</td>
                                                 <td class="text-end" v-for="num in 13" :key="num">
@@ -89,13 +89,15 @@
                     <h1>Data Syncing <i class="far fa-sync fa-spin"></i></h1>
                 </div>
             </div>
-            <Form @clicked="childClicked()" v-else />
+            <Form :syncing="syncing" @clicked="childClicked()" v-else />
         </div>
         <div class="col-sm-3" v-if="toggle && !formshow">
             <div class="card border-0 shadow mb-3">
                 <div class="card-body">
-                    <button @click="toggle = !toggle" class="btn btn-sm btn-secondary bg-gradient float-end"><i class="fas fa-arrow-right"></i></button>
-                    <h4>Filters</h4>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Filters</strong>
+                        <button @click="toggle = !toggle" class="btn btn-sm btn-outline-secondary bg-gradient"><i class="fas fa-arrow-right"></i></button>
+                    </div>
                     <div class="form-floating mb-2">
                         <select class="form-select" id="Division" v-model="division_id">
                             <option :value="0" selected>All Division</option>
@@ -120,7 +122,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <template v-if="!workshop.published">
+                        <!-- <template v-if="workshop.published"> -->
                             <!-- Temporary disabled other functionalities for other Programs, this is to focus on the only Program 1 RA 10612 and RA 7687/ 2067. This can be further improved -->
                             <!-- <button class="btn btn-sm btn-success float-end"><i class="fas fa-plus"></i></button> -->
                             <p class="fw-bold">Annex F Special Case <i class="far fa-question-circle"></i></p><hr>
@@ -164,12 +166,13 @@
                                     </div>
                                 </div>
                             </div>
-                        </template>
-                        <div v-else class="text-center p-5">
+                        <!-- </template> -->
+                        <!-- <div v-else class="text-center p-5">
                             <h3>Projects already published</h3>
-                        </div>
+                        </div> -->
                     </div>
-                    <div class="modal-footer" v-if="!workshop.published">
+                    <!-- <div class="modal-footer" v-if="workshop.published"> -->
+                    <div class="modal-footer">
                         <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
                         <button type="button" class="btn btn-success bg-gradient" @click="publish()">Publish Projects</button>
                     </div>
@@ -270,6 +273,7 @@ export default {
             this.prev = this.formshow ? this.toggle : this.prev
             this.toggle = this.formshow ? false : this.prev
             this.childClick()
+            this.syncRecords()
         },
         childClick(){
             this.$emit('clicked')
@@ -301,7 +305,7 @@ export default {
                 var fund = funds.find(elem => elem.type == 'GAA')
                 var orig = fund ? fund.amount : 0
                 amount = this.subAmount(subs, 'GAA', workshopYear)
-                amount = subs.length > 0 ? amount : orig
+                amount = subs.length > 0 ? amount > 0 ? amount : orig : orig
             }
             if(num == 2 || num == 5 || num == 7 || num == 9 || num == 11){
                 // Proposed 2 5 7 9 11
@@ -315,7 +319,7 @@ export default {
                 var fund = funds.find(elem => elem.type == 'NEP')
                 var orig = fund ? fund.amount : 0
                 amount = this.subAmount(subs, 'NEP', workshopYear)
-                amount = subs.length > 0 ? amount : orig
+                amount = subs.length > 0 ? amount > 0 ? amount : orig : orig
             }
             if(num == 4 || num == 6 || num == 8 || num == 10 || num == 12){
                 // Revised 4 6 8 10 12

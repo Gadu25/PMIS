@@ -20,7 +20,8 @@
             <div class="col-sm-3" v-if="filtershow && !formshow">
                 <div class="card shadow border-0 mb-3">
                     <div class="card-body">
-                        <div class="d-flex justify-content-end mb-2">
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Filters</strong>
                             <button @click="filtershow = false" class="btn btn-sm btn-outline-secondary"><i class="far fa-arrow-right"></i></button>
                         </div>
                         <div class="form-floating mb-3">

@@ -11,38 +11,54 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="!syncing">
                     <template v-for="sources, div in annexones" :key="div">
-                        <tr class="fw-bold" style="background: orange">
-                            <td colspan="2">{{div}}</td>
-                        </tr>
-                        <template v-for="headers, source in sources" :key="source">
-                            <tr v-if="div != 'STSD'">
-                                <td colspan="2" style="background: yellow;" class="text-danger fw-bold text-center">{{source}}</td>
+                        <template v-if="userDiv(div) || isAdmin">
+                            <tr class="fw-bold" style="background: orange">
+                                <td colspan="2" v-if="isAdmin">{{div}}</td>
                             </tr>
-                            <template v-for="annexones, header in headers" :key="header">
-                                <tr class="fw-bold">
-                                    <td colspan="2">{{header}}</td>
+                            <template v-for="headers, source in sources" :key="source">
+                                <tr v-if="div != 'STSD'">
+                                    <td colspan="2" style="background: yellow;" class="text-danger fw-bold text-center" v-if="isAdmin || isChief">{{source}}</td>
                                 </tr>
-                                <template v-for="annexone in annexones" :key="annexone.id">
-                                    <tr>
-                                        <td><div class="ms-1">{{annexone.project.title}}</div></td>
-                                        <td class="text-center">
-                                            <template v-if="formMatchProject(annexone.project)">
-                                                <button v-if="inUserRoles('annex_one_edit')" style="width: 80px;" class="btn btn-sm shadow-none btn-primary mb-1" data-bs-target="#modal" data-bs-toggle="modal" @click="editForm(annexone)"><i class="far fa-pencil-alt"></i> Info</button><br>
-                                                <button v-if="inUserRoles('annex_one_edit')" style="width: 80px;" class="btn btn-sm shadow-none btn-warning mb-1" @click="editFormTable(annexone)"><i class="far fa-pencil-alt"></i> Table</button><br>
-                                                <button v-if="inUserRoles('annex_one_delete')" style="width: 80px;" class="btn btn-sm shadow-none btn-danger" @click="removeAnnexOne(annexone)"><i class="far fa-trash-alt"></i> Project</button>
-                                            </template>
-                                        </td>
+                                <template v-for="annexones, header in headers" :key="header">
+                                    <tr class="fw-bold" v-if="header != 'None'">
+                                        <td colspan="2" v-if="isAdmin || isChief">{{header}}</td>
                                     </tr>
-                                    <tr v-for="sub in annexone.subs" :key="sub.id">
-                                        <td colspan="2"><div class="ms-2">{{sub.subproject.title}}</div></td>
-                                    </tr>
+                                    <template v-for="annexone in annexones" :key="annexone.id">
+                                        <template v-if="userMatchProject(annexone.project) || isAdmin || isChief || isProjectHead(annexone.project)">
+                                            <tr>
+                                                <td><div class="ms-1">{{annexone.project.title}}</div></td>
+                                                <td class="text-center">
+                                                    <button v-if="inUserRoles('annex_one_edit') || isAdmin || isChief || isProjectHead(annexone.project)" 
+                                                        style="width: 110px;" class="btn btn-sm shadow-none mb-1" 
+                                                        :class="(isChief || (isProjectHead(annexone.project)) && !userMatchProject(annexone.project)) ? 'btn-outline-primary' : 'btn-primary'" 
+                                                        @click="editFormTable(annexone)">{{(isChief || (isProjectHead(annexone.project)) && !userMatchProject(annexone.project)) ? 'View' : 'Edit'}} Table</button><br>
+                                                    <template v-if="userMatchProject(annexone.project) || isAdmin">
+                                                        <button v-if="inUserRoles('annex_one_edit')" 
+                                                            style="width: 110px;" 
+                                                            class="btn btn-sm shadow-none btn-primary mb-1" 
+                                                            data-bs-target="#modal" data-bs-toggle="modal"
+                                                            @click="editForm(annexone)">Edit Info</button><br>
+                                                        <button v-if="inUserRoles('annex_one_delete')" 
+                                                            style="width: 110px;" 
+                                                            class="btn btn-sm shadow-none btn-danger" 
+                                                            @click="removeAnnexOne(annexone)">Delete Project</button>
+                                                    </template>
+                                                </td>
+                                            </tr>
+                                            <tr v-for="sub in annexone.subs" :key="sub.id">
+                                                <td colspan="2"><div class="ms-2">{{sub.subproject.title}}</div></td>
+                                            </tr>
+                                        </template>
+                                    </template>
                                 </template>
                             </template>
                         </template>
-                        
                     </template>
+                </tbody>
+                <tbody v-else>
+                    <tr><td colspan="2" class="text-center p-5"><h3>Data Syncing <i class="fas fa-sync fa-spin"></i></h3></td></tr>
                 </tbody>
             </table>
         </div>
@@ -50,7 +66,7 @@
     <div v-else>
         <div class="d-flex justify-content-between mb-2">
             <button class="btn btn-sm btn-outline-secondary" @click="hideForm()"><i class="fas fa-times"></i> Close</button>
-            <button class="btn btn-sm btn-primary" @click="submitForm2()"><i class="fas fa-save"></i> Save changes</button>
+            <button class="btn btn-sm btn-primary" v-if="isAdmin || userMatchProject(form2.project)" @click="submitForm2()"><i class="fas fa-save"></i> Save changes</button>
         </div>
         <div class="table-responsive" v-dragscroll>
             <table class="table table-sm table-bordered" style="font-size: 12px; min-width: 1500px">
@@ -58,15 +74,15 @@
                 <tbody class="align-middle ">
                     <tr>
                         <td>{{form2.title}}</td>
-                        <td v-for="fund, fkey in form2.funds" :key="fkey" class="text-end" :style="isForInput(fund.type, form2.subs) ? 'padding: 0; height: 1px' : ''">
-                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="isForInput(fund.type, form2.subs)" v-model="fund.amount" v-money="money">
-                            <span class="me-2" v-else>{{fund.amount == 0 ? '' : formatAmount(fund.amount = getTotal(fkey, form2.subs, fund.amount))}}</span>
+                        <td v-for="fund, fkey in form2.funds" :key="fkey" class="text-end" :style="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || isAdmin ? 'padding: 0; height: 1px' : ''">
+                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || isAdmin" v-model="fund.amount" v-money="money">
+                            <span class="me-2" v-else>{{getTotal(fkey, form2.subs, fund.amount) == 0 ? '' : formatAmount(fund.amount = getTotal(fkey, form2.subs, fund.amount))}}</span>
                         </td>
                     </tr>
                     <tr v-for="sub in form2.subs" :key="sub.id">
                         <td><div class="ms-2">{{sub.title}}</div></td>
-                        <td v-for="fund, fkey in sub.funds" :key="fkey" class="text-end" :style="fund.type == 'Revised' || fund.type == 'Last' ? 'padding: 0; height: 1px' : ''">
-                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="fund.type == 'Revised' || fund.type == 'Last'" v-model="fund.amount" v-money="money">
+                        <td v-for="fund, fkey in sub.funds" :key="fkey" class="text-end" :style="(isForInput(fund.type) && userMatchProject(form2.project)) || isAdmin ? 'padding: 0; height: 1px' : ''">
+                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="(isForInput(fund.type) && userMatchProject(form2.project)) || isAdmin" v-model="fund.amount" v-money="money">
                             <span v-else>{{fund.amount == 0 ? '' : formatAmount(fund.amount)}}</span>
                         </td>
                     </tr>
@@ -74,7 +90,7 @@
             </table>
         </div>
     </div>
-    <div class="modal fade" id="modal" tabindex="-1">
+    <div class="modal fade" id="modal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -85,71 +101,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" ref="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- <template v-if="formpart == 1">
-                        <div class="form-group row">
-                            <div :class="setColumn('division')">
-                                <div class="form-floating mb-3">
-                                    <select class="form-select" id="Division" v-model="form.division_id" @change="changeDivision()">
-                                        <option value="" selected hidden disabled>Select Division</option>
-                                        <option :value="division.id" v-for="division in divisions" :key="division.id">{{division.name}}</option>
-                                    </select>
-                                    <label for="Division">Division</label>
-                                </div>
-                            </div>
-                            <div :class="setColumn('unit')" v-if="units.length > 0">
-                                <div class="form-floating mb-3">
-                                    <select class="form-select" id="Unit" v-model="form.unit_id" @change="changeUnit()">
-                                        <option value="" selected hidden disabled>Select Unit</option>
-                                        <option :value="unit.id" v-for="unit in units" :key="unit.id">{{unit.name}}</option>
-                                        <option :value="null">Not Applicable</option>
-                                    </select>
-                                    <label for="Unit">Unit</label>
-                                </div>
-                            </div>
-                            <div class="col-sm-4" v-if="subunits.length > 0">
-                                <div class="form-floating mb-3">
-                                    <select class="form-select" id="SubUnit" v-model="form.subunit_id">
-                                        <option value="" selected hidden disabled>Select Sub-Unit</option>
-                                        <option :value="subunit.id" v-for="subunit in subunits" :key="subunit.id">{{subunit.name}}</option>
-                                        <option :value="null">Not Applicable</option>
-                                    </select>
-                                    <label for="SubUnit">Sub-Unit</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <div :class="setColumn('program')">
-                                <div class="form-floating mb-3">
-                                    <select class="form-select" id="Program" v-model="form.program_id" @change="changeProgram()">
-                                        <option value="" selected hidden disabled>Select Program</option>
-                                        <option :value="program.id" v-for="program in programs" :key="program.id">{{program.title}}</option>
-                                    </select>
-                                    <label for="Program">Program</label>
-                                </div>
-                            </div>
-                            <div :class="setColumn('subprogram')" v-if="subprograms.length > 0">
-                                <div class="form-floating mb-3">
-                                    <select class="form-select" id="subProgram" v-model="form.subprogram_id" @change="changeSubprogram()">
-                                        <option value="" selected hidden disabled>Select Sub-Program</option>
-                                        <option :value="subprogram.id" v-for="subprogram in subprograms" :key="subprogram.id">{{subprogram.title}}</option>
-                                        <option :value="null">Not Applicable</option>
-                                    </select>
-                                    <label for="subProgram">Sub-Program</label>
-                                </div>
-                            </div>
-                            <div class="col-sm-4" v-if="clusters.length > 0">
-                                <div class="form-floating mb-3">
-                                    <select class="form-select" id="cluster" v-model="form.cluster_id">
-                                        <option value="" selected hidden disabled>Select Cluster</option>
-                                        <option :value="cluster.id" v-for="cluster in clusters" :key="cluster.id">{{cluster.title}}</option>
-                                        <option :value="null">Not Applicable</option>
-                                    </select>
-                                    <label for="cluster">Cluster</label>
-                                </div>
-                            </div>
-                        </div>
-                    </template> -->
-                    <!-- <template v-if="formpart == 2"> -->
                         <div class="form-group row">
                             <div class="col-sm-7">
                                 <div class="form-floating mb-3">
@@ -178,7 +129,7 @@
                         </div>
                         <div class="d-flex justify-content-between mb-2" >
                             <div id="tooltip">
-                                <i class="far fa-question-circle fa-lg"></i>
+                                <!-- <i class="far fa-question-circle fa-lg"></i> -->
                                 <!-- <span id="tooltiptext">Projects shown on select options are based on selected filters during the first part of the form. Check your selected project filters or contact your System Administrator for further clarifications.</span> -->
                             </div>
                             <button class="btn btn-sm btn-success bg-gradient" v-if="!editmode" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
@@ -190,7 +141,7 @@
                                     <select class="form-select" id="floatingSelect" @change="changeProject(fp)" v-model="fp.project_id">
                                         <option value="" hidden disabled selected>Select Project</option>
                                         <template v-for="project in projects" :key="project.id">
-                                            <option :value="project.id" v-if="formMatchProject(project) && !used.includes(project.id) || project.id == fp.project_id">{{project.title}}</option>
+                                            <option :value="project.id" v-if="(userMatchProject(project) || isAdmin) && !used.includes(project.id) || project.id == fp.project_id">{{project.title}}</option>
                                         </template>
                                     </select>
                                     <label for="floatingSelect">Project</label>
@@ -251,12 +202,6 @@ export default {
             editmode: false,
             formshow: false,
             form: {
-                // program_id: '',
-                // subprogram_id: '',
-                // cluster_id: '',
-                // division_id: '',
-                // unit_id: '',
-                // subunit_id: '',
                 id: '',
                 projects: [],
                 project: {
@@ -270,18 +215,14 @@ export default {
                 headerType: '',
                 workshop_id: this.$route.params.workshopId
             },
-            // subprograms: [],
-            // clusters: [],
-            // units: [],
-            // subunits: [],
-            // formpart: 2,
             used: [],
             processing: false,
             form2:{
                 id: '',
                 title: '',
                 funds: [],
-                subs: []
+                subs: [],
+                project: {}
             },
             money: {
                 decimal: '.',
@@ -297,7 +238,7 @@ export default {
         ...mapActions('workshop', ['fetchOptions']),
         ...mapActions('annexone', ['fetchAnnexOnes', 'saveAnnexOne', 'updateAnnexOne', 'deleteAnnexOne']),
         removeAnnexOne(annexone){
-            this.swalConfirmCancel('Are you sure?', 'You will data of this project for this workshop').then(res => {
+            this.swalConfirmCancel('Are you sure?', 'You will not be able to retrieve this data').then(res => {
                 if(res){
                     this.deleteAnnexOne(annexone.id).then(res => {
                         var icon = res.errors ? 'error' : 'success'
@@ -339,6 +280,7 @@ export default {
         editFormTable(annexone){
             this.formshow = true
             this.form2.id = annexone.id
+            this.form2.project = annexone.project
             this.form2.title = annexone.project.title
             this.form2.funds = [
                 {id: '', type: 'GAA',      amount: 0, year: 0},
@@ -400,7 +342,7 @@ export default {
                 }
             }
         },
-        isForInput(type, subs){
+        isForInput(type, subs = []){
             return (type == 'Revised' || type == 'Last') && subs.length == 0
         },
         getTotal(key, subs, fund){
@@ -468,6 +410,7 @@ export default {
                             this.processing = false
                             if(!res.errors){
                                 this.$refs.Close.click()
+                                this.childClick()
                             }
                         })
                     })
@@ -485,6 +428,7 @@ export default {
                     this.processing = false
                     if(!res.errors){
                         this.$refs.Close.click()
+                        this.childClick()
                     }
                 })
             }
@@ -520,7 +464,7 @@ export default {
         //         return array2.length == 0 ? 'col-sm-6' : 'col-sm-4'
         //     }
         // },
-        formMatchProject(project){
+        userMatchProject(project){
             var leaderId = project.leader.profile_id
             var encoderIds = []
             for(let enconder of project.encoders){
@@ -548,7 +492,7 @@ export default {
             for(let projectId of this.used){
                 var project = this.form.projects.find(elem => elem.project_id == projectId)
                 if(!project){
-                    // this.used.remove(projectId)
+                    this.used.remove(projectId)
                 }
             }
         },
@@ -596,6 +540,24 @@ export default {
             let strNum = num.toString().replace(/\,/g,'')
             return Math.abs(parseFloat(strNum))
         },
+        userDiv(division){
+            return this.user.division.code == division
+        },
+        // isLeader(project){
+        //     var state = false
+        //     var profileId = this.user.active_profile.id
+        //     state = project.leader.profile_id == profileId
+        //     for(let encoder of project.encoders){
+        //         if(!state){
+        //             state = encoder.profile_id == profileId
+        //         }
+        //     }
+        //     return state
+        // },
+        isProjectHead(project){
+            var unitId = this.user.unit_id
+            return project.unit_id == unitId && this.user.active_profile.title.name == 'Unit Head'
+        }
     },
     computed:{
         ...mapGetters('annexone', ['getAnnexOnes']),
@@ -607,8 +569,14 @@ export default {
         // usedprojects(){ return this.getOptions.used_projects },
         annexones(){ return this.getAnnexOnes },
         user(){ return this.getAuthUser },
-        userroles(){ return this.getAuthUser.active_profile.roles },
+        userroles(){ return this.user.active_profile.roles },
+        userdivision(){ return this.user.division.code == division },
+        isAdmin(){ return this.user.active_profile.title.name == 'Superadmin'},
+        isChief(){ return this.user.active_profile.title.name == 'Division Chief'},
         workshopYear(){ return parseInt(this.getWorkshop.year) }
+    },
+    props: {
+        syncing: Boolean
     },
     created(){
         if(this.getOptions.length == 0){
@@ -660,6 +628,7 @@ export default {
 
 .form-control#fund{
     font-size: 12px;
+    background: rgba(0, 0, 0, 0.03);
 }
 .form-control#fund:focus{
     background: rgba(173, 216, 230, 0.3);
