@@ -106,11 +106,13 @@
                     <button class="btn btn-sm btn-secondary position-absolute end-0" style="z-index: 999" v-if="!filtershow" @click="filtershow = true"><i class="fas fa-arrow-left"></i></button>
                     <!-- Display View -->
                     <template v-if="!editmode">
-                        <div class="card border-0 shadow overflow-auto" :style="!printmode ? 'height: calc(100vh - 210px)' : ''">
-                            <div class="card-body">
-                                <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
-                                <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" :year="syncedyear" id="printMe"/>
-                                <EmptyTable v-else />
+                        <div class="shadow" style="height: calc(100vh - 202px); overflow: auto;">
+                            <div class="card border-0 shadow overflow-auto" :style="!printmode ? 'height: calc(100vh - 202px)' : ''">
+                                <div class="card-body">
+                                    <div class="card-overlay" v-if="syncing"><h1><i class="fas fa-spinner fa-spin fa-5x"></i></h1> </div>
+                                    <Display v-if="annexes.length > 0" :printmode="printmode" :syncing="syncing" :displaysyncstatus="displaysyncstatus" :year="syncedyear" id="printMe"/>
+                                    <EmptyTable v-else />
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -130,34 +132,43 @@
                             <table class="table table-sm table-bordered table-hover">
                                 <thead class="text-center">
                                     <tr>
-                                        <th style="width: 40%" v-if="tab == 'performance'"><span class="text-nowrap">Program/Project</span></th>
-                                        <th style="width: 40%"><span class="text-nowrap">{{tab == 'performance' ? 'Performance' : 'Outcome & Output'}} Indicators (PIs)</span></th>
+                                        <th :style="isAdmin ? 'width: 40%' : 'width: 25%'" v-if="tab == 'performance'"><span class="text-nowrap">Program/Project</span></th>
+                                        <th :style="isAdmin ? 'width: 40%' : 'width: 25%'"><span class="text-nowrap">{{tab == 'performance' ? 'Performance' : 'Outcome & Output'}} Indicators (PIs)</span></th>
+                                        <th style="width: 20%" v-if="!isAdmin && tab == 'performance'">Leader</th>
+                                        <th style="width: 10%" v-if="!isAdmin && tab == 'performance'">Cluster</th>
                                         <th style="width: 20%">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody >
                                     <template v-if="!syncing">
                                         <template v-for="program in annexes" :key="'program_'+program.id">
-                                            <tr v-if="(program.subpwithitems || program.items.length > 0) && tab == 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
+                                            <!-- <tr v-if="(program.subpwithitems || program.items.length > 0) && tab == 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr> -->
+                                            <tr v-if="isAdmin && tab == 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
                                             <tr v-if="(program.subpwithci || program.commonindicators.length > 0) && tab != 'performance'"><th class="bg-success text-white" colspan="3">{{program.title}}</th></tr>
                                             <template v-if="tab == 'performance'">
                                                 <template v-for="item in program.items" :key="'cluster-item_'+item.id">
-                                                    <tr>
-                                                        <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
-                                                        <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
-                                                    </tr>
-                                                    <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
-                                                        <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
-                                                        <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
-                                                        <td class="text-center" :rowspan="item.subs.length + 1">
-                                                            <template v-if="checkUserDivision(item.project)">
-                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
-                                                                <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
-                                                            </template>
-                                                            <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
-                                                        </td>
-                                                    </tr>
+                                                    <template v-if="checkUserDivision(item.project) || isAdmin">
+                                                        <template v-if="isUserProjectLeader(item.project.leader.profile_id) || isAdmin || isChief || isHead">
+                                                            <tr>
+                                                                <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
+                                                                <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                                <td v-if="!isAdmin" class="text-center">{{getLeader(item.project)}}</td>
+                                                                <td v-if="!isAdmin" class="text-center">{{getCluster(item.project)}}</td>
+                                                                <td class="text-center">
+                                                                    <template v-if="checkUserDivision(item.project) || isAdmin">
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id) || isAdmin" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true) || isAdmin" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                        <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
+                                                                    </template>
+                                                                    <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                </td>
+                                                            </tr>
+                                                            <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
+                                                                <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
+                                                                <td colspan="2"><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                            </tr>
+                                                        </template>
+                                                    </template>
                                                 </template>
                                             </template>
                                             <template v-else>
@@ -174,26 +185,33 @@
                                                 </template>
                                             </template>
                                             <template v-for="subprogram in program.subprograms" :key="'subprogram_'+subprogram.id">
-                                                <tr v-if="(subprogram.items.length > 0 || subprogram.cluswithitems) && tab == 'performance'"><th colspan="3">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</th></tr>
+                                                <!-- <tr v-if="(subprogram.items.length > 0 || subprogram.cluswithitems) && tab == 'performance'"><th colspan="3">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</th></tr> -->
+                                                <tr v-if="isAdmin && tab == 'performance'"><th colspan="3">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</th></tr>
                                                 <tr v-if="(subprogram.commonindicators.length > 0 || subprogram.cluswithci) && tab != 'performance'"><th colspan="3">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</th></tr>
                                                 <template v-if="tab == 'performance'">
-                                                    <template v-for="item in subprogram.items" :key="'cluster-item_'+item.id">
-                                                        <tr>
-                                                            <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
-                                                            <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
-                                                            <td class="text-center" :rowspan="item.subs.length + 1">
-                                                                <template v-if="checkUserDivision(item.project)">
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
-                                                                    <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
-                                                                </template>
-                                                                <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
-                                                            </td>
-                                                        </tr>
-                                                        <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
-                                                            <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
-                                                            <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
-                                                        </tr>
+                                                    <template v-for="item in subprogram.items" :key="'subprogram-item_'+item.id">
+                                                        <template v-if="checkUserDivision(item.project) || isAdmin">
+                                                            <template v-if="isUserProjectLeader(item.project.leader.profile_id) || isAdmin || isChief || isHead">
+                                                                <tr>
+                                                                    <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
+                                                                    <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                                    <td v-if="!isAdmin" class="text-center">{{getLeader(item.project)}}</td>
+                                                                    <td v-if="!isAdmin" class="text-center">{{getCluster(item.project)}}</td>
+                                                                    <td class="text-center">
+                                                                        <template v-if="checkUserDivision(item.project) || isAdmin || isHead">
+                                                                            <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id) || isAdmin " @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                            <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true) || isAdmin " @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                            <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
+                                                                        </template>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
+                                                                    <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
+                                                                    <td :colspan="isAdmin ? 2 : 4"><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                                </tr>
+                                                            </template>
+                                                        </template>
                                                     </template>
                                                 </template>
                                                 <template v-else>
@@ -210,26 +228,33 @@
                                                     </template>
                                                 </template>
                                                 <template v-for="cluster in subprogram.clusters" :key="'cluster_'+cluster.id">
-                                                    <tr v-if="cluster.items.length > 0 && tab == 'performance'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
+                                                    <!-- <tr v-if="cluster.items.length > 0 && tab == 'performance'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr> -->
+                                                    <tr v-if="isAdmin && tab == 'performance'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
                                                     <tr v-if="cluster.commonindicators.length > 0 && tab != 'performance'"><th colspan="3"><div class="ms-2">{{cluster.title}}</div></th></tr>
                                                     <template v-if="tab == 'performance'">
                                                         <template v-for="item in cluster.items" :key="'cluster-item_'+item.id">
-                                                            <tr>
-                                                                <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
-                                                                <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
-                                                                <td class="text-center" :rowspan="item.subs.length+1">
-                                                                    <template v-if="checkUserDivision(item.project)">
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id)" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true)" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
-                                                                        <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
-                                                                    </template>
-                                                                    <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
-                                                                </td>
-                                                            </tr>
-                                                            <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
-                                                                <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
-                                                                <td><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
-                                                            </tr>
+                                                            <template v-if="checkUserDivision(item.project) || isAdmin">
+                                                                <template v-if="isUserProjectLeader(item.project.leader.profile_id) || isAdmin || isChief || isHead">
+                                                                    <tr>
+                                                                        <td><div class="ms-3"><i class="fas me-2" :class="setStatusIcon(item.status)"></i>{{item.project.title}}</div></td>
+                                                                        <td><li v-for="indicator in item.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                                        <td v-if="!isAdmin" class="text-center">{{getLeader(item.project)}}</td>
+                                                                        <td v-if="!isAdmin" class="text-center">{{getCluster(item.project)}}</td>
+                                                                        <td class="text-center">
+                                                                            <template v-if="checkUserDivision(item.project) || isAdmin">
+                                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id) || isAdmin" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true) || isAdmin" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                                <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
+                                                                            </template>
+                                                                            <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
+                                                                        <td><div class="ms-4">{{setSubTitle(sub)}}</div></td>
+                                                                        <td colspan="2"><li v-for="indicator in sub.indicators" :key="'indicator_'+indicator.id">{{indicator.description}}</li></td>
+                                                                    </tr>
+                                                                </template>
+                                                            </template>
                                                         </template>
                                                     </template>
                                                     <template v-else>
@@ -264,23 +289,26 @@
                             <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-outline-secondary" v-if="histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                         </div>
                         <div v-if="!isForReview(form.status)">
-                            <button class="btn btn-sm btn-outline-secondary me-1" @click="showComputeForm()" v-if="form.program_id == 1 && checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
-                            <button class="btn btn-sm btn-secondary me-1"         @click="submitForm('Draft')"      v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-edit"></i> Draft</button>
-                            <button class="btn btn-sm btn-success"                @click="submitForm('For Review')" v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-search"></i> {{authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'}}</button>
+                            <button class="btn btn-sm btn-outline-secondary me-1"   @click="showComputeForm()" v-if="form.program_id == 1 && (checkUserTitle(form.status) && isUserProjectLeader(form.leaderId) || isAdmin)" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
+                            <button class="btn btn-sm btn-primary bg-gradient me-1" v-if="isAdmin" data-bs-target="#form" data-bs-toggle="modal"><i class="far fa-save"></i> Admin Save</button>
+                            <button class="btn btn-sm btn-secondary me-1"           @click="submitForm('Draft')"      v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-edit"></i> Draft</button>
+                            <button class="btn btn-sm btn-success"                  @click="submitForm('For Review')" v-if="checkUserTitle(form.status) && isUserProjectLeader(form.leaderId)"><i class="fas fa-search"></i> {{authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'}}</button>
                         </div>
                         <div v-if="isForReview(form.status) && form.status != 'Submitted'">
-                            <button class="btn btn-sm btn-secondary min-100 me-1" v-if="checkUserTitle(form.status)" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
-                            <button class="btn btn-sm btn-success min-100 me-1"   v-if="checkUserTitle(form.status)" @click="submitForm('approve')"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submit to Planning Unit' : 'Approve'}}</button>
+                            <button class="btn btn-sm btn-outline-secondary me-1"   @click="showComputeForm()" v-if="form.program_id == 1 && isAdmin" data-bs-toggle="modal" data-bs-target="#detailform"><i class="far fa-cogs"></i></button>
+                            <button class="btn btn-sm btn-primary bg-gradient me-1" v-if="isAdmin" data-bs-target="#form" data-bs-toggle="modal"><i class="far fa-save"></i> Admin Save</button>
+                            <button class="btn btn-sm btn-secondary min-100 me-1"   v-if="checkUserTitle(form.status)" @click="indicatorshow = false" data-bs-target="#form" data-bs-toggle="modal"><i class="fas fa-times"></i> Reject</button>
+                            <button class="btn btn-sm btn-success min-100 me-1"     v-if="checkUserTitle(form.status)" @click="submitForm('approve')"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submit to Planning Unit' : 'Approve'}}</button>
                         </div>
                     </div>
-                    <div class="table-responsive" style="height: calc(100vh - 218px);" v-dragscroll>
+                    <div class="table-responsive" style="height: calc(100vh - 218px);">
                         <table class="table table-sm table-bordered">
                             <TableHead :syncing="true" :printmode="true" :year="syncedyear" />
                             <tbody>
                                 <tr><td :rowspan="form.indicators.length + 1">{{form.project_title}}</td></tr>
                                 <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
                                     <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
-                                        <template v-if="form.status == 'New' || form.status == 'Draft'">
+                                        <template v-if="form.status == 'New' || form.status == 'Draft' || isAdmin">
                                             <!-- Program 1: S&T Scholarship Program -->
                                             <template v-if="form.program_id == 1">
                                                 <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
@@ -308,7 +336,7 @@
                                     <tr><td :rowspan="sub.indicators.length+1">{{sub.title}}</td></tr>      
                                     <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
                                         <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
-                                            <template v-if="form.status == 'New' || form.status == 'Draft'">
+                                            <template v-if="form.status == 'New' || form.status == 'Draft' || isAdmin">
                                                 <!-- Program 1: S&T Scholarship Program -->
                                                 <template v-if="form.program_id == 1">
                                                     <p class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
@@ -451,7 +479,8 @@
                     <h5 class="modal-title"> <span>Performance Indicators</span></h5>
                     <button type="button" ref="closebtn" class="btn-close"  data-bs-dismiss="modal" aria-label="close"></button>
                 </div>
-                <div class="modal-body p-0 overflow-auto" style="height: 50vh;">
+                <div class="modal-body p-0" >
+                    <div class="table-responsive" style="max-height: 50vh;">
                     <table class="table table-sm table-bordered m-0">
                         <thead class="text-center">
                             <tr>
@@ -520,9 +549,16 @@
                             </template>
                         </tbody>
                     </table>
+                    </div>
+                    <div class="p-3 border-top" v-if="isAdmin">
+                        <div class="form-floating">
+                            <textarea class="form-control" placeholder="Leave a comment here" v-model="form.comment" id="Comment" style="height: 100px"></textarea>
+                            <label for="Comment">Please add comment <span class="text-danger">*</span></label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button @click="submitForm('same')" type="button" class="btn btn-primary rounded-pill" style="min-width: 100px">Save</button>
+                    <button :disabled="isAdmin && form.comment == ''" @click="!isAdmin || form.comment != '' ? submitForm('same') : null" type="button" class="btn btn-primary rounded-pill" style="min-width: 100px"><i class="far fa-save"></i> {{isAdmin ? 'Admin' : ''}} Save</button>
                 </div>
             </div>
             <div class="modal-content" v-else>
@@ -535,7 +571,8 @@
                         <label for="Comment">Please add comment <span class="text-danger">*</span></label>
                     </div>
                     <div class="d-flex justify-content-end">
-                        <button class="btn btn-sm btn-success rounded-pill min-100" @click="submitForm('reject')">Submit</button>
+                        <button class="btn btn-sm btn-primary rounded-pill min-100" v-if="isAdmin" :disabled="form.comment == ''" @click="form.comment != '' ? submitForm(form.status) : null">Save</button>
+                        <button class="btn btn-sm btn-success rounded-pill min-100" v-if="!isAdmin" @click="submitForm('reject')">Submit</button>
                     </div>
                 </div>
             </div>
@@ -769,12 +806,13 @@ export default {
         },
         // Form
         submitForm(status){
+            console.log(status)
             this.saving = true
             var validate = true
             this.prevstatus = this.form.status
             var stat = this.form.status
             if(status != 'approve' || status != 'reject'){
-                validate = this.formValidated()
+                validate = status != 'Draft' ? this.formValidated() : true
                 if(!validate){
                     status = this.prevstatus
                     this.saving = false
@@ -1269,11 +1307,21 @@ export default {
         inUserRole(code){
             var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
             return (role)
-        }
+        },
+        getLeader(project){
+            var user = project.leader.profile.user
+            return user.firstname + ' ' + user.lastname
+        },
+        getCluster(project){
+            return project.cluster_id ? project.cluster.title : project.subprogram.title_short
+        },
     },
     computed: {
         ...mapGetters('user', ['getAuthUser']),
         authuser(){ return this.getAuthUser },
+        isAdmin(){ return this.authuser.active_profile.title.name == 'Superadmin' },
+        isChief(){ return this.authuser.active_profile.title.name == 'Division Chief' },
+        isHead(){  return this.authuser.active_profile.title.name == 'Unit Head' },
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },
         workshopYear(){ return parseInt(this.getWorkshop.year) },

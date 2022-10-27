@@ -187,7 +187,7 @@ class WorkshopController extends Controller
             });
 
             $annexes = $query->with(
-                ['project.leader', 'histories.profile.user', 'subs.subproject', 
+                ['project.leader.profile.user', 'project.cluster', 'project.subprogram', 'histories.profile.user', 'subs.subproject', 
                 'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
                 'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns'])
                 ->where('status', $request['status'])
@@ -255,33 +255,38 @@ class WorkshopController extends Controller
             $initialIndicators = $annexe->indicators;
             $initialStatus = $annexe->status;
             $subject = '';
-            $action = $this->saveIndicators($request, $annexe, $initialIndicators);
+            $action = $this->saveIndicators($request, $annexe, $initialIndicators, $annexe->year);
 
             foreach($request['subs'] as $sub){
                 $annexesub = AnnexESub::findOrFail($sub['id']);
                 $initialIndicators = $annexesub->indicators;
-                $this->saveIndicators($request, $annexesub, $initialIndicators, $sub['indicators'], true);
+                $this->saveIndicators($request, $annexesub, $initialIndicators, $annexe->year, $sub['indicators'], true);
             }
 
             $subject = $subject.(($status == 'New' || $status == 'Draft' || $status == 'For Review' || $status == 'same') ? $action : '<p class="m-0">Action: Change Status </p>');
-            $subject = $subject.((!$statchange || $status == 'same') ? '<p class="m-0">Status: Unchanged</p>' : '');
+            $subject = $subject.((!$statchange || $status == 'same') ? '<p class="m-0">Status: '.$annexe->status.' <small><i>`Unchanged</small>`</i></p>' : '');
 
             if($statchange && $status != 'same'){
                 $prevstatus = $annexe->status;
                 $annexe->status = $status;
                 $annexe->save();
                 $subject = $subject.'<p class="m-0">Status: '.$prevstatus.' => '.$annexe->status.'</p>';
-            }
-
-            // $subject = $request['comment'] != '' ? $subject.'<p class="m-0">Comment: <i>'.$request['comment'].'</i></p>' : $subject;
-
-            if($statchange){
                 if($initialStatus != 'New' || $status == 'For Review'){
                     $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id.'?year='.$annexe->year;
                     $message = $this->sendNotification($annexe->project, $status, 'Annex E', $link);
                     $subject = $subject.$message;
                 }
             }
+
+            // $subject = $request['comment'] != '' ? $subject.'<p class="m-0">Comment: <i>'.$request['comment'].'</i></p>' : $subject;
+
+            // if($statchange){
+            //     if($initialStatus != 'New' || $status == 'For Review'){
+            //         $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id.'?year='.$annexe->year;
+            //         $message = $this->sendNotification($annexe->project, $status, 'Annex E', $link);
+            //         $subject = $subject.$message;
+            //     }
+            // }
             
 
             $this->createHistory($annexe, $subject, $request['comment']);
@@ -476,7 +481,7 @@ class WorkshopController extends Controller
         }
     }
 
-    private function saveIndicators($request, $parent, $initialIndicators, $indicators = [], $isSub = false){
+    private function saveIndicators($request, $parent, $initialIndicators, $year, $indicators = [], $isSub = false){
         $indicators = ($isSub === false) ? $request['indicators'] : $indicators;
         $tempIndicatorIds = [];
         foreach($indicators as $indicator){
@@ -527,7 +532,8 @@ class WorkshopController extends Controller
                                 $project = $annexe->project;
                                 $annexf = AnnexF::whereHas('projects', function($q) use($project){
                                     $q->where('id', $project->id);
-                                })->where('workshop_id', $annexe->workshop_id)->first();
+                                })->where('workshop_id', $annexe->workshop_id)->where('year', $year)->get();
+                                $annexf = $annexf ? $annexf[0] : null;
                                 // check if activity already exists
                                 $existingActivity = false;
                                 foreach($annexf->activities as $activity){
@@ -594,7 +600,7 @@ class WorkshopController extends Controller
                     if($request['subunit_id']) { $q->where('subunit_id',  $request['subunit_id']);  }
                 }
             });
-            $annexfs = $query->with(['projects.subprogram', 'projects.leader', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
+            $annexfs = $query->with(['projects.subprogram', 'projects.cluster', 'projects.leader.profile.user', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
                 ->where('workshop_id', $request['workshopId'])
                 ->where('year', $request['year'])
                 ->where('status', $request['status'])->get();
@@ -652,15 +658,15 @@ class WorkshopController extends Controller
             if($statchange && $status != 'same'){
                 $annexf->status = $status;
                 $subject = $subject.'<p class="m-0">Status: '.$initialStatus.' => '.$annexf->status.'</p>';
-            }
-
-            if($statchange){
                 if($initialStatus != 'New' || $status == 'For Review'){
                     // $linkstatus = $status == 'For Review' ? 'For%20Review' : ($status == 'For Approval' ? 'For%20Approval' : ($status == 'Approved' ? 'Approved' : 'Submitted'));
                     $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?id='.$annexf->id;
                     $message = $this->sendNotification($annexf->projects, $status, 'Annex F', $link);
                     $subject = $subject.$message;
                 }
+            }
+
+            if($statchange){
             }
             
             $annexf->save();

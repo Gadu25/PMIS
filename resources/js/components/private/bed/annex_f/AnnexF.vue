@@ -8,6 +8,7 @@
         <div class="d-flex justify-content-between mb-2 ">
             <div> <!-- div needed for flex space between  -->
                 <template v-if="!editmode && inUserRole('annex_f_export') && syncedstatus == 'Submitted'">
+                <!-- <template v-if="!editmode && inUserRole('annex_f_export') "> -->
                     <button v-if="!editmode" class="btn btn-sm shadow-none min-100 me-1" :class="printmode ? 'btn-secondary' : 'btn-outline-secondary'" @click="printmode = !printmode"><i v-if="printmode" class="far fa-arrow-left"></i> Export</button>
                     <button class="btn btn-sm btn-outline-secondary me-1" v-print="'#printMe'" v-if="printmode"><i class="far fa-print"></i> Print or Save as PDF</button>
                     <a v-if="!editmode && exportlink != '' && printmode" :href="exportlink" target="_blank" class="btn btn-sm btn-success bg-gradient"><i class="far fa-file-excel"></i> Excel</a>
@@ -107,7 +108,7 @@
                     <div class="overlay" v-if="syncing">
                         <h1 class="text-white">Syncing Records <i class="far fa-spinner fa-spin"></i></h1>
                     </div>
-                    <div class="card-body" :class="editmode ? 'p-0' : ''">
+                    <div class="card-body" :class="editmode ? 'p-0' : ''" :style="printmode ? 'height: calc(100vh - 205px); overflow: auto;' : ''">
                         <template v-if="!editmode">
                             <div class="position-relative" id="printMe">
                                 <div class="d-flex justify-content-between"><small>Department of Science and Technology</small> <small class="fw-bold">Annex F</small></div>
@@ -129,22 +130,27 @@
                                         <thead class="text-center">
                                             <tr>
                                                 <th>Project Name/Activity</th>
+                                                <th v-if="!isAdmin">Leader</th>
+                                                <th v-if="!isAdmin">Cluster</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <template v-for="program in annexfs" :key="program.id+'_program'">
-                                                <tr class="bg-success text-white fw-bold" v-if="program.items.length > 0 || program.show">
+                                                <!-- <tr class="bg-success text-white fw-bold" v-if="program.items.length > 0 || program.show"> -->
+                                                <tr class="bg-success text-white fw-bold" v-if="isAdmin">
                                                     <td class="fw-bold" colspan="2">{{program.title}}</td>
                                                 </tr>
                                                 <FormItem @clicked="childClick" :items="program.items" :saving="saving"/>
                                                 <template v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
-                                                    <tr v-if="subprogram.items.length > 0 || subprogram.show">
+                                                    <!-- <tr v-if="subprogram.items.length > 0 || subprogram.show"> -->
+                                                    <tr v-if="isAdmin">
                                                         <td class="fw-bold" colspan="2">{{program.id == 1 ? subprogram.title_short : subprogram.title}}</td>
                                                     </tr>
                                                     <FormItem @clicked="childClick" :items="subprogram.items" :saving="saving"/>
                                                     <template v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
-                                                        <tr v-if="cluster.items.length > 0">
+                                                        <!-- <tr v-if="cluster.items.length > 0"> -->
+                                                        <tr v-if="isAdmin">
                                                             <td colspan="2"><div class="fw-bold ms-2">{{cluster.title}}</div></td>
                                                         </tr>
                                                         <FormItem @clicked="childClick" :items="cluster.items" :saving="saving"/>
@@ -162,41 +168,45 @@
                                         <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-outline-secondary" v-if="histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                     </div>
                                     <span v-if="saving">Saving <i class="fas fa-spinner fa-spin"></i></span>
-                                    <div v-if="statusNewDraft(form.status) && isUserProjectLeader(form.leaderId)">
+                                    <div v-if="statusNewDraft(form.status) && isUserProjectLeader(form.leaderId) || isAdmin">
+                                        <!-- <button v-if="statusNewDraft(form.status) && isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" @click="!saving ? submitForm(form.status) : null"><i class="far fa-save"></i> Admin Save</button> -->
+                                        <button v-if="statusNewDraft(form.status) && isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" data-bs-toggle="modal" data-bs-target="#comment"><i class="far fa-save"></i> Admin Save</button>
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="!saving ? submitForm('Draft') : null"><i class="fas fa-edit"></i> Draft</button>
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('For Review') : null"><i class="fas fa-search"></i> {{authuser.active_profile.title.name == 'Unit Header' ? 'For Approval' : 'For Review'}}</button>
                                     </div>
                                     <div v-if="!statusNewDraft(form.status) && form.status != 'Submitted'">
+                                        <!-- <button v-if="isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" @click="!saving ? submitForm(form.status) : null"><i class="far fa-save"></i> Admin Save</button> -->
+                                        <button v-if="isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" data-bs-toggle="modal" data-bs-target="#comment"><i class="far fa-save"></i> Admin Save</button>
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-secondary me-1" data-bs-toggle="modal" data-bs-target="#comment"><i class="fas fa-times"></i> Reject</button>
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-success" @click="!saving ? submitForm('approve') : null"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submitted' : 'Approve'}}</button>
                                     </div>
                                 </div>
-                                <div class="table-responsive form-details pb-2" v-dragscroll>
-                                    <table class="table table-sm table-bordered" style="width: 3000px">
-                                        <TableHead :year="syncedyear" />
+                                <div class="table-responsive form-details pb-2">
+                                    <table class="table table-sm table-bordered" style="width: 3000px;">
+                                        <TableHead :year="syncedyear" :sticky="true" />
                                         <tbody>
                                             <tr>
                                                 <td>{{form.title}}</td>
                                                 <td></td>
-                                                <td :class="statusNewDraft(form.status) ? 'p-0' : ''" v-for="activity, key in form.activities" :key="key+'month-form-activities'">
+                                                <td :class="statusNewDraft(form.status) || isAdmin ? 'p-0' : ''" v-for="activity, key in form.activities" :key="key+'month-form-activities'">
                                                     <div class="position-relative" v-for="act, akey in activity" :key="key+'mf-act-desc'+akey">
-                                                        <button   v-if="statusNewDraft(form.status)" @click="removeActivity(key, act)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
-                                                        <textarea v-if="statusNewDraft(form.status)" class="form-control act-input" rows="8" v-model="act.description"></textarea>
+                                                        <button   v-if="(statusNewDraft(form.status) || isAdmin) && activity.length > 1" @click="removeActivity(key, act)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
+                                                        <textarea v-if="statusNewDraft(form.status) || isAdmin" class="form-control act-input" rows="8" v-model="act.description"></textarea>
                                                         <p v-else>{{act.description}}</p>
                                                     </div>
-                                                    <button v-if="statusNewDraft(form.status)" @click="addActivity(key)" class="btn btn-sm btn-outline-secondary act-add"><i class="fas fa-plus"></i></button>
+                                                    <button v-if="statusNewDraft(form.status) || isAdmin" @click="addActivity(key)" class="btn btn-sm btn-outline-secondary act-add"><i class="fas fa-plus"></i></button>
                                                 </td>
                                                 <td></td>
-                                                <td style="height: 1px;" :class="statusNewDraft(form.status) ? 'p-0' : ''">
-                                                    <textarea v-if="statusNewDraft(form.status)" style="resize: none;" v-model="form.remarks" class="form-control remarks"></textarea>
+                                                <td style="height: 1px;" :class="statusNewDraft(form.status) || isAdmin ? 'p-0' : ''">
+                                                    <textarea v-if="statusNewDraft(form.status) || isAdmin" style="resize: none;" v-model="form.remarks" class="form-control remarks"></textarea>
                                                     <p v-else>{{form.remarks}}</p>
                                                 </td>
                                             </tr>
                                             <tr class="funding">
                                                 <td class="text-center"><small>Funding</small></td>
                                                 <td></td>
-                                                <td :class="statusNewDraft(form.status) ? 'p-0' : 'text-end'" v-for="fund, key in form.funds" :key="key+'month-form-fund'">
-                                                    <input v-if="statusNewDraft(form.status)" type="text" class="form-control fund-input" @change="numChange(fund.amount, key)" v-model="fund.amount" v-money="money">
+                                                <td :class="statusNewDraft(form.status) || isAdmin ? 'p-0' : 'text-end'" v-for="fund, key in form.funds" :key="key+'month-form-fund'">
+                                                    <input v-if="statusNewDraft(form.status) || isAdmin" type="text" class="form-control fund-input" @change="numChange(fund.amount, key)" v-model="fund.amount" v-money="money">
                                                     <span  v-else>{{fund.amount}}</span>
                                                 </td>
                                                 <td class="text-end"> {{formatAmount(getTotalAmount())}} <input type="text" class="d-none" v-money="money" @change="numChange(0, 15)"></td>
@@ -206,25 +216,25 @@
                                                 <tr>
                                                     <td>{{sub.title}}</td>
                                                     <td></td>
-                                                    <td :class="statusNewDraft(form.status) ? 'p-0' : ''" v-for="activity, skey in sub.activities" :key="skey+'month-form-activities-sub'">
+                                                    <td :class="statusNewDraft(form.status) || isAdmin ? 'p-0' : ''" v-for="activity, skey in sub.activities" :key="skey+'month-form-activities-sub'">
                                                         <div class="position-relative" v-for="act, akey in activity" :key="key+'mf-act-desc'+akey">
-                                                            <button   v-if="statusNewDraft(form.status)" @click="removeActivity(skey, act, key)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
-                                                            <textarea v-if="statusNewDraft(form.status)" class="form-control act-input" rows="8" v-model="act.description"></textarea>
-                                                            <p v-else>{{act.description}}</p>
+                                                            <button   v-if="(statusNewDraft(form.status) || isAdmin) && activity.length > 1" @click="removeActivity(skey, act, key)" class="btn btn-outline-danger act-rmv"><i class="far fa-times"></i></button>
+                                                            <textarea v-if="statusNewDraft(form.status) || isAdmin" class="form-control act-input" rows="8" v-model="act.description"></textarea>
+                                                            <p v-else>{{act.description}} {{act.length}}</p>
                                                         </div>
-                                                        <button v-if="statusNewDraft(form.status)" @click="addActivity(skey, key)" class="btn btn-sm btn-outline-secondary act-add"><i class="fas fa-plus"></i></button>
+                                                        <button v-if="statusNewDraft(form.status) || isAdmin" @click="addActivity(skey, key)" class="btn btn-sm btn-outline-secondary act-add"><i class="fas fa-plus"></i></button>
                                                     </td>
                                                     <td></td>
-                                                    <td style="height: 1px;" :class="statusNewDraft(form.status) ? 'p-0' : ''">
-                                                        <textarea v-if="statusNewDraft(form.status)" style="resize: none;" v-model="sub.remarks" class="form-control remarks"></textarea>
+                                                    <td style="height: 1px;" :class="statusNewDraft(form.status) || isAdmin ? 'p-0' : ''">
+                                                        <textarea v-if="statusNewDraft(form.status) || isAdmin" style="resize: none;" v-model="sub.remarks" class="form-control remarks"></textarea>
                                                         <p v-else>{{form.remarks}}</p>
                                                     </td>
                                                 </tr>
                                                 <tr class="funding">
                                                     <td class="text-center"><small>Funding</small></td>
                                                     <td></td>
-                                                    <td :class="statusNewDraft(form.status) ? 'p-0' : 'text-end'" v-for="fund, fkey in sub.funds" :key="fkey+'month-form-fund-sub'">
-                                                        <input v-if="statusNewDraft(form.status)" type="text" class="form-control fund-input" @change="numChange(fund.amount, fkey, key)" v-model="fund.amount" v-money="money">
+                                                    <td :class="statusNewDraft(form.status) || isAdmin ? 'p-0' : 'text-end'" v-for="fund, fkey in sub.funds" :key="fkey+'month-form-fund-sub'">
+                                                        <input v-if="statusNewDraft(form.status) || isAdmin" type="text" class="form-control fund-input" @change="numChange(fund.amount, fkey, key)" v-model="fund.amount" v-money="money">
                                                         <span  v-else>{{fund.amount}}</span>
                                                         <!-- <span  v-else>{{fund.amount != 0 ? formatAmount(fund.amount) : ''}}</span> -->
                                                     </td>
@@ -234,8 +244,8 @@
                                             </template>
                                         </tbody>
                                     </table>
-                                    <strong>Status: {{form.status}}</strong>
                                 </div>
+                                <strong>Status: {{form.status}}</strong>
                             </div>
                             <Logs :histories="histories" :title="historyfor"/>
                             <div class="modal fade" id="comment" tabindex="-1" role="dialog" aria-hidden="true">
@@ -250,7 +260,7 @@
                                                 <label for="Comment">Please add comment <span class="text-danger">*</span></label>
                                             </div>
                                             <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-success rounded-pill" @click="submitForm('reject')">Submit</button>
+                                                <button type="button" class="btn btn-success rounded-pill" @click="isAdmin ? submitForm(form.status) : submitForm('reject')">Submit</button>
                                             </div>
                                         </div>
                                     </div>
@@ -431,7 +441,7 @@ export default {
         },
         submitForm(status){
             var form = this.form
-            if(status == 'reject'){
+            if(status == 'reject' || this.isAdmin){
                 if(form.comment == ''){
                     this.toastMsg('warning', 'Please add a comment')
                     return false
@@ -681,7 +691,15 @@ export default {
         inUserRole(code){
             var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
             return (role)
-        }
+        },
+        // checkUserAccess(progId, subpId = null, clusId = null){
+            // var user = this.authuser
+            // var uProgId = user.program_id
+            // var uSubpId = user.subprogram_id
+            // var uClusId = user.cluster_id
+            // console.log(user)
+            // return true
+        // }
     },
     computed: {
         ...mapGetters('annexf', ['getAnnexFs']),
@@ -695,6 +713,7 @@ export default {
         divisions(){ return this.getDivisions },
         ...mapGetters('user', ['getAuthUser']),
         authuser(){ return this.getAuthUser },
+        isAdmin(){ return this.authuser.active_profile.title.name == 'Superadmin' }
     },
     created(){
         this.fetchWorkshop(this.$route.params.workshopId).then(res => {
@@ -746,11 +765,11 @@ export default {
     margin: 0;
 }
 .table-responsive.display{
-    max-height: calc(100vh - 350px);
+    max-height: calc(100vh - 318px);
     padding: 0 10px 10px 0;
 }
 .table-responsive.form-details{
-    height: calc(100vh - 236px);
+    height: calc(100vh - 258px);
     padding: 10px;
 }
 .table-responsive.form-display{

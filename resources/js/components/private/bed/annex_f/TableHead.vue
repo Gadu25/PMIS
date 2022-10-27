@@ -1,5 +1,5 @@
 <template>
-    <thead class="align-middle text-center" :class="sticky ? 'position-sticky top-0 transparint shadow' : ''">
+    <thead class="align-middle text-center" :class="sticky ? 'position-sticky transparint shadow' : ''">
         <tr>
             <th style="width: 8%" rowspan="3"><span class="text-nowrap">Project Name/Activity</span></th>
             <th style="width: 1%" rowspan="3">Total <br> Target <br> (P'000)</th>
@@ -48,6 +48,8 @@ export default {
 </script>
 <style scoped>
 .transparint{
+    top: -10px;
     background: rgba(255, 255, 255, 0.9);
+    z-index: 100;
 }
 </style>

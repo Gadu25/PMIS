@@ -1,17 +1,24 @@
 <template>
     <template v-for="item in items" :key="item.id+'-item'">
-        <tr>
-            <td><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
-            <td :class="checkUserDivision(item.projects) ? 'btns' : ''">
-                <button class="btn btn-sm btn-primary bg-gradient mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" v-if="inUserRole('annex_f_edit_details') && checkUserDivision(item.projects) && (item.status == 'Draft' ? isUserProjectLeader(item.projects) : true )"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button><br> 
-                <!-- <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
-                <button class="btn btn-sm btn-warning bg-gradient mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"  v-if="item.histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
-
-            </td>
-        </tr>
-        <tr v-for="sub in item.subs" :key="sub.id+'sub-item'">
-            <td colspan="2"><div class="fs-14 fst-italic ms-4">{{sub.subproject.title}}</div></td>
-        </tr>
+        <template v-if="checkUserDivision(item.projects) || isAdmin">
+            <template v-if="isUserProjectLeader(item.projects) || isHead || isChief || isAdmin">
+                <tr>
+                    <td><div class="ms-3"><i class="fas" :class="setStatusIcon(item.status)"></i> {{setItemTitle(item.projects)}}</div></td>
+                    <td v-if="!isAdmin">{{getProjectLeader(item.projects)}}</td>
+                    <td v-if="!isAdmin">{{getCluster(item.projects)}}</td>
+                    <td :class="checkUserDivision(item.projects) ? 'btns' : ''">
+                        <button class="btn btn-sm btn-primary bg-gradient mb-1" @click="childClick(item, setItemTitle(item.projects), 'editform')" 
+                        v-if="(inUserRole('annex_f_edit_details') && checkUserDivision(item.projects) && (item.status == 'Draft' ? isUserProjectLeader(item.projects) : true )) || isAdmin"><i class="far" :class="statusNewDraft(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> Details</button><br> 
+                        <!-- <button class="btn btn-sm btn-danger" v-if="statusNewDraft(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
+                        <button class="btn btn-sm btn-warning bg-gradient mb-1" @click="childClick(item, setItemTitle(item.projects), 'history')"
+                        v-if="item.histories.length > 0 | isAdmin" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                    </td>
+                </tr>
+                <tr v-for="sub in item.subs" :key="sub.id+'sub-item'">
+                    <td :colspan="isAdmin ? 2 : 4"><div class="fs-14 fst-italic ms-4">{{sub.subproject.title}}</div></td>
+                </tr>
+            </template>
+        </template>
     </template>
 </template>
 <script>
@@ -62,21 +69,46 @@ export default {
         },
         isUserProjectLeader(projects){
             var state = false
-            var project = projects[0]
-            if(project.leader){
-                state = this.authuser.active_profile.id == project.leader.profile_id
-                // console.log(project.leader)
+            for(let project of projects){
+                if(!state && project.leader){
+                    state = this.authuser.active_profile.id == project.leader.profile_id
+                }
             }
             return state
         },
         inUserRole(code){
             var role = this.authuser.active_profile.roles.find(elem => elem.code == code)
             return (role)
+        },
+        getProjectLeader(projects){
+            var prev = ''
+            var fullname = ''
+            for(let i = 0; i < projects.length; i++){
+                var project = projects[i]
+                var leader = project.leader.profile.user
+                var name = leader.firstname+' '+leader.lastname
+                fullname  = prev && prev != name ? fullname+' & '+name : name
+                prev = name
+            }
+            return fullname
+        },
+        getCluster(projects){
+            var cluster = ''
+            for(let project of projects){
+                if(!cluster){
+                    cluster = project.cluster_id ? project.cluster.title : project.subprogram.title_short
+                }
+            }
+            return cluster
         }
     },
     computed: {
         ...mapGetters('user', ['getAuthUser']),
         authuser(){ return this.getAuthUser },
+        isAdmin(){ return this.authuser.active_profile.title.name == 'Superadmin' },
+        isHead(){  return this.authuser.active_profile.title.name == 'Unit Head' },
+        isChief(){ return this.authuser.active_profile.title.name == 'Division Chief' },
+
     },
     props: {
         items: Object,

@@ -3,90 +3,92 @@
         <div class="position-relative" :class="toggle ? 'col-sm-9' : 'col-sm-12'">
             <button v-if="!toggle && !formshow" @click="toggle = !toggle" style="z-index: 99" class="btn btn-sm btn-secondary bg-gradient position-absolute end-0"><i class="fas fa-arrow-left"></i></button>
             <div v-if="!editmode" class="card border-0 shadow rounded-0">
-                <div class="card-body" v-if="!syncing">
-                    <div :style="'font-size:' + fontsize" class="d-flex justify-content-end fw-bold">Annex 1</div>
-                    <div class="text-center mb-3">
-                        <h6 :style="'font-size:' + fontsize" class="mb-0 fw-bold">SEI Annual Planning Workshop</h6>
-                        <h6 :style="'font-size:' + fontsize" class="fw-bold">{{workshop.date}}</h6>
-                    </div>
-                    <div class="table-responsive" id="main-container" v-dragscroll>
-                        <table class="table table-sm table-bordered" :style="'font-size:' + fontsize">
-                            <TableHead :forPrint="exportmode" />
-                            <tbody class="align-middle">
-                                <template v-for="sources, div in annexones" :key="div">
-                                    <tr class="fw-bold" style="background: orange;">
-                                        <td>{{div}}</td>
-                                        <td class="text-end" v-for="num in 13" :key="num">
-                                            {{ setDivisionFund(num, sources, div) }}
-                                        </td>
-                                    </tr>
-                                    <template v-for="headers, source in sources" :key="source">
-                                        <tr v-if="div != 'STSD'" class="fw-bold text-danger" style="background: yellow;">
-                                            <td class="text-center">{{source}}</td>
+                <div id="main-container">
+                    <div class="card-body" v-if="!syncing" id="printMe">
+                        <div :style="'font-size:' + fontsize" class="d-flex justify-content-end fw-bold">Annex 1</div>
+                        <div class="text-center mb-3">
+                            <h6 :style="'font-size:' + fontsize" class="mb-0 fw-bold">SEI Annual Planning Workshop</h6>
+                            <h6 :style="'font-size:' + fontsize" class="fw-bold">{{workshop.date}}</h6>
+                        </div>
+                        <div :class="!exportmode ? 'table-responsive' : '   '" :id="!exportmode ? 'table-container' : ''" v-dragscroll>
+                            <table class="table table-sm table-bordered" :style="'font-size:' + fontsize">
+                                <TableHead :forPrint="exportmode" />
+                                <tbody class="align-middle">
+                                    <template v-for="sources, div in annexones" :key="div">
+                                        <tr class="fw-bold" style="background: orange;">
+                                            <td>{{div}}</td>
                                             <td class="text-end" v-for="num in 13" :key="num">
-                                                {{ setSourceFund(num, headers) }}
+                                                {{ setDivisionFund(num, sources, div) }}
                                             </td>
                                         </tr>
-                                        <template v-for="items, header in headers" :key="header">
-                                            <tr class="fw-bold" v-if="header != 'None'">
-                                                <td>{{header}}</td>
-                                                <td class="text-end" v-for="num in 13" :key="num">
-                                                    {{ isSubprogram(items) ? setHeaderFund(num, items) : '' }}
-                                                </td>
-                                            </tr>
-                                            <template v-for="item in items" :key="item.id">
-                                                <tr>
-                                                    <td><div class="ms-1">{{item.project.title}}</div></td>
-                                                    <td class="text-end" v-for="num in 13" :key="num">
-                                                        {{ setFund(num, item.funds, item.subs) }}
-                                                    </td>
-                                                </tr>
-                                                <template v-for="subitem in item.subs" :key="subitem">
-                                                    <tr>
-                                                        <td><div class="ms-3">{{subitem.subproject.title}}</div></td>
-                                                        <td class="text-end" v-for="num in 13" :key="num">
-                                                            {{ setFund(num, subitem.funds) }}
-                                                        </td>
-                                                    </tr>
-                                                </template>
-                                            </template>
-                                            <template v-if="!isSubprogram(items)">
-                                                <tr style="background: green;" class="fw-bold">
-                                                    <td class="text-center">Sub-Total</td>
-                                                    <td class="text-end" v-for="num in 13" :key="num">
-                                                        {{ setHeaderFund(num, items) }}
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                        </template>
-                                        <template v-if="div == 'STSD' && division_id == 0">
-                                            <tr style="background: #7aa9cf;" class="fw-bold">
-                                                <td class="stsdtotals">Total 2A1</td>
+                                        <template v-for="headers, source in sources" :key="source">
+                                            <tr v-if="div != 'STSD'" class="fw-bold text-danger" style="background: yellow;">
+                                                <td class="text-center">{{source}}</td>
                                                 <td class="text-end" v-for="num in 13" :key="num">
                                                     {{ setSourceFund(num, headers) }}
                                                 </td>
                                             </tr>
-                                            <tr style="background: #b4c867;" class="fw-bold">
-                                                <td class="stsdtotals">Less AC</td>
-                                                <td class="text-end" v-for="num in 13" :key="num">
-                                                    {{ setBySource(num, 'AC') }}
-                                                </td>
-                                            </tr>
-                                            <tr style="background: #7aa9cf;" class="fw-bold">
-                                                <td class="stsdtotals">Total for 2A2</td>
-                                                <td class="text-end" v-for="num in 13" :key="num">
-                                                    {{ setBySource(num, '2A2') }}
-                                                </td>
-                                            </tr>
+                                            <template v-for="items, header in headers" :key="header">
+                                                <tr class="fw-bold" v-if="header != 'None'">
+                                                    <td>{{header}}</td>
+                                                    <td class="text-end" v-for="num in 13" :key="num">
+                                                        {{ isSubprogram(items) ? setHeaderFund(num, items) : '' }}
+                                                    </td>
+                                                </tr>
+                                                <template v-for="item in items" :key="item.id">
+                                                    <tr>
+                                                        <td><div class="ms-1">{{item.project.title}}</div></td>
+                                                        <td class="text-end" v-for="num in 13" :key="num">
+                                                            {{ setFund(num, item.funds, item.subs) }}
+                                                        </td>
+                                                    </tr>
+                                                    <template v-for="subitem in item.subs" :key="subitem">
+                                                        <tr>
+                                                            <td><div class="ms-3">{{subitem.subproject.title}}</div></td>
+                                                            <td class="text-end" v-for="num in 13" :key="num">
+                                                                {{ setFund(num, subitem.funds) }}
+                                                            </td>
+                                                        </tr>
+                                                    </template>
+                                                </template>
+                                                <template v-if="!isSubprogram(items)">
+                                                    <tr style="background: green;" class="fw-bold">
+                                                        <td class="text-center">Sub-Total</td>
+                                                        <td class="text-end" v-for="num in 13" :key="num">
+                                                            {{ setHeaderFund(num, items) }}
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </template>
+                                            <template v-if="div == 'STSD' && division_id == 0">
+                                                <tr style="background: #7aa9cf;" class="fw-bold">
+                                                    <td class="stsdtotals">Total 2A1</td>
+                                                    <td class="text-end" v-for="num in 13" :key="num">
+                                                        {{ setSourceFund(num, headers) }}
+                                                    </td>
+                                                </tr>
+                                                <tr style="background: #b4c867;" class="fw-bold">
+                                                    <td class="stsdtotals">Less AC</td>
+                                                    <td class="text-end" v-for="num in 13" :key="num">
+                                                        {{ setBySource(num, 'AC') }}
+                                                    </td>
+                                                </tr>
+                                                <tr style="background: #7aa9cf;" class="fw-bold">
+                                                    <td class="stsdtotals">Total for 2A2</td>
+                                                    <td class="text-end" v-for="num in 13" :key="num">
+                                                        {{ setBySource(num, '2A2') }}
+                                                    </td>
+                                                </tr>
+                                            </template>
                                         </template>
                                     </template>
-                                </template>
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body p-5 text-center" v-else>
-                    <h1>Data Syncing <i class="far fa-sync fa-spin"></i></h1>
+                    <div class="card-body p-5 text-center" v-else>
+                        <h1>Data Syncing <i class="far fa-sync fa-spin"></i></h1>
+                    </div>
                 </div>
             </div>
             <Form :syncing="syncing" @clicked="childClicked()" v-else />
@@ -110,9 +112,22 @@
                     </div>
                 </div>
             </div>
-            <div class="d-flex justify-content-end">
-                <button v-if="inUserRoles('annex_one_publish_projects')" class="btn btn-sm btn-warning bg-gradient" data-bs-target="#modal" data-bs-toggle="modal">Publish Projects</button>
-            </div>
+            <template v-if="!editmode">
+                <div class="card border-0 shadow mb-3">
+                    <div class="card-body">
+                        <span class="btn" v-if="!exportmode" @click="exportmode = true">Export Annex 1</span>
+                        
+                        <template v-if="exportmode">
+                            <p class="btn" @click="exportmode = false"><strong>Exit Export Mode</strong></p>
+                            <button class="btn btn-sm w-100 btn-outline-secondary mb-2" v-print="'#printMe'"><i class="far fa-print"></i> Print / Save as PDF</button><br>
+                            <button class="btn btn-sm w-100 btn-success bg-gradient"><i class="far fa-file-excel"></i> Download as Excel</button>
+                        </template>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button v-if="inUserRoles('annex_one_publish_projects')" class="btn btn-sm btn-warning bg-gradient" data-bs-target="#modal" data-bs-toggle="modal">Publish Projects</button>
+                </div>
+            </template>
         </div>
         <div class="modal fade" id="modal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
@@ -457,10 +472,14 @@ export default {
 </script>
 <style scoped>
 #main-container{
+    height: calc(100vh - 205px);
+    overflow: auto;
+}
+#table-container{
     height: calc(100vh - 300px);
     overflow: auto;
 }
-#main-container>table{
+#table-container>table{
     min-width: 1500px;
 }
 .stsdtotals{

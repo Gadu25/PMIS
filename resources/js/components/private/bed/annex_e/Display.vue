@@ -99,7 +99,7 @@ export default {
 </script>
 <style scoped>
 .table-responsive.display{
-    height: 100%; 
+    height: 100vh ; 
     padding: 0 4px 4px 4px; 
 }
 </style>
