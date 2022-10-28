@@ -123,6 +123,7 @@ Route::prefix('/workshop')->group(function(){
     Route::middleware('auth:sanctum')->delete('/{id}', [WorkshopController::class, 'destroy']);
 });
 Route::get('/export/{workshopId}/{annex}/{status}/{type}/{id1}/{id2}/{id}/{year}', [WorkshopController::class, 'exportxlsx']);
+Route::get('/export/{workshopId}/{divisionId}', [WorkshopController::class, 'xlsxAnnexone']);
 
 Route::prefix('/tag')->group(function(){
     Route::middleware('auth:sanctum')->get('/', [TagController::class, 'index']);

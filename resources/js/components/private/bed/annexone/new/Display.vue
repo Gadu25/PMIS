@@ -120,7 +120,7 @@
                         <template v-if="exportmode">
                             <p class="btn" @click="exportmode = false"><strong>Exit Export Mode</strong></p>
                             <button class="btn btn-sm w-100 btn-outline-secondary mb-2" v-print="'#printMe'"><i class="far fa-print"></i> Print / Save as PDF</button><br>
-                            <button class="btn btn-sm w-100 btn-success bg-gradient"><i class="far fa-file-excel"></i> Download as Excel</button>
+                            <a class="btn btn-sm w-100 btn-success bg-gradient" href="/api/export/1/0" target="_blank"><i class="far fa-file-excel"></i> Download as Excel</a>
                         </template>
                     </div>
                 </div>

@@ -139,6 +139,56 @@ class WorkshopController extends Controller
         DB::beginTransaction();
         try {
             $workshop = Workshop::findOrFail($id);
+
+            // get all annexes and delete
+            $annexes = AnnexE::where('workshop_id', $id)->get();
+            foreach($annexes as $annexe){
+                foreach($annexe->performance_indicators as $indicator){
+                    $indicator->tags()->sync([]);
+                    $indicator->details()->delete();
+                    $indicator->breakdowns()->delete();
+                }
+                foreach ($annexe->subs as $sub) {
+                    foreach($sub->performance_indicators as $indicator){
+                        $indicator->tags()->sync([]);
+                        $indicator->details()->delete();
+                        $indicator->breakdowns()->delete();
+                    }
+                    $sub->delete();
+                }
+                $annexe->delete();
+            }
+
+            $annexfs = AnnexF::where('workshop_id', $id)->get();
+            foreach($annexfs as $annexf){
+                $annexf->projects()->sync([]);
+                $annexf->activities()->delete();
+                $annexf->funds()->delete();
+                foreach($annexf->subs as $sub){
+                    $sub->activities()->delete();
+                    $sub->funds()->delete();
+                    $sub->delete();
+                }
+                $annexf->delete();
+            }
+
+            $commonindicators = CommonIndicator::where('workshop_id', $id)->get();
+            foreach($commonindicators as $commonindicator){
+                $commonindicator->tags()->sync([]);
+                $commonindicator->details()->delete();
+                foreach($commonindicator->subindicators as $sub){
+                    $sub->tags()->sync([]);
+                    $sub->details()->delete();
+                    $sub->delete();
+                }
+                $commonindicator->delete();
+            }
+
+            $nationalexpenditures = NationalExpenditure::where('workshop_id', $id)->get();
+            foreach($nationalexpenditures as $nep){
+                $nep->delete();
+            }
+
             $workshop->delete();
 
             DB::commit();
@@ -1250,9 +1300,12 @@ class WorkshopController extends Controller
     }
 
     public function filteredAnnexOne(Request $request){
-        $divisionId = $request['division_id'];
+        return $this->getFilteredAnnexOne($request['workshop_id'], $request['division_id']);
+    }
+
+    private function getFilteredAnnexOne($workshopId, $divisionId){
         $annexones = AnnexOne::with(['subs.subproject', 'subs.funds', 'funds', 'project.subprojects', 'project.leader', 'project.encoders'])
-            ->where('workshop_id', $request['workshop_id'])
+            ->where('workshop_id', $workshopId)
             ->whereHas('project', function($q) use($divisionId){
                 if($divisionId != 0){ $q->where('division_id', $divisionId); }
             })->get()->sortBy('project.division_id');
@@ -1899,12 +1952,11 @@ class WorkshopController extends Controller
         return [$year+1, $year+2];
     }
 
-    // Export
+    // Export Annex E and F
     public function exportxlsx($workshopId, $annex, $status, $filter, $id1, $id2, $id3, $year){ // $annex = E or F
         $workshop = Workshop::findOrFail($workshopId);
         $this->formatWorkshop($workshop);
         $year = (int) $year;
-
 
         $data = [];
         $xlsxheader = $this->xlsxheader($annex, $year);
@@ -2376,4 +2428,125 @@ class WorkshopController extends Controller
         $row = $defaultrow+$ctr;
         return $col1.$row.':'.$col2.$row;
     }
+
+    // Export Annex 1
+    public function xlsxAnnexone($workshopId, $divisionId){
+        try {
+            $workshop = Workshop::findOrFail($workshopId);
+            $this->formatWorkshop($workshop);
+            $year = (int) $workshop->year;
+            $date = $workshop->date;
+            $data = [];
+
+            $xlsxheader = $this->annex1header($date, $year);
+            foreach($xlsxheader['header'] as $header){
+                array_push($data, $header);
+            }
+
+            $xlsxbody = $this->annex1body($workshopId, $divisionId);
+            foreach($xlsxbody['body'] as $body){
+                array_push($data, $body);
+            }
+
+
+            $filename = 'Annex1_'.$date.'.xlsx';
+            $xlsx = SimpleXLSXGen::fromArray( $data, $filename );
+            foreach($xlsxheader['mergedcells'] as $cells){
+                $xlsx->mergeCells($cells);
+            }
+
+
+
+            for($i = 0; $i < 14; $i++){
+                $width = $i == 0 ? 40 : 15;
+                $num = $i+1;
+                $xlsx->setColWidth($num, $width);
+            }
+
+            $xlsx->downloadAs($filename); 
+
+
+
+        }
+        catch(\Exception $e){
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    private function annex1header($date, $year){
+        $header = [
+            ['<right><b>ANNEX 1</b></right>'],
+            ['<center>SEI Annual Planning Workshop</center>'],
+            ['<center>'.$date.'</center>'], 
+            ['<style height="20"> </style>'],
+            ['<middle><center>Programs/ Projects/ Activities</center></middle>','<center>Budgetary Requirements</center>'],
+            [null, '<middle><center>FY '.$year.'</center></middle>', '<middle><center>FY '.($year+1).'</center></middle>', null, null, '<center>FY '.($year+2).'</center>', null, '<center>Forward Estimates</center>'],
+            [null, null, null, null, null, '<center>Proposal to DBM</center>', null, '<center>FY '.($year+3).'</center>', null, '<center>FY '.($year+4).'</center>', null, '<center>FY '.($year+5).'</center>', null, '<center>FY '.($year+6).'</center>'],
+            [null, '<middle><center><style height="100">GAA</style></center></middle>', '<middle><center>Proposed</center></middle>', '<middle><center>NEP</center></middle>', '<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>', 
+            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
+            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
+            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
+            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>']
+        ];
+        $mergedcells = [
+            'A1:N1', 'A2:N2', 'A3:N3', 'A4:N4',
+            'A5:A8', 'B5:N5', 'B6:B7', 'C6:E7',
+            'F6:G6', 'F7:G7', 'H7:I7', 'J7:K7',
+            'L7:M7', 'H6:N6'
+        ];
+        return ['header' => $header, 'mergedcells' => $mergedcells];
+    }
+
+    private function annex1body($workshopId, $divisionId){
+        $body = [];
+        $divisions = $this->getFilteredAnnexOne($workshopId, $divisionId);
+        foreach($divisions as $division => $sources){
+            array_push($body, $this->formatCell($division, ['b', 'bgcolor:#FFA500']));
+            foreach($sources as $source => $headers){
+                array_push($body, $this->formatCell($source, ['b', 'center', 'style:bgcolor="#FFFF00",color="#FF0000"']));
+                // foreach($headers as $header => $items){
+                //     array_push($body, [$header]);
+                //     foreach($items as $item){
+                //         array_push($body, [$this->wrapText($item->project->title)]);
+                //     }
+                // }
+            }
+        }
+
+        return ['body' => $body];
+    }
+    // #FFA500 - orange
+    // #FFFF00 - yellow
+
+    // private function wrapText($text){
+    //     return '<wraptext>'.$text.'</wraptext>';
+    // }
+
+    private function formatCell($text, $formats){
+        $formattedcell = $text;
+        foreach($formats as $format){
+            $array = explode(':', $format);
+            $frmt = $array[0];
+            if($frmt == 'style'){
+                $formattedcell = '<'.$frmt;
+                $styles = explode(',', $array[1]);
+                $length = sizeof($styles);
+                foreach($styles as $key => $style){
+                    $formattedcell = $formattedcell.' '.$style;
+                    if($length-1 == $key){
+                        $formattedcell = $formattedcell.'>';
+                    }
+                }
+            }
+            else{
+                $formattedcell = '<'.$frmt.'>'.$formattedcell.'</'.$frmt.'>';
+            }
+                // $color = $array[1];
+                // $formattedcell = '<style '.$frmt.'="'.$color.'">'.$formattedcell.'</style>';
+        }
+
+
+        return [$formattedcell];
+    }
+
 }
