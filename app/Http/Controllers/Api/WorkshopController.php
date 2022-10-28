@@ -2443,11 +2443,11 @@ class WorkshopController extends Controller
                 array_push($data, $header);
             }
 
-            $xlsxbody = $this->annex1body($workshopId, $divisionId);
+            $xlsxbody = $this->annex1body($workshopId, $divisionId, $year);
+            // return $xlsxbody;
             foreach($xlsxbody['body'] as $body){
                 array_push($data, $body);
             }
-
 
             $filename = 'Annex1_'.$date.'.xlsx';
             $xlsx = SimpleXLSXGen::fromArray( $data, $filename );
@@ -2458,7 +2458,7 @@ class WorkshopController extends Controller
 
 
             for($i = 0; $i < 14; $i++){
-                $width = $i == 0 ? 40 : 15;
+                $width = $i == 0 ? 40 : 17;
                 $num = $i+1;
                 $xlsx->setColWidth($num, $width);
             }
@@ -2469,24 +2469,24 @@ class WorkshopController extends Controller
 
         }
         catch(\Exception $e){
-            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
         }
     }
 
     private function annex1header($date, $year){
         $header = [
             ['<right><b>ANNEX 1</b></right>'],
-            ['<center>SEI Annual Planning Workshop</center>'],
-            ['<center>'.$date.'</center>'], 
+            ['<center><b>SEI Annual Planning Workshop</center>'],
+            ['<center><b>'.$date.'</center>'], 
             ['<style height="20"> </style>'],
-            ['<middle><center>Programs/ Projects/ Activities</center></middle>','<center>Budgetary Requirements</center>'],
-            [null, '<middle><center>FY '.$year.'</center></middle>', '<middle><center>FY '.($year+1).'</center></middle>', null, null, '<center>FY '.($year+2).'</center>', null, '<center>Forward Estimates</center>'],
-            [null, null, null, null, null, '<center>Proposal to DBM</center>', null, '<center>FY '.($year+3).'</center>', null, '<center>FY '.($year+4).'</center>', null, '<center>FY '.($year+5).'</center>', null, '<center>FY '.($year+6).'</center>'],
-            [null, '<middle><center><style height="100">GAA</style></center></middle>', '<middle><center>Proposed</center></middle>', '<middle><center>NEP</center></middle>', '<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>', 
-            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
-            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
-            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
-            '<middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>']
+            ['<b><middle><center>Programs/ Projects/ Activities</center></middle>','<center>Budgetary Requirements</center>'],
+            [null, '<b><middle><center>FY '.$year.'</center></middle>', '<b><middle><center>FY '.($year+1).'</center></middle>', null, null, '<b><center>FY '.($year+2).'</center>', null, '<b><center>Forward Estimates</center>'],
+            [null, null, null, null, null, '<b><center>Proposal to DBM</center>', null, '<b><center>FY '.($year+3).'</center>', null, '<b><center>FY '.($year+4).'</center>', null, '<b><center>FY '.($year+5).'</center>', null, '<b><center>FY '.($year+6).'</center>'],
+            [null, '<b><middle><center><style height="100">GAA</style></center></middle>', '<b><middle><center>Proposed</center></middle>', '<b><middle><center>NEP</center></middle>', '<b><middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>', 
+            '<b><middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<b><middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
+            '<b><middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<b><middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
+            '<b><middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<b><middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>',
+            '<b><middle><center><wraptext>Submitted During Previous Annual Report</wraptext></center></middle>','<b><middle><center><wraptext>Revised Proposed Programs and Projects with Corresponding Budget (if any)</wraptext></center></middle>']
         ];
         $mergedcells = [
             'A1:N1', 'A2:N2', 'A3:N3', 'A4:N4',
@@ -2497,19 +2497,68 @@ class WorkshopController extends Controller
         return ['header' => $header, 'mergedcells' => $mergedcells];
     }
 
-    private function annex1body($workshopId, $divisionId){
-        $body = [];
+    private function annex1body($workshopId, $divisionId, $year){
+        $body = []; 
         $divisions = $this->getFilteredAnnexOne($workshopId, $divisionId);
         foreach($divisions as $division => $sources){
-            array_push($body, $this->formatCell($division, ['b', 'bgcolor:#FFA500']));
+            $divArr = [$this->formatCell($division, ['b', 'style:bgcolor="#FFA500"'])];
+            if($division == 'STSD'){
+                // if stsd, need to minus AC
+                $divArr = $this->a1DivFunds($divArr, $year, $sources, $divisions);
+            }
+            else{
+                $divArr = $this->a1DivFunds($divArr, $year, $sources);
+            }
+            array_push($body, $divArr);
             foreach($sources as $source => $headers){
-                array_push($body, $this->formatCell($source, ['b', 'center', 'style:bgcolor="#FFFF00",color="#FF0000"']));
-                // foreach($headers as $header => $items){
-                //     array_push($body, [$header]);
-                //     foreach($items as $item){
-                //         array_push($body, [$this->wrapText($item->project->title)]);
-                //     }
-                // }
+                $srcArr = [$this->formatCell($source, ['b', 'center', 'style:bgcolor="#FFFF00",color="#FF0000"'])];
+                $srcArr = $this->a1SrcFunds($srcArr, $year, $headers);
+                if($division != 'STSD'){
+                    array_push($body, $srcArr);
+                }
+                foreach($headers as $header => $items){
+                    $headerType = $this->a1HeaderType($items);
+                    $headArr = [$this->formatCell($header, ['b'])];
+                    $headArr = $this->a1HeadFunds($headArr, $year, $items, $headerType);
+                    if($header != 'None'){
+                        array_push($body, $headArr);
+                    }
+                    foreach($items as $item){
+                        $itemArr = [$this->formatCell($item->project->title, ['wraptext'])];
+                        $itemArr = $this->a1setFund($itemArr, $year, $item->funds);
+                        $middle = [];
+                        foreach($itemArr as $iArr){
+                            array_push($middle, $this->formatCell($iArr, ['middle']));
+                        }
+                        array_push($body, $middle);
+                        foreach($item->subs as $sub){
+                            $subArr = [$this->formatCell($sub->subproject->title, ['wraptext', 'i'])];
+                            $subArr = $this->a1setFund($subArr, $year, $sub->funds);
+                            $middle = [];
+                            foreach($subArr as $sArr){
+                                array_push($middle, $this->formatCell($sArr, ['middle']));
+                            }
+                            array_push($body, $middle);
+                        }
+                    }
+                    if($headerType != 'Subprogram'){
+                        $subTArr = [$this->formatCell('Sub-Total', ['b', 'center', 'style:bgcolor="#00B050"'])];
+                        $subTArr = $this->a1HeadFunds($subTArr, $year, $items, 'Sub-Total');
+                        array_push($body, $subTArr);
+                    }
+                }
+            }
+            if($division == 'STSD'){
+                $total2a1 = [$this->formatCell('Total 2A1', ['center', 'b', 'middle', 'style:bgcolor="#9BC2E6",height="30"'])];
+                $total2a1 = $this->a1DivFunds($total2a1, $year, $sources, [], '#9BC2E6');
+                array_push($body, $total2a1);
+                $total2a1ac = [$this->formatCell('Total AC', ['center', 'b', 'middle', 'style:bgcolor="#C6E0B4",height="30"'])];
+                $total2a1ac = $this->a1BySrcFunds($total2a1ac, $year, $divisions, '2A1-AC', '#C6E0B4');
+                array_push($body, $total2a1ac);
+                $total2a2 = [$this->formatCell('Total 2A2', ['center', 'b', 'middle', 'style:bgcolor="#9BC2E6",height="30"'])];
+                $total2a2 = $this->a1BySrcFunds($total2a2, $year, $divisions, '2A2', '#9BC2E6');
+                // $total2a2 = $this->a1DivFunds($total2a2, $year, $sources);
+                array_push($body, $total2a2);
             }
         }
 
@@ -2517,10 +2566,142 @@ class WorkshopController extends Controller
     }
     // #FFA500 - orange
     // #FFFF00 - yellow
+    private function a1HeaderType($items){
+        foreach($items as $item){
+            return $item->header_type;
+        }
+    }
 
-    // private function wrapText($text){
-    //     return '<wraptext>'.$text.'</wraptext>';
-    // }
+    private function a1setFund($arr, $year, $funds){
+        $cols = ['GAA', 'Proposed', 'NEP', 'Revised', 'Proposed', 'Revised', 'Proposed', 'Revised', 'Proposed', 'Revised', 'Proposed', 'Revised', 'Last'];
+        foreach($cols as $col){
+            $amount = null;
+            foreach($funds as $fund){
+                if($fund['year'] == $year && $fund['type'] == $col){
+                    $amount = $fund['amount'];
+                }
+            }
+            $amount = $amount ? number_format($amount, 2, ".", ",") : null;
+            array_push($arr, $amount);
+            $year = $col == 'GAA' || $col == 'Revised' ? $year + 1 : $year;
+        }
+        return $arr;
+    }
+
+    private function a1HeadFunds($arr, $year, $items, $row){
+        $totals = [];
+        for($i = 0; $i < 13; $i++){
+            array_push($totals, 0);
+        }
+        foreach($items as $item){
+            $funds = $this->a1SetFund([], $year, $item->funds);
+            foreach($funds as $key => $fund){
+                $amount = $fund ? $this->formatAmount($fund) : 0;
+                $totals[$key] = $totals[$key] + $amount;
+            }
+        }
+        foreach($totals as $total){
+            if($row === 'Subprogram'){
+                $total = $total ? $this->formatCell(number_format($total, 2, ".", ","), ['b']) : null;
+                array_push($arr, $total);
+            }
+            if($row === 'Sub-Total'){
+                $total = $total ? number_format($total, 2, ".", ",") : null;
+                array_push($arr, $this->formatCell($total, ['b', 'middle', 'style:bgcolor="#00B050"']));
+            }
+        }
+        return $arr;
+    }
+
+    private function a1SrcFunds($arr, $year, $headers){
+        $totals = [];
+        for($i = 0; $i < 13; $i++){
+            array_push($totals, 0);
+        }
+        foreach($headers as $items){
+            foreach($items as $item){
+                $funds = $this->a1SetFund([], $year, $item->funds);
+                foreach($funds as $key => $fund){
+                    $amount = $fund ? $this->formatAmount($fund) : 0;
+                    $totals[$key] = $totals[$key] + $amount;
+                }
+            }
+        }
+        foreach($totals as $total){
+            $total = $total ? number_format($total, 2, ".", ",") : null;
+            array_push($arr, $this->formatCell($total, ['b', 'middle', 'style:bgcolor="#FFFF00"']));
+        }
+        return $arr;
+    }
+
+    private function a1DivFunds($arr, $year, $sources, $divisions = [], $color = ''){
+        $stsd = sizeof($divisions) > 0;
+        $totals = []; $acs = [];
+        for($i = 0; $i < 13; $i++){
+            array_push($totals, 0);
+            if($stsd){ array_push($acs, 0); }
+        }
+        foreach($sources as $source => $headers){
+            foreach($headers as $items){
+                foreach($items as $item){
+                    $funds = $this->a1SetFund([], $year, $item->funds);
+                    foreach($funds as $key => $fund){
+                        $amount = $fund ? $this->formatAmount($fund) : 0;
+                        $totals[$key] = $totals[$key] + $amount;
+                    }
+                }
+            }
+        }
+        foreach($divisions as $division => $sources){
+            foreach($sources as $source => $headers){
+                if($source == '2A1-AC'){
+                    foreach($headers as $header => $items){
+                        foreach($items as $item){
+                            $funds = $this->a1SetFund([], $year, $item->funds);
+                            foreach($funds as $key => $fund){
+                                $amount = $fund ? $this->formatAmount($fund) : 0;
+                                $acs[$key] = $acs[$key] + $amount;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        foreach($totals as $key => $total){
+            $total = $stsd ? $total - $acs[$key] : $total;
+            $total = $total ? number_format($total, 2, ".", ",") : null;
+            $color = $color ? $color : '#FFA500';
+            array_push($arr, $this->formatCell($total, ['b', 'middle', 'style:bgcolor="'.$color.'"']));
+        }
+        return $arr;
+    }
+
+    private function a1BySrcFunds($arr, $year, $divisions, $src, $color){
+        $totals = [];
+        for($i = 0; $i < 13; $i++){
+            array_push($totals, 0);
+        }
+        foreach($divisions as $division => $sources){
+            foreach($sources as $source => $headers){
+                if($source == $src){
+                    foreach($headers as $header => $items){
+                        foreach($items as $item){
+                            $funds = $this->a1SetFund([], $year, $item->funds);
+                            foreach($funds as $key => $fund){
+                                $amount = $fund ? $this->formatAmount($fund) : 0;
+                                $totals[$key] = $totals[$key] + $amount;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        foreach($totals as $total){
+            $total = $total ? number_format($total, 2, ".", ",") : null;
+            array_push($arr, $this->formatCell($total, ['b', 'middle', 'style:bgcolor="'.$color.'"']));
+        }
+        return $arr;
+    }
 
     private function formatCell($text, $formats){
         $formattedcell = $text;
@@ -2528,25 +2709,22 @@ class WorkshopController extends Controller
             $array = explode(':', $format);
             $frmt = $array[0];
             if($frmt == 'style'){
-                $formattedcell = '<'.$frmt;
+                $temp = '<style';
                 $styles = explode(',', $array[1]);
                 $length = sizeof($styles);
                 foreach($styles as $key => $style){
-                    $formattedcell = $formattedcell.' '.$style;
-                    if($length-1 == $key){
-                        $formattedcell = $formattedcell.'>';
+                    $temp = $temp.' '.$style;
+                    if($length == $key+1){
+                        $temp = $temp.'>';
                     }
                 }
+                $formattedcell = $temp.$formattedcell.'</style>';
             }
             else{
                 $formattedcell = '<'.$frmt.'>'.$formattedcell.'</'.$frmt.'>';
             }
-                // $color = $array[1];
-                // $formattedcell = '<style '.$frmt.'="'.$color.'">'.$formattedcell.'</style>';
         }
-
-
-        return [$formattedcell];
+        return $formattedcell;
     }
 
 }

@@ -12,7 +12,7 @@ class ProjectProfile extends Model
     protected $fillables = [
         'title',
         'status',
-        'compliance_with_law',
+        // 'compliance_with_law',
         'project_leader',
         'start',
         'end',
@@ -49,4 +49,20 @@ class ProjectProfile extends Model
                 $q->where('type', 'Milestone');
             });
     }
+
+    public function laws(){
+        return $this->belongsToMany(Law::class, 'project_profile_law', 'project_profile_id', 'law_id');
+    }
+
+    // future improvements
+
+    // auto fill project profile status (new, ongoing, completed, terminated)
+    // new - if project does not have any profile before
+    // ongoing - if project previously have profile 
+    // completed - auto update on end of year (if project is not terminated)
+    // terminated - create a button for project leaders to terminate a project profile
+
+    // project leaders - include division chiefs on select options
+
+    // project - restrictions
 }

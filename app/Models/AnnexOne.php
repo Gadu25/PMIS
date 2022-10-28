@@ -14,7 +14,7 @@ class AnnexOne extends Model
     ];
 
     public function subs(){
-        return $this->hasMany(AnnexOneSub::class);
+        return $this->hasMany(AnnexOneSub::class)->orderBy('id', 'asc');
     }
 
     public function funds(){

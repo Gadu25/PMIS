@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\WorkshopController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\PublicationController;
 use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\Api\ComplianceController;
 
 Route::controller(AuthController::class)->group(function(){
     Route::post('login', 'login');
@@ -68,7 +69,11 @@ Route::prefix('/project')->group(function(){
         Route::middleware('auth:sanctum')->get('/event/{year}/{start}/{end}', [ProjectController::class, 'getEvents']);
         Route::middleware('auth:sanctum')->put('/lib/{id}', [ProjectController::class, 'updateLib']);
     });
-    
+});
+
+
+Route::prefix('/law')->group(function(){
+    Route::middleware('auth:sanctum')->get('/', [ComplianceController::class, 'index']);
 });
 
 Route::prefix('/workshop')->group(function(){

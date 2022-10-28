@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->mediumText('title');
             $table->string('status');
-            $table->string('compliance_with_law');
+            // $table->string('compliance_with_law');
             $table->string('project_leader');
             $table->integer('start');
             $table->integer('end');

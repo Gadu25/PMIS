@@ -75,7 +75,7 @@
                     <tr>
                         <td>{{form2.title}}</td>
                         <td v-for="fund, fkey in form2.funds" :key="fkey" class="text-end" :style="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || isAdmin ? 'padding: 0; height: 1px' : ''">
-                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || isAdmin" v-model="fund.amount" v-money="money">
+                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || (isAdmin && form2.subs.length == 0)" v-model="fund.amount" v-money="money">
                             <span class="me-2" v-else>{{getTotal(fkey, form2.subs, fund.amount) == 0 ? '' : formatAmount(fund.amount = getTotal(fkey, form2.subs, fund.amount))}}</span>
                         </td>
                     </tr>

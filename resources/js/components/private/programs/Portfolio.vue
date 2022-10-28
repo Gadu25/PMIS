@@ -175,7 +175,7 @@ export default {
         }
     },
     methods: {
-        ...mapActions('project', ['fetchProject', 'updatePortfolio']),
+        ...mapActions('project', ['fetchProject', 'updatePortfolio', 'fetchLaws']),
         ...mapActions('user', ['fetchStaffs']),
         editForm(){
             var project = this.project

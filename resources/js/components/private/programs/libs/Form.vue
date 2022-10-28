@@ -9,12 +9,14 @@
         <div class="row">
             <!-- General Information -->
             <div class="col-sm-8">
+                <p class="fw-bold">Project Title</p>
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="floatingInput" placeholder=" " v-model="form.title">
                     <label for="floatingInput">Title</label>
                 </div>
             </div>
             <div class="col-sm-4">
+                <p class="fw-bold">Status</p>
                 <div class="form-floating mb-3">
                     <select class="form-select" id="floatingSelect" v-model="form.status">
                         <option value="" selected hidden disabled>Select one</option>
@@ -27,61 +29,62 @@
                 </div>
             </div>
             <div class="col-sm-6">
-                <div class="form-floating position-relative mb-3">
-                    <button class="btn btn-sm btn-outline-secondary border-0 position-absolute end-0" v-if="form.comp.includes('Other')" @click="form.comp = 'Mandate'"><i class="fas fa-times"></i></button>
-                    <select class="form-select" id="floatingSelect" v-model="form.comp" v-if="!form.comp.includes('Other')">
-                        <option value="" selected hidden disabled>Select one</option>
-                        <option value="Disaster and Risk Reduction and Management (DRRM)">Disaster and Risk Reduction and Management (DRRM)</option>
-                        <option value="Gender and Development (GAD)">Gender and Development (GAD)</option>
-                        <option value="Indigenous People">Indigenous People</option>
-                        <option value="Mandate">Mandate</option>
-                        <option value="Person With Disabilities (PWD)">Person With Disabilities (PWD)</option>
-                        <option value="Senior Citizen">Senior Citizen</option>
-                        <option value="Other - ">Other</option>
-                    </select>
-                    <input type="text" v-else class="form-control" v-model="form.comp">
-                    <label for="floatingSelect">Compliance with Law</label>
+                <p class="fw-bold">Implementation Period</p>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="form-floating mb-3">
+                            <select @change="checkMonthSelected()" class="form-select" id="floatingSelect" v-model="form.start">
+                                <option selected hidden disabled>Select one</option>
+                                <option :value="month" v-for="month in 12" :key="month">{{monthName(month)}}</option>
+                            </select>
+                            <label for="floatingSelect">Start</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-floating mb-3">
+                            <select @change="checkMonthSelected()" class="form-select" id="floatingSelect" v-model="form.end">
+                                <option selected hidden disabled>Select one</option>
+                                <option :value="month" v-for="month in 12" :key="month">{{monthName(month)}}</option>
+                            </select>
+                            <label for="floatingSelect">End</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="floatingSelect" v-model="form.year">
+                                <option selected hidden disabled>Select one</option>
+                                <option :value="year+1950" v-for="year in 200" :key="year">{{year+1950}}</option>
+                            </select>
+                            <label for="floatingSelect">Year</label>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-sm-6">
+                <p class="fw-bold">Project Leader</p>
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="floatingInput" v-model="form.leader" disabled>
                     <label for="floatingInput">Project Leader</label>
                 </div>
             </div>
-            <p>Implementation Period</p>
-            <div class="col-sm-4">
-                <div class="form-floating mb-3">
-                    <select @change="checkMonthSelected()" class="form-select" id="floatingSelect" v-model="form.start">
-                        <option selected hidden disabled>Select one</option>
-                        <option :value="month" v-for="month in 12" :key="month">{{monthName(month)}}</option>
+            <p class="fw-bold">Compliance with Law <button class="btn btn-sm btn-outline-success border-0 shadow-none mb-1" tabindex="-1" @click="addCompliance()"><i class="fas fa-plus"></i></button></p>
+            <div class="col-sm-4" v-for="comp, key in form.comps" :key="key">
+                <div class="form-floating position-relative mb-3">
+                    <button class="btn btn-sm btn-outline-danger border-0 position-absolute end-0" v-if="comp.id != 0 && form.comps.length > 1" @click="removeCompliance(comp)"><i class="fas fa-times"></i></button>
+                    <button class="btn btn-sm btn-outline-secondary border-0 position-absolute end-0" v-if="comp.id == 0" @click="comp.id = 4, comp.text = ''"><i class="fas fa-times"></i></button>
+                    <select class="form-select" id="floatingSelect" v-model="comp.id" v-if="comp.id != 0">
+                        <option :value="law.id" v-for="law in laws" :key="law.id">{{law.name}}</option>
+                        <option :value="0">Other</option>
                     </select>
-                    <label for="floatingSelect">Start</label>
+                    <input type="text" v-else class="form-control" v-model="comp.text">
+                    <label for="floatingSelect">Compliance with Law {{!comp.id ? '- Other' : ''}}</label>
                 </div>
             </div>
-            <div class="col-sm-4">
-                <div class="form-floating mb-3">
-                    <select @change="checkMonthSelected()" class="form-select" id="floatingSelect" v-model="form.end">
-                        <option selected hidden disabled>Select one</option>
-                        <option :value="month" v-for="month in 12" :key="month">{{monthName(month)}}</option>
-                    </select>
-                    <label for="floatingSelect">End</label>
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="form-floating mb-3">
-                    <select class="form-select" id="floatingSelect" v-model="form.year">
-                        <option selected hidden disabled>Select one</option>
-                        <option :value="year+1950" v-for="year in 200" :key="year">{{year+1950}}</option>
-                    </select>
-                    <label for="floatingSelect">Year</label>
-                </div>
-            </div>
-            <p>Proponents  <button class="btn btn-sm btn-outline-success border-0 shadow-none mb-1" tabindex="-1" @click="addProponent()"><i class="fas fa-plus"></i></button></p>
+            <p class="fw-bold">Proponents <button class="btn btn-sm btn-outline-success border-0 shadow-none mb-1" tabindex="-1" @click="addProponent()"><i class="fas fa-plus"></i></button></p>
             <div class="col-sm-4" v-for="proponent, key in form.proponents" :key="key">
                 <div class="form-floating mb-3 position-relative">
-                    <button class="btn btn-sm btn-outline-danger border-0 end-0 position-absolute shadow-none" tabindex="-1" v-if="form.proponents.length > 1" @click="removeProponent(proponent)"><i class="fas fa-times"></i></button>
-                    <input type="text" class="form-control" id="floatingInput" placeholder=" " v-model="proponent.name">
+                    <button class="btn btn-sm btn-outline-danger border-0 end-0 position-absolute shadow-none" tabindex="-1" v-if="form.proponents.length > 1 && key != 0" @click="removeProponent(proponent)"><i class="fas fa-times"></i></button>
+                    <input type="text" class="form-control" id="floatingInput" :disabled="key == 0" placeholder=" " v-model="proponent.name">
                     <label for="floatingInput">Proponent {{key+1}}</label>
                 </div>
             </div><hr>
@@ -277,7 +280,7 @@ export default {
                 project_id: '',
                 title: '',
                 status: '',
-                comp: 'Mandate',
+                comps: [{id: 4, text: ''}],
                 leader: '',
                 start: 1,
                 end: 12,
@@ -335,7 +338,7 @@ export default {
         }
     },
     methods: {
-        ...mapActions('project', ['saveProfile']),
+        ...mapActions('project', ['saveProfile', 'fetchLaws']),
         fillForm(){
             if(this.editmode){
                 var profile = this.profile
@@ -384,6 +387,10 @@ export default {
 
                 this.form.title = this.project.title
                 this.form.project_id = this.project.id
+                this.form.proponents = [{
+                    id: '',
+                    name: this.project.division.name
+                }]
             }
         },
         childClick(){
@@ -408,6 +415,12 @@ export default {
         },
         removeProponent(proponent){
             this.form.proponents.remove(proponent)
+        },
+        addCompliance(){
+            this.form.comps.push({id: 4, text: ''})
+        },
+        removeCompliance(comp){
+            this.form.comps.remove(comp)
         },
         newContent(){
             this.editproposalcontent = false
@@ -682,10 +695,12 @@ export default {
         },
     },
     computed: {
-        ...mapGetters('project', ['getProject']),
-        project(){ return this.getProject }
+        ...mapGetters('project', ['getProject', 'getLaws']),
+        project(){ return this.getProject },
+        laws(){ return this.getLaws }
     },
     created(){
+        this.fetchLaws()
         this.fillForm()
     },
     props: {

@@ -23,6 +23,7 @@ use App\Models\LibType;
 use App\Models\LibItem;
 use App\Models\ScheduleOfActivity;
 use App\Models\SoaMonth;
+use App\Models\Law;
 
 use App\Models\History;
 use App\Models\Notification;
@@ -42,7 +43,9 @@ class ProjectController extends Controller
     }
     
     private function getProject($id){
+        // return Law::all();
         return Project::with(
+            'division',
             'profiles.proponents', 
             'profiles.proposals', 
             'profiles.milestones.months', 
@@ -285,6 +288,19 @@ class ProjectController extends Controller
             $this->saveProponents($request['proponents'], $profile->id);
             $this->saveProposalContents($request['proposalcontent'], $profile->id);
             $this->saveActivities($request['activities'], $profile->id);
+            $comps = [];
+            foreach($request['comps'] as $comp){
+                if($comp['id'] == 0){
+                    $new = new Law;
+                    $new->name = $comp['text'];
+                    $new->save();
+                    array_push($comps, $new->id);
+                }
+                else{
+                    array_push($comps, $comp['id']);
+                }
+            }
+            $profile->laws()->sync($comps);
 
             $lib = new LineItemBudget;
             $lib->status = 'Draft';
@@ -341,6 +357,19 @@ class ProjectController extends Controller
             $this->saveProponents($request['proponents'], $profile->id, $profile->proponents);
             $this->saveProposalContents($request['proposalcontent'], $profile->id, $profile->proposals);
             $this->saveActivities($request['activities'], $profile->id, $profile->activities);
+            $comps = [];
+            foreach($request['comps'] as $comp){
+                if($comp['id'] == 0){
+                    $new = new Law;
+                    $new->name = $comp['text'];
+                    $new->save();
+                    array_push($comps, $new->id);
+                }
+                else{
+                    array_push($comps, $comp['id']);
+                }
+            }
+            $profile->laws()->sync($comps);
 
             DB::commit();
             return ['message' => 'Profile added!', 'profile' => $this->showProfile($id)];
@@ -416,7 +445,7 @@ class ProjectController extends Controller
     private function saveProfile($profile, $request, $projectleader, $authProfileId){
         $profile->title               = $request['title'];
         $profile->status              = $request['status'];
-        $profile->compliance_with_law = $request['comp'];
+        // $profile->compliance_with_law = $request['comp'];
         $profile->project_leader      = $projectleader;
         $profile->start               = $request['start'];
         $profile->end                 = $request['end'];

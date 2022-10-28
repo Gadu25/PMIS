@@ -115,12 +115,12 @@
             <template v-if="!editmode">
                 <div class="card border-0 shadow mb-3">
                     <div class="card-body">
-                        <span class="btn" v-if="!exportmode" @click="exportmode = true">Export Annex 1</span>
+                        <span class="btn w-100" v-if="!exportmode" @click="exportmode = true">Export Mode</span>
                         
                         <template v-if="exportmode">
-                            <p class="btn" @click="exportmode = false"><strong>Exit Export Mode</strong></p>
+                            <p class="btn w-100" @click="exportmode = false"><strong>Exit Export Mode</strong></p>
                             <button class="btn btn-sm w-100 btn-outline-secondary mb-2" v-print="'#printMe'"><i class="far fa-print"></i> Print / Save as PDF</button><br>
-                            <a class="btn btn-sm w-100 btn-success bg-gradient" href="/api/export/1/0" target="_blank"><i class="far fa-file-excel"></i> Download as Excel</a>
+                            <a class="btn btn-sm w-100 btn-success bg-gradient" :href="'/api/export/'+this.$route.params.workshopId+'/'+this.division_id" target="_blank"><i class="far fa-file-excel"></i> Download as Excel</a>
                         </template>
                     </div>
                 </div>

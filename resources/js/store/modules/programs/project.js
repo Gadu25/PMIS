@@ -4,10 +4,12 @@ const state = {
     profile: [],
     project: [],
     projects: [],
-    sortedprojects: []
+    sortedprojects: [],
+    laws: []
 }
 
 const getters = {
+    getLaws: (state) => state.laws,
     getProfile: (state) => state.profile,
     getProject: (state) => state.project,
     getProjects: (state) => state.projects,
@@ -77,10 +79,18 @@ const actions = {
             return res.data
         })
         return response
+    },
+    async fetchLaws({commit}){
+        const response = await axios.get('/api/law').then(res => {
+            if(!res.data.errors){
+                commit('setLaws', res.data)
+            }
+        })
     }
 }
 
 const mutations = {
+    setLaws: (state, data) => state.laws = data,
     setProfile: (state, data) => state.profile = data,
     setProject: (state, data) => state.project = data,
     setProjects: (state, data) => state.projects = data,
