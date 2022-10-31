@@ -104,7 +104,17 @@
                     <template v-if="exportmode">
                         <button class="btn btn-outline-secondary border-0 shadow mb-2" v-print="'#printMe'"><i class="far fa-print"></i> Print / <i class="fas fa-download"></i> PDF</button>
                         <button class="btn btn-success border-0 shadow mb-2"><i class="fas fa-file-excel"></i> Excel</button>
-                    </template>
+                    </template><br>
+                    <strong>Gen Info</strong><br>
+                    <div class="card shadow border-0 ms-3 mb-2">
+                        <div class="card-body text-start"> 
+                            <p><small><strong>Profile Status:</strong></small> <span class="badge" :class="profile.status == 'New' ? 'bg-primary' :
+                                                                profile.status == 'Continuing' ? 'bg-warning' :
+                                                                profile.status == 'Completed' ? 'bg-success' :
+                                                                profile.status == 'Terminated' ? 'bg-danger' : 'bg-secondary'">{{profile.status}}</span> </p>
+                           <small> <strong>Compliance with Law:</strong> <li  v-for="law in profile.laws" :key="law.id">{{law.name}}</li></small>
+                        </div>
+                    </div> 
                 </div>
             </div>
         </template>
@@ -294,6 +304,8 @@ export default {
     width: 200px;
     text-align: center;
 }
+
+.side-btns>.card,
 .side-btns>button{
     width: 150px;
 }
@@ -343,6 +355,7 @@ td.Milestone{
         display: flex;
         flex-direction: column;
     }
+    .side-btns>.card,
     .side-btns>button{
         width: 100%;
     }

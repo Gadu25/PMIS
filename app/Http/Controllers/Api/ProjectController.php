@@ -297,7 +297,9 @@ class ProjectController extends Controller
                     array_push($comps, $new->id);
                 }
                 else{
-                    array_push($comps, $comp['id']);
+                    if(!in_array($comp['id'], $comps)){
+                        array_push($comps, $comp['id']);
+                    }
                 }
             }
             $profile->laws()->sync($comps);
@@ -335,7 +337,7 @@ class ProjectController extends Controller
     }
 
     public function showProfile($id){
-        return ProjectProfile::with('project', 'proponents', 'proposals', 'libs.histories.profile.user', 'libs.types.items', 'activities.months')->where('id',$id)->first();
+        return ProjectProfile::with('project', 'laws', 'proponents', 'proposals', 'libs.histories.profile.user', 'libs.types.items', 'activities.months')->where('id',$id)->first();
     }
 
     public function updateProfile(Request $request, $id){
@@ -366,7 +368,9 @@ class ProjectController extends Controller
                     array_push($comps, $new->id);
                 }
                 else{
-                    array_push($comps, $comp['id']);
+                    if(!in_array($comp['id'], $comps)){
+                        array_push($comps, $comp['id']);
+                    }
                 }
             }
             $profile->laws()->sync($comps);

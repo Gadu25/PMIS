@@ -346,12 +346,20 @@ export default {
                 this.form.project_id = profile.project_id
                 this.form.title = profile.title
                 this.form.status = profile.status
-                this.form.comp = profile.compliance_with_law
+                // this.form.comp = profile.compliance_with_law
+                this.form.comps = []
                 this.form.leader = profile.project_leader
                 this.form.start = profile.start
                 this.form.end = profile.end
                 this.form.year = profile.year
                 this.form.proponents = []
+                // console.log(profile.laws)
+                for(let law of profile.laws){
+                    this.form.comps.push({
+                        id: law.id,
+                        text: ''
+                    })
+                }
                 for(let proponent of profile.proponents){
                     this.form.proponents.push({
                         id: proponent.id,
