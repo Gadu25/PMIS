@@ -625,7 +625,7 @@ export default {
             var form = this.form
             if(form.title == '') { this.toastMsg('warning', 'Title required'); return false }
             if(form.status == ''){ this.toastMsg('warning', 'Status required'); return false }
-            if(form.comp == '')  { this.toastMsg('warning', 'Compliance with Law required'); return false }
+            // if(form.comp == '')  { this.toastMsg('warning', 'Compliance with Law required'); return false }
             for(let proponent of form.proponents){
                 if(proponent.name == ''){ this.toastMsg('warning', 'Proponent required'); return false}
             }
@@ -649,19 +649,19 @@ export default {
             for(let i = form.start; i <= form.end; i++){
                 months.push(i)
             }
-            var monthchecker = []
+            // var monthchecker = []
             for(let activity of form.activities){
                 if(activity.title == ''){ this.toastMsg('warning', 'Activity Title required'); return false }
-                for(let month of activity.months){
-                    if(month.type != '' && !monthchecker.includes(month.month)){
-                        monthchecker.push(month.month)
-                    }
-                }
+                // for(let month of activity.months){
+                //     if(month.type != '' && !monthchecker.includes(month.month)){
+                //         monthchecker.push(month.month)
+                //     }
+                // }
             }
-            if(months.length != monthchecker.length){
-                this.toastMsg('warning', 'All months must have at least one (1) activity');
-                return false;
-            }
+            // if(months.length != monthchecker.length){
+            //     this.toastMsg('warning', 'All months must have at least one (1) activity');
+            //     return false;
+            // }
             return true
         },
         submitForm(){

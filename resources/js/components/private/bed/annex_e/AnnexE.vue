@@ -831,9 +831,9 @@ export default {
             if(status == 'For Review'){
                 status = this.authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'
             }
-            this.form.status = status
             
             if(validate){
+                this.form.status = status
                 this.saveAnnexE(this.form).then(res => {
                     var icon = res.errors ? 'error' : 'success'
                     this.toastMsg(icon, res.message)

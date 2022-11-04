@@ -200,7 +200,7 @@ export default {
                     for(let item of type.items){
                         if(item.name == ''){ this.toastMsg('warning', 'Item name required'); return false }
                         var key = this.form.libcount - 1
-                        if(item.amounts[key].amount == '0.00' && this.tempstat != 'Draft'){ this.toastMsg('warning', 'Item amount required'); return false }
+                        // if(item.amounts[key].amount == '0.00' && this.tempstat != 'Draft'){ this.toastMsg('warning', 'Item amount required'); return false }
                     }
                 }
             }

@@ -608,7 +608,10 @@ class ProjectController extends Controller
             $status == 'For charging and certify funds available - Budget Unit' || 
             $status == 'For approval - Director' ||
             $status == 'Approved'){
-                $profile = Profile::where('title_id', 3)
+                // Title ID: 2 = Deputy Director, 3 = Division Chief
+                // Check if OD - Planning, if OD - Planning use Deputy Director ID else Division Chief ID
+                $titleId = $project->division_id == 1 && $project->unit_id == 2 ? 2 : 3;
+                $profile = Profile::where('title_id', $titleId)
                     ->whereHas('user', function($q) use($project){
                         $q->where('division_id', $project->division_id);
                     })->where('active', true)->first();
