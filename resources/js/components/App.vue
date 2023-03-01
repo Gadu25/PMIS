@@ -7,11 +7,11 @@
             <div class="sidebar" :class="toggle ? 'hide' : ''">
                 <div class="sidebar-header">
                     <router-link :to="{ name: 'Dashboard' }" class="sidebar-link">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center px-2">
                             <div>
-                            <img :src="'/images/Logo.png'" alt="logo" width="60">
+                                <img :src="'/images/Logo.png'" alt="logo" width="40">
                             </div>
-                            <div class="w-100 text-center">
+                            <div class="w-100 text-start ms-3">
                                 <span style="" id="pmis">PMIS</span>
                             </div>
                             <!-- <span>Project Management Info System</span> -->
@@ -20,15 +20,15 @@
                     <button id="toggleBtn" @click="toggle = !toggle" class="btn btn-sm btn-primary"><i class="fas fa-bars"></i></button>
                 </div>
                 <div class="sidebar-body">
-                    <router-link active-class="active" class="p-3" :to="{ name: 'Dashboard' }"><i class="far fa-home"></i>&nbsp;&nbsp;Dashboard</router-link>
+                    <router-link active-class="active glow" class="px-4 py-3" :to="{ name: 'Dashboard' }"><i class="far fa-home"></i>&nbsp;&nbsp;Dashboard</router-link>
                     <template v-for="val, key in auth.active_profile.groupedroles" :key="key">
-                        <router-link active-class="active" class="p-3" :to="{ name: setRouteName(key)}"><i class="far fa-circle "></i>&nbsp;&nbsp;{{key}}</router-link>
+                        <router-link active-class="active glow" class="px-4 py-3" :to="{ name: setRouteName(key)}"><i class="far fa-circle "></i>&nbsp;&nbsp;{{key}}</router-link>
                     </template>
-                    <router-link active-class="active" class="p-3" :to="{ name: 'About' }"><i class="far fa-circle "></i>&nbsp;&nbsp;About System</router-link>
+                    <router-link active-class="active glow" class="px-4 py-3" :to="{ name: 'About' }"><i class="far fa-circle "></i>&nbsp;&nbsp;About System</router-link>
                     <!-- <router-link active-class="active" :to="{ name: 'Programs' }">Programs and Projects</router-link>
                     <router-link active-class="active" :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
                     <router-link active-class="active" :to="{ name: 'Users' }">User Management</router-link> -->
-                    <a href="/login" class="p-3" @click="logout"><i class="far fa-arrow-left"></i>&nbsp;&nbsp;Logout</a>
+                    <a href="/login" class="px-4 py-3" @click="logout"><i class="far fa-arrow-left"></i>&nbsp;&nbsp;Logout</a>
                 </div>
             </div>
             <div class="body" :style="!toggle ? 'width: calc(100vw - 280px)' : 'width: 100vw'">
@@ -127,6 +127,9 @@ export default {
 }
 </script>
 <style scoped>
+.glow { 
+    text-shadow: 0 0 5px rgba(81, 203, 238, 1);
+}
 .app-container{
     background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);
     display: flex;
@@ -147,8 +150,11 @@ export default {
 }
 .sidebar-header{
     width: 100%;
+    height: 60px;
     background: rgba(0, 0, 0, 0.8);
-    padding: 14px;
+    padding-left: 14px;
+    padding-right: 14px;
+    align-items: center;
     text-align: center;
     cursor: pointer;
 }
@@ -200,8 +206,9 @@ export default {
     text-align: center;
 }
 .topbar{
-    height: auto;
-    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    height: 60px;
     background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: space-between;
@@ -219,7 +226,7 @@ export default {
 }
 .content{
     background: white;
-    height: calc(100% - 45px);
+    height: calc(100vh - 60px);
     overflow: auto;
     overflow-x: hidden;
 }

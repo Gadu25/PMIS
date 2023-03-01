@@ -1,7 +1,7 @@
 <template>
     <div class="p-2 workshop" v-if="!childSelected">
         <h2 class="text-center">Budget Executive Documents</h2><hr>
-        <div class="container" v-if="!loading">
+        <div class="px-3 py-4" v-if="!loading">
             <form @submit.prevent="submitForm()" class="d-flex justify-content-center border-bottom mb-4" v-if="formshow">
                 <div class="col-sm-8 shadow p-3 mb-3">
                     <div class="mb-2"><h4> Workshop Form</h4></div>
@@ -25,10 +25,10 @@
                 </div>
             </form>
             <template v-else>
-            <button v-if="inUserRole('workshop_add')" class="btn btn-sm btn-success float-end" @click="resetForm()"><i class="fas fa-plus"></i></button>
+            <button v-if="inUserRole('workshop_add')" class="btn btn-sm btn-success float-end" @click="resetForm()" title="Add workshop"><i class="fas fa-plus"></i></button>
             <h4><strong>Planning Workshops</strong></h4><hr>
             <div class="d-flex justify-content-center workshop-accordions">
-                <div class="col-sm-8">
+                <div class="w-100">
                     <div class="accordion shadow-lg" id="accordionExample">
                         <div class="accordion-item" v-for="workshop in workshops" :key="workshop.id+'_workshop'">
                             <h2 class="accordion-header" id="headingOne">
@@ -49,8 +49,8 @@
                                         </ul>
                                         <div class="d-flex justify-content-end">
                                             <div class="" v-if="inUserRole('workshop_edit') || inUserRole('workshop_delete')">
-                                                <button style="min-width: 32px;" v-if="inUserRole('workshop_edit')" @click="editForm(workshop)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i> </button>
-                                                <button style="min-width: 32px;" v-if="inUserRole('workshop_delete')" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i> </button>
+                                                <button style="min-width: 32px;" v-if="inUserRole('workshop_edit')" @click="editForm(workshop)" class="btn btn-sm btn-primary me-1 border border-secondary" title="Edit workshop"><i class="far fa-pencil-alt"></i> </button>
+                                                <button style="min-width: 32px;" v-if="inUserRole('workshop_delete')" @click="removeWorkshop(workshop.id)" class="btn btn-sm btn-danger border border-secondary" title="Delete workshop"><i class="far fa-trash-alt"></i> </button>
                                             </div>
                                         </div>
                                     </div>

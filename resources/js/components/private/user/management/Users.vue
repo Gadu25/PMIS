@@ -18,13 +18,13 @@
                                     <label for="filterDivision">Division</label>
                                 </div>
                                 <div class="d-flex align-items-center mx-2">
-                                    <button @click="syncData()" class="btn btn-sm btn-primary" title="Refresh table"><i class="fas fa-sync"></i></button>
+                                    <button @click="syncData()" class="btn btn-primary" title="Refresh"><i class="fas fa-sync"></i></button>
                                 </div>
                             </div>
                             <div class="d-flex align-items-center">
-                                <button class="btn bg-gradient btn-sm btn-secondary me-1" data-bs-target="#modal" data-bs-toggle="modal" @click="modalmode = 'roles'"><i class="fas fa-user-shield"></i></button>
-                                <button class="btn bg-gradient btn-sm btn-secondary me-1" data-bs-target="#modal" data-bs-toggle="modal" @click="modalmode = 'logs'"><i class="fas fa-user-clock"></i></button>
-                                <button class="btn bg-gradient btn-sm btn-success" @click="resetForm()" title="Add user"><i class="far fa-user-plus"></i></button>
+                                <button class="btn bg-gradient btn-secondary me-1" data-bs-target="#modal" data-bs-toggle="modal" @click="modalmode = 'roles'"><i class="fas fa-user-shield"></i></button>
+                                <button class="btn bg-gradient btn-secondary me-1" data-bs-target="#modal" data-bs-toggle="modal" @click="modalmode = 'logs'"><i class="fas fa-user-clock"></i></button>
+                                <button class="btn bg-gradient btn-success" @click="resetForm()" title="Add user"><i class="far fa-user-plus"></i></button>
                             </div>
                         </div>
                         <div class="table-responsive users">
@@ -45,14 +45,14 @@
                                             <tr class="align-middle" v-for="user in unit" :key="'user_'+user.id">
                                                 <td><div class="ms-3">{{user.firstname}} {{user.lastname}}</div></td>
                                                 <td>{{user.email}}</td>
-                                                <td>
-                                                    <div class="text-nowrap" :class="profile.active ? 'bg-info bg-gradient px-2 py-1 my-1 rounded text-center' : ''" v-for="profile in user.profiles" :key="'profile_'+profile.id">
-                                                        <strong>{{profile.title.name}} {{profile.isOIC ? ', OIC' : ''}}</strong>
+                                                <td class="d-flex justify-content-center align-items-center">
+                                                    <div class="text-nowrap" :class="profile.active ? 'bg-info bg-gradient px-2 py-1 my-1 rounded-pill text-center w-100' : ''" v-for="profile in user.profiles" :key="'profile_'+profile.id">
+                                                        <strong class="text-white">{{profile.title.name}} {{profile.isOIC ? ', OIC' : ''}}</strong>
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <button @click="editForm(user)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                                    <button class="btn btn-sm btn-danger me-1" data-bs-target="#deletePrompt" data-bs-toggle="modal" @click="openDeleteModal(user.id)"><i class="far fa-trash-alt"></i></button>
+                                                    <button @click="editForm(user)" class="btn btn-sm btn-primary me-1 border border-secondary" title="Edit user"><i class="far fa-pencil-alt"></i></button>
+                                                    <button class="btn btn-sm btn-danger me-1 border border-secondary" data-bs-target="#deletePrompt" data-bs-toggle="modal" title="Delete user" @click="openDeleteModal(user.id)"><i class="far fa-trash-alt"></i></button>
                                                 </td>
                                             </tr>
                                         </template>
@@ -249,9 +249,8 @@
                                 <h5 class="my-4">Are you sure you want to delete this user?</h5>
                             </div>
                             <div class="d-flex justify-content-center mt-2">
-                                <button type="button" class="btn rounded-pill min-100 btn-success mx-1" data-bs-dismiss="modal">Cancel</button>
-
-                                <button type="button" class="btn rounded-pill min-100 btn-danger mx-1" data-bs-dismiss="modal" @click="deleteU()">Yes</button>
+                                <button type="button" class="btn rounded-pill min-100 btn-success mx-1 border border-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn rounded-pill min-100 btn-danger mx-1 border border-secondary" data-bs-dismiss="modal" @click="deleteU()">Yes</button>
                             </div>
 
                         </div>
@@ -532,6 +531,7 @@ export default {
 }
 .table-responsive.users{
     height: calc(100vh - 275px);
+    border-radius: 10px;
 }
 .main-container{
     height: calc(100vh - 165px);

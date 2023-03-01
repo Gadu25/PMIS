@@ -5,11 +5,22 @@
             <div class="col-sm-6 px-3 pb-3" v-for="report in reports" :key="report">
                 <div class="card border-0 shadow" @click="childSelected = true, $router.push({ name: reportRoute(report)})">
                     <div class="card-body">
-                        <h1> {{report}}</h1>
+                        <h2 class="text-left"> {{report}}</h2>
                     </div>
                 </div>
-
             </div>
+            <!-- <div class="col-sm-6 px-3 bp-3">
+                <div class="card border-0 shadow" @click="childSelected = true, $router.push({name: reportRoute(Annual Reports)})">
+                    <div class="card-body">
+                        <h2 class="text-center">Annual Reports</h2>
+                    </div>
+                </div>
+                <div class="card border-0 shadow" @click="childSelected = true, $router.push({name: reportRoute(Bar)})">
+                    <div class="card-body">
+                        <h2 class="text-center">Bar</h2>
+                    </div>
+                </div>
+            </div> -->
         </div>
     </div>
     <router-view @clicked="childSelected = false" v-else></router-view>
@@ -76,6 +87,7 @@ export default {
     transform: scale(1.02);
     cursor: pointer;
 }
+
 @media only screen and (max-width: 600px) {
     .card-body{
         min-height: 100px;
