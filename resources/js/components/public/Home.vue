@@ -1,14 +1,21 @@
 <template>
     <div class="home-container">
-        <div class="col-sm-4">
+        <div>
             <div class="card shadow">
                 <div class="card-body">
-                    <div class="text-center"><img :src="'/images/Logo.png'" alt="Logo" width="150"></div>
-                    <h2 class="text-center">Welcome to</h2>
-                    <h1 class="text-center"><strong>DOST-SEI Project Management Information System</strong></h1>
-                    <div class="d-flex justify-content-end mt-5">
-                        <router-link class="btn btn-primary rounded-pill" style="min-width: 200px" :to="{name: 'Login'}">Click here to Sign in!</router-link>
+                    <div class="d-flex flex-wrap sm-flex-col">
+                        <div class="p-2">
+                            <div class="text-center"><img :src="'/images/Logo.png'" alt="Logo" height="200"></div>
+                        </div>
+                        <div class="p-2">
+                            <h3 class="mb-3 text-start">Welcome to</h3>
+                            <h1 class="text-start"><strong>DOST-SEI Project Management Information System</strong></h1>
+                            <div class="d-flex justify-content-end mt-5">
+                                <router-link class="btn btn-primary rounded-pill" style="min-width: 200px" :to="{name: 'Login'}">Sign In</router-link>
+                            </div>
+                        </div>
                     </div>
+                    
                 </div>
             </div>
         </div>
