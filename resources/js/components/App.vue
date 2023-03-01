@@ -12,7 +12,7 @@
                             <img :src="'/images/Logo.png'" alt="logo" width="60">
                             </div>
                             <div class="w-100 text-center">
-                                <span style="" id="pmis">P M I S</span>
+                                <span style="" id="pmis">PMIS</span>
                             </div>
                             <!-- <span>Project Management Info System</span> -->
                         </div>
@@ -20,20 +20,20 @@
                     <button id="toggleBtn" @click="toggle = !toggle" class="btn btn-sm btn-primary"><i class="fas fa-bars"></i></button>
                 </div>
                 <div class="sidebar-body">
-                    <router-link active-class="active" :to="{ name: 'Dashboard' }">Dashboard</router-link>
+                    <router-link active-class="active" class="p-3" :to="{ name: 'Dashboard' }"><i class="far fa-home"></i>&nbsp;&nbsp;Dashboard</router-link>
                     <template v-for="val, key in auth.active_profile.groupedroles" :key="key">
-                        <router-link active-class="active" :to="{ name: setRouteName(key)}">{{key}}</router-link>
+                        <router-link active-class="active" class="p-3" :to="{ name: setRouteName(key)}"><i class="far fa-circle "></i>&nbsp;&nbsp;{{key}}</router-link>
                     </template>
-                    <router-link active-class="active" :to="{ name: 'About' }">About System</router-link>
+                    <router-link active-class="active" class="p-3" :to="{ name: 'About' }"><i class="far fa-circle "></i>&nbsp;&nbsp;About System</router-link>
                     <!-- <router-link active-class="active" :to="{ name: 'Programs' }">Programs and Projects</router-link>
                     <router-link active-class="active" :to="{ name: 'Workshops' }">Budget Executive Documents</router-link>
                     <router-link active-class="active" :to="{ name: 'Users' }">User Management</router-link> -->
-                    <a href="/login" @click="logout">Logout</a>
+                    <a href="/login" class="p-3" @click="logout"><i class="far fa-arrow-left"></i>&nbsp;&nbsp;Logout</a>
                 </div>
             </div>
             <div class="body" :style="!toggle ? 'width: calc(100vw - 280px)' : 'width: 100vw'">
                 <div class="topbar">
-                    <div class=""><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
+                    <div><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
                     <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
                     <div class="p-1 position-relative">
                         <router-link class="text-white" :to="{ name: 'Profile' }"><i class="far fa-user-circle fa-2x"></i> </router-link>
@@ -200,11 +200,12 @@ export default {
     text-align: center;
 }
 .topbar{
+    height: auto;
     padding: 5px;
-    height: 45px;
     background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 .red-dot{
     width: 11px;
