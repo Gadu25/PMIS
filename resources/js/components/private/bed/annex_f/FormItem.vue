@@ -69,9 +69,17 @@ export default {
         },
         isUserProjectLeader(projects){
             var state = false
+            var profileId = this.authuser.active_profile.id
             for(let project of projects){
                 if(!state && project.leader){
-                    state = this.authuser.active_profile.id == project.leader.profile_id
+                    state = profileId == project.leader.profile_id
+                }
+                if(!state && project.encoders){
+                    for(let encoder of project.encoders){
+                        if(!state){
+                            state = profileId == encoder.profile_id
+                        }
+                    }
                 }
             }
             return state

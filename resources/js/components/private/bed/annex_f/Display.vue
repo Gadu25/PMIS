@@ -1,4 +1,5 @@
 <template>
+    
     <table class="table table-sm table-bordered" :style="!printmode ? 'width: 2000px' : '' ">
         <TableHead :sticky="!printmode" :year="year" />
         <tbody v-if="annexfs.length == 0">

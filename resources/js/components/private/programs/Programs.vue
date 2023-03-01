@@ -494,7 +494,8 @@ export default {
             state = divId == udivId && 
                 (unitId == uunitId || uunitId === 0) && 
                 (subuId == usubuId || usubuId == 0) && 
-                (title.includes('Unit') || title.includes('Leader'))
+                (title.includes('Unit') || title.includes('Leader') || title.includes('Chief')
+                || (key == 0 && title.includes('Encoder')))
 
             return state
         },

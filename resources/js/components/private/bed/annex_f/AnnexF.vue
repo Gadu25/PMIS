@@ -108,13 +108,13 @@
                     <div class="overlay" v-if="syncing">
                         <h1 class="text-white">Syncing Records <i class="far fa-spinner fa-spin"></i></h1>
                     </div>
-                    <div class="card-body" :class="editmode ? 'p-0' : ''" :style="printmode ? 'height: calc(100vh - 205px); overflow: auto;' : ''">
+                    <div class="card-body" :class="editmode ? 'p-0' : ''" :style="printmode ? 'height: calc(100vh - 205px);' : ''">
                         <template v-if="!editmode">
                             <div class="position-relative" id="printMe">
                                 <div class="d-flex justify-content-between"><small>Department of Science and Technology</small> <small class="fw-bold">Annex F</small></div>
                                 <h6 class="mb-2 fw-bold"><small>SCIENCE EDUCATION INSITITUTE</small></h6>
                                 <h6 class="mb-3 fw-bold" style="background: yellow;"><small>Schedule of FY {{this.syncedyear}} Project Implementation</small></h6>
-                                <div class="table-responsive " :class="printmode ? '' : 'display'" v-dragscroll>
+                                <div class=" " :class="printmode ? '' : 'table-responsive display'" v-dragscroll>
                                     <Display :printmode="printmode" :year="syncedyear" />
                                 </div>
                                 <span v-if="printmode">Annex F {{syncedstatus}} Projects as of {{this.getDateToday()}}</span>
@@ -168,17 +168,18 @@
                                         <button :class="saving ? 'disabled' : ''" class="btn btn-sm btn-outline-secondary" v-if="histories.length > 0" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
                                     </div>
                                     <span v-if="saving">Saving <i class="fas fa-spinner fa-spin"></i></span>
-                                    <div v-if="statusNewDraft(form.status) && isUserProjectLeader(form.leaderId) || isAdmin">
+                                    <div v-if="statusNewDraft(form.status) && (isUserProjectLeader(form.leaderId) || isEncoder()) || isAdmin">
                                         <!-- <button v-if="statusNewDraft(form.status) && isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" @click="!saving ? submitForm(form.status) : null"><i class="far fa-save"></i> Admin Save</button> -->
                                         <button v-if="statusNewDraft(form.status) && isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" data-bs-toggle="modal" data-bs-target="#comment"><i class="far fa-save"></i> Admin Save</button>
-                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="!saving ? submitForm('Draft') : null"><i class="fas fa-edit"></i> Draft</button>
+                                        <button v-if="checkUserTitle(form.status) || isEncoder()" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-secondary me-1" @click="!saving ? submitForm('Draft') : null"><i class="fas fa-edit"></i> Draft</button>
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm(authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review') : null"><i class="fas fa-search"></i>{{authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'}}</button>
+                                        <button v-if="isUserProjectLeader(form.leaderId) && isChief" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-success" @click="!saving ? submitForm('Approved') : null"><i class="fas fa-check"></i> Approved</button>
                                     </div>
                                     <div v-if="!statusNewDraft(form.status) && form.status != 'Submitted'">
                                         <!-- <button v-if="isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" @click="!saving ? submitForm(form.status) : null"><i class="far fa-save"></i> Admin Save</button> -->
                                         <button v-if="isAdmin" :class="saving ? 'disabled' : ''" class="btn btn-sm btn-primary bg-gradient me-1" data-bs-toggle="modal" data-bs-target="#comment"><i class="far fa-save"></i> Admin Save</button>
                                         <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-secondary me-1" data-bs-toggle="modal" data-bs-target="#comment"><i class="fas fa-times"></i> Reject</button>
-                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-success" @click="!saving ? submitForm('approve') : null"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submitted' : 'Approve'}}</button>
+                                        <button v-if="checkUserTitle(form.status)" :class="saving ? 'disabled' : ''" class="btn btn-sm min-100 btn-success" @click="!saving ? submitForm('approve') : null"><i class="fas fa-check"></i> {{form.status == 'Approved' ? 'Submit to Planning' : 'Approve'}}</button>
                                     </div>
                                 </div>
                                 <div class="table-responsive form-details pb-2">
@@ -325,7 +326,8 @@ export default {
                 leaderId: '',
                 activities: [],
                 funds:      [],
-                subs:       []
+                subs:       [],
+                encoders:   []
             },
             months: [
                 'Oct', 'Nov', 'Dec',
@@ -466,14 +468,23 @@ export default {
             this.histories  = item.histories
             this.historyfor = title
             this.formshow = true
+
+            var project = item.projects[0] ? item.projects[0] : null
             var form = this.form
             form.id       = item.id
             form.status   = item.status
             form.title    = title
-            form.leaderId = item.projects[0].leader.profile_id
+            form.leaderId = project ? project.leader.profile_id : null
             form.activities = []
             form.funds      = []
             form.subs       = []
+            form.encoders   = []
+
+            if(project){
+                for(let encoder of project.encoders){
+                    form.encoders.push(encoder.profile_id)
+                }
+            }
 
             this.setFormArrays(form)
             this.setFunds(form.funds, item.funds)
@@ -563,6 +574,10 @@ export default {
         },
         isUserProjectLeader(id){
             return this.authuser.active_profile.id == id
+        },
+        isEncoder(){
+            var profileId = this.authuser.active_profile.id
+            return this.form.encoders.includes(profileId)
         },
         // Display
         setStatusIcon(status){
@@ -713,7 +728,8 @@ export default {
         divisions(){ return this.getDivisions },
         ...mapGetters('user', ['getAuthUser']),
         authuser(){ return this.getAuthUser },
-        isAdmin(){ return this.authuser.active_profile.title.name == 'Superadmin' }
+        isAdmin(){ return this.authuser.active_profile.title.name == 'Superadmin' },
+        isChief(){ return this.authuser.active_profile.title.name == 'Division Chief' },
     },
     created(){
         this.fetchWorkshop(this.$route.params.workshopId).then(res => {

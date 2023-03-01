@@ -237,7 +237,7 @@ class WorkshopController extends Controller
             });
 
             $annexes = $query->with(
-                ['project.leader.profile.user', 'project.cluster', 'project.subprogram', 'histories.profile.user', 'subs.subproject', 
+                ['project.encoders.profile.user', 'project.leader.profile.user', 'project.cluster', 'project.subprogram', 'histories.profile.user', 'subs.subproject', 
                 'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
                 'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns'])
                 ->where('status', $request['status'])
@@ -650,10 +650,10 @@ class WorkshopController extends Controller
                     if($request['subunit_id']) { $q->where('subunit_id',  $request['subunit_id']);  }
                 }
             });
-            $annexfs = $query->with(['projects.subprogram', 'projects.cluster', 'projects.leader.profile.user', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
+            $annexfs = $query->with(['projects.subprogram', 'projects.cluster', 'projects.leader.profile.user', 'projects.encoders.profile.user', 'histories.profile.user', 'funds', 'activities', 'subs.activities', 'subs.funds', 'subs.subproject'])
                 ->where('workshop_id', $request['workshopId'])
                 ->where('year', $request['year'])
-                ->where('status', $request['status'])->get();
+                ->where('status', $request['status'])->orderBy('id', 'asc')->get();
             
             $grouped = $annexfs->groupBy(['projects.0.program_id', 'projects.0.subprogram_id', 'projects.0.cluster_id']);
 

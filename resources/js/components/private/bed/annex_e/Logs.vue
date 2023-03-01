@@ -45,7 +45,8 @@ export default {
 </script>
 <style scoped>
 .log-container{
-    max-height: calc(100vh - 500px);
+    /* max-height: calc(100vh - 500px); */
+    height: 500px;
     overflow: auto;
     padding: 0.5em;
     margin-top: 0.5em;
