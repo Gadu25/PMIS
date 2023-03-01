@@ -1,24 +1,24 @@
 <template>
-    <div class="p-2">
-        <button class="btn btn-sm btn-outline-secondary mt-2 float-start" @click="$router.push({name: 'Reports'})"><i class="fas fa-arrow-left"></i></button>
-        <button class="btn btn-sm btn-success bg-gradient mt-2 float-end" @click="newReport()" data-bs-target="#modal" data-bs-toggle="modal"><i class="fas fa-plus"></i></button>
-        <h2 class="text-center border-bottom pb-2 mb-2">Annual Reports</h2>
+    <div class="px-3 py-4">
+        <button class="btn btn-sm btn-outline-secondary mt-2 float-start" @click="$router.push({name: 'Reports'})" title="Back"><i class="fas fa-arrow-left"></i></button>
+        <button class="btn btn-sm btn-success bg-gradient mt-2 float-end" @click="newReport()" data-bs-target="#modal" data-bs-toggle="modal" title="Add"><i class="fas fa-plus"></i></button>
+        <h2 class="text-center">Annual Reports</h2><hr>
         <template v-if="!loading">
             <div class="row justify-content-center px-3">
-                <div class="col-sm-8" id="main-container">
-                    <div class="card mb-3 border-0 shadow" v-for="report in reports" :key="report.id">
+                <div id="main-container">
+                    <div class="card mb-3 border-0 shadow p-4" v-for="report in reports" :key="report.id">
                         <div class="card-body">
                             <div class="border-bottom pb-2 mb-2" id="details" @click="pdfshow = true, pdffile = report.pdf_file, year = report.year" data-bs-target="#modal" data-bs-toggle="modal">
                                 <div id="img-container">
-                                    <img :src="'/annual/thumbnails/'+report.thumbnail" width="180" height="200"  alt="">
+                                    <img :src="'/annual/thumbnails/'+report.thumbnail" width="180" height="200" alt="" class="border" v-bind:style="{'border-radius': '8px'}">
                                 </div>
                                 {{report.description}}
                             </div>
                             <div class="d-flex justify-content-between">
                                 <div class="fw-bold">Annual Report {{report.year}}</div>
                                 <div>
-                                    <button class="btn btn-sm btn-primary bg-gradient me-1" @click="editForm(report)" data-bs-toggle="modal" data-bs-target="#modal"><i class="far fa-pencil-alt"></i></button>
-                                    <button class="btn btn-sm btn-danger bg-gradient" @click="deleteForm(report.id)"><i class="far fa-trash-alt"></i></button>
+                                    <button class="btn btn-primary bg-gradient me-1 border" @click="editForm(report)" data-bs-toggle="modal" data-bs-target="#modal" title="Edit"><i class="far fa-pencil-alt"></i></button>
+                                    <button class="btn btn-danger bg-gradient border" @click="deleteForm(report.id)" title="Delete"><i class="far fa-trash-alt"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -205,6 +205,12 @@ export default {
 }
 </script>
 <style scoped>
+.card{
+    border-radius: 8px;
+}
+.card-body>img{
+    border-radius: 10px;
+}
 #main-container{
     height: calc(100vh - 130px);
     overflow: auto;

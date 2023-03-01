@@ -243,16 +243,13 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body my-3">
-                        <div v-if="modalmode = 'delete'">
-                            <div class="text-center">
-                                <i class="fa fa-exclamation-triangle fa-5x" style="color: #ef4444"></i>
-                                <h5 class="my-4">Are you sure you want to delete this user?</h5>
-                            </div>
-                            <div class="d-flex justify-content-center mt-2">
-                                <button type="button" class="btn rounded-pill min-100 btn-success mx-1 border border-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn rounded-pill min-100 btn-danger mx-1 border border-secondary" data-bs-dismiss="modal" @click="deleteU()">Yes</button>
-                            </div>
-
+                        <div class="text-center">
+                            <i class="fa fa-exclamation-triangle fa-5x" style="color: #ef4444"></i>
+                            <h5 class="my-4">Are you sure you want to delete this user?</h5>
+                        </div>
+                        <div class="d-flex justify-content-center mt-2">
+                            <button type="button" class="btn rounded-pill min-100 btn-success mx-1 border border-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn rounded-pill min-100 btn-danger mx-1 border border-secondary" data-bs-dismiss="modal" @click="deleteU()">Yes</button>
                         </div>
                     </div>
                 </div>
@@ -531,7 +528,7 @@ export default {
 }
 .table-responsive.users{
     height: calc(100vh - 275px);
-    border-radius: 10px;
+    border-radius: 8px;
 }
 .main-container{
     height: calc(100vh - 165px);

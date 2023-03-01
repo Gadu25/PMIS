@@ -1,26 +1,62 @@
 <template>
-    <div class="p-2 " v-if="!childSelected">
-        <h2 class="text-center pb-2 mb-3 border-bottom">Reports</h2>
+    <div class="px-3 py-4" v-if="!childSelected">
+        <h2 class="text-center">Reports</h2><hr>
         <div class="row flex-wrap px-2">
-            <div class="col-sm-6 px-3 pb-3" v-for="report in reports" :key="report">
+            <!-- <div class="col-sm-6 px-3 pb-3" v-for="report in reports" :key="report">
                 <div class="card border-0 shadow" @click="childSelected = true, $router.push({ name: reportRoute(report)})">
                     <div class="card-body">
                         <h2 class="text-left"> {{report}}</h2>
                     </div>
                 </div>
-            </div>
-            <!-- <div class="col-sm-6 px-3 bp-3">
-                <div class="card border-0 shadow" @click="childSelected = true, $router.push({name: reportRoute(Annual Reports)})">
-                    <div class="card-body">
-                        <h2 class="text-center">Annual Reports</h2>
-                    </div>
-                </div>
-                <div class="card border-0 shadow" @click="childSelected = true, $router.push({name: reportRoute(Bar)})">
-                    <div class="card-body">
-                        <h2 class="text-center">Bar</h2>
-                    </div>
-                </div>
             </div> -->
+            <div class="col-md-6 px-3 pb-3">
+                <div class="card bg-primary shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annual Reports')})">
+                    <div class="card-body">
+                        <i class="far fa-file-chart-pie fa-4x me-3"></i>
+                        <h3 class="text-left">Annual Reports</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 px-3 pb-3">
+                <div class="card bg-success shadow" @click="childSelected = true, $router.push({ name: reportRoute('BAR')})">
+                    <div class="card-body">
+                        <i class="far fa-chart-bar fa-4x me-3"></i>    
+                        <h3 class="text-left">BAR</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 px-3 pb-3">
+                <div class="card bg-danger shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annex E')})">
+                    <div class="card-body">
+                        <i class="far fa-chart-area fa-4x me-3"></i>    
+                        <h3 class="text-left">Annex E</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 px-3 pb-3">
+                <div class="card bg-warning shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annex F')})">
+                    <div class="card-body">
+                        <i class="far fa-chart-area fa-4x me-3"></i>    
+                        <h3 class="text-left">Annex F</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 px-3 pb-3">
+                <div class="card bg-success shadow" @click="childSelected = true, $router.push({ name: reportRoute('Monthly Accomplishment Reports')})">
+                    <div class="card-body">
+                        <i class="far fa-calendar fa-4x me-3"></i>   
+                        <h3 class="text-left">Monthly Accomplishment Reports</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 px-3 pb-3">
+                <div class="card bg-secondary shadow" @click="childSelected = true, $router.push({ name: reportRoute('BED')})">
+                    <div class="card-body">
+                        <i class="far fa-coins fa-4x me-3"></i>  
+                        <h3 class="text-left">BED</h3>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <router-view @clicked="childSelected = false" v-else></router-view>
@@ -74,12 +110,17 @@ export default {
 }
 </script>
 <style scoped>
+.card{
+    border-radius: 8px;
+}
 .card-body{
     min-height: 150px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
     text-align: center;
+    padding: 5%;
+    color: whitesmoke;
 }
 .card:hover{
     /* transition: 0.3s all ease; */

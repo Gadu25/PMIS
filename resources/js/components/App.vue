@@ -56,8 +56,16 @@ export default {
         return {
             token: localStorage.getItem('token') || 0,
             toggle: false,
-            loading: true
+            loading: true,
+            width: document.documentElement.clientWidth,
+            height: document.documentElement.clientHeight
         }
+    },
+    mounted() {
+        window.addEventListener('resize', this.getDimensions);
+    },
+    unmounted() {
+        window.removeEventListener('resize', this.getDimensions);
     },
     methods: {
         ...mapActions('user', ['logout', 'fetchAuthUser']),
@@ -75,6 +83,15 @@ export default {
                 this.fetchAuthUser().then(res => {
                     this.loading = false
                 })
+            }
+        },
+        getDimensions() {
+            this.width = document.documentElement.clientWidth;
+            this.height = document.documentElement.clientHeight;
+            if(this.width < 960){
+                this.toggle = true;
+            } else {
+                this.toggle = false;
             }
         },
         setRouteName(name){
