@@ -46,6 +46,13 @@ const actions = {
         }
         return response.data
     },
+    async deleteUser({commit}, id){
+        const response = await axios.delete('/api/user/delete/'+id)
+        if(!response.data.errors){
+            commit('deleteUser', response.data.message)
+        }
+        return response.data
+    },
     // User functions
     async updateNotification({commit}, id){
         const response = await axios.put('/api/user/notification/'+id).then(res => {

@@ -25,6 +25,7 @@ Route::prefix('/user')->group(function(){
     Route::middleware('auth:sanctum')->get('/title', [UserController::class, 'getTitles']);
     Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'update']);
     Route::middleware('auth:sanctum')->get('/division/{id}', [UserController::class, 'getByDivision']);
+    Route::middleware('auth:sanctum')->delete('/delete/{id}', [UserController::class, 'deleteUser']);
 
     Route::prefix('/notification')->group(function(){
         Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'updateNotification']);

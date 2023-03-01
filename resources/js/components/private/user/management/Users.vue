@@ -18,13 +18,13 @@
                                     <label for="filterDivision">Division</label>
                                 </div>
                                 <div class="d-flex align-items-center mx-2">
-                                    <button @click="syncData()" class="btn btn-sm btn-primary"><i class="fas fa-sync"></i></button>
+                                    <button @click="syncData()" class="btn btn-sm btn-primary" title="Refresh table"><i class="fas fa-sync"></i></button>
                                 </div>
                             </div>
                             <div class="d-flex align-items-center">
                                 <button class="btn bg-gradient btn-sm btn-secondary me-1" data-bs-target="#modal" data-bs-toggle="modal" @click="modalmode = 'roles'"><i class="fas fa-user-shield"></i></button>
                                 <button class="btn bg-gradient btn-sm btn-secondary me-1" data-bs-target="#modal" data-bs-toggle="modal" @click="modalmode = 'logs'"><i class="fas fa-user-clock"></i></button>
-                                <button class="btn bg-gradient btn-sm btn-success" @click="resetForm()"><i class="far fa-user-plus"></i></button>
+                                <button class="btn bg-gradient btn-sm btn-success" @click="resetForm()" title="Add user"><i class="far fa-user-plus"></i></button>
                             </div>
                         </div>
                         <div class="table-responsive users">
@@ -52,7 +52,7 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <button @click="editForm(user)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                                    <button class="btn btn-sm btn-danger me-1"><i class="far fa-trash-alt"></i></button>
+                                                    <button class="btn btn-sm btn-danger me-1" data-bs-target="#deletePrompt" data-bs-toggle="modal" @click="openDeleteModal(user.id)"><i class="far fa-trash-alt"></i></button>
                                                 </td>
                                             </tr>
                                         </template>
@@ -60,7 +60,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <strong class="position-absolute bottom-0">List of Users</strong>
+                        <!-- <strong class="position-absolute bottom-0">List of Users</strong> -->
                     </template>
                     <template v-else>
                         <button tabindex="-1" @click="formshow = false" class="btn btn-sm btn-danger float-end"><i class="fas fa-times"></i></button>
@@ -229,12 +229,37 @@
                             <div class="d-flex justify-content-end mt-2">
                                 <button type="button" class="btn rounded-pill min-100 btn-primary" data-bs-dismiss="modal">Save</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="deletePrompt" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Deleting User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body my-3">
+                        <div v-if="modalmode = 'delete'">
+                            <div class="text-center">
+                                <i class="fa fa-exclamation-triangle fa-5x" style="color: #ef4444"></i>
+                                <h5 class="my-4">Are you sure you want to delete this user?</h5>
+                            </div>
+                            <div class="d-flex justify-content-center mt-2">
+                                <button type="button" class="btn rounded-pill min-100 btn-success mx-1" data-bs-dismiss="modal">Cancel</button>
+
+                                <button type="button" class="btn rounded-pill min-100 btn-danger mx-1" data-bs-dismiss="modal" @click="deleteU()">Yes</button>
+                            </div>
 
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 </template>
 <script>
@@ -250,6 +275,7 @@ export default {
         return {
             filterdivision_id: 0,
             synceddivision_id: 0,
+            deleteUser_id: 0,
             syncing: false,
             formshow: false,
             copyroles: false,
@@ -281,7 +307,7 @@ export default {
         }
     },
     methods: {
-        ...mapActions('user', ['fetchUsers', 'fetchTitles', 'saveUser', 'fetchUsersByDivision']),
+        ...mapActions('user', ['fetchUsers', 'fetchTitles', 'saveUser', 'deleteUser', 'fetchUsersByDivision']),
         ...mapActions('division', ['fetchDivisions']),
         ...mapActions('roles', ['fetchSidebarItems']),
         syncData(){
@@ -379,6 +405,21 @@ export default {
                     if(!res.errors){
                         this.formshow = false
                     }
+                })
+            }
+        },
+        openDeleteModal(id){
+            console.log("the id prompted: "+id)
+            this.deleteUser_id = id;
+            console.log("deleteUser_id", this.deleteUser_id)
+            this.modalmode = 'delete'
+        },
+        deleteU(){
+            if(this.deleteUser_id != 0){
+                console.log("USER DELETE", this.deleteUser_id)
+                this.deleteUser(this.deleteUser_id).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
                 })
             }
         },

@@ -200,6 +200,24 @@ class UserController extends Controller
         return ['message' => 'Sidebar Item deleted!', 'roles' => $this->getSidebarItems()];
     }
 
+    public function deleteUser($id){
+        DB::beginTransaction();
+        try {
+            $user = User::findOrFail($id);
+            $user->delete();
+
+            $profile = Profile::where("user_id", $id);
+            $profile->delete();
+
+            DB::commit();
+            return ['message' => 'User deleted!'];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
     // Staff
     public function getStaffs(){
         $titles = Title::where('name', 'Unit Head')->orWhere('name', 'Project Leader')->orWhere('name', 'Staff / Encoder')->get();
