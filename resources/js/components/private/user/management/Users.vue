@@ -187,7 +187,13 @@
                         <!-- User Roles -->
                         <div v-if="modalmode == 'user'">
                             <div class="mb-2">
-                                <button v-if="!copyroles" @click="copyroles = !copyroles" class="btn btn-sm btn-primary mb-1">Copy Roles</button>
+                                <button v-if="!copyroles" @click="copyroles = !copyroles" class="btn btn-sm btn-secondary mb-1">
+                                    <div id="tooltip" class="px-2">
+                                        <i class="far fa-question-circle"></i>
+                                        <span id="tooltiptext">Copy roles from existing accounts</span>
+                                    </div>
+                                    Copy Roles
+                                </button>
                                 <template v-else>
                                     <div class="form-floating mb-2">
                                         <select class="form-control" id="CopyUser" v-model="copyuser">
