@@ -187,7 +187,7 @@
                         <!-- User Roles -->
                         <div v-if="modalmode == 'user'">
                             <div class="mb-2">
-                                <button v-if="!copyroles" @click="copyroles = !copyroles" class="btn btn-sm btn-secondary mb-1">
+                                <button v-if="!copyroles" @click="toggleCopy()" class="btn btn-sm btn-secondary mb-1">
                                     <div id="tooltip" class="px-2">
                                         <i class="far fa-question-circle"></i>
                                         <span id="tooltiptext">Copy roles from existing accounts</span>
@@ -345,7 +345,8 @@ export default {
                     title_id: '',
                     active: true,
                     isOIC: false,
-                    access_level: 'User'
+                    access_level: 'User',
+                    roles: []
                 }]
             this.form.isSynced = (this.synceddivision_id != 0)
             this.form.selectedKey = ''
@@ -475,13 +476,18 @@ export default {
             name = user.firstname+' '+user.lastname +' ('+user.active_profile.title.name+')'
             return name
         },
+        toggleCopy(){
+            this.copyroles = !this.copyroles
+        },
         copyUser(){
             var form = this.form
+            this.form.profiles[form.selectedKey].roles = []
             var roles = this.copyuser.active_profile.roles
             for(let i = 0; i < roles.length; i++){
                 var role = roles[i]
-                form.profiles[form.selectedKey].roles.push(role.id)
+                this.form.profiles[form.selectedKey].roles.push(role.id)
             }
+            // console.log("after for loop", this.form.profiles[form.selectedKey])
         },
         // Toast
         toastMsg(icon, msg){
