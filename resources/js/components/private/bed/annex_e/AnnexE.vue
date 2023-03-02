@@ -156,7 +156,7 @@
                                                                 <td v-if="!isAdmin" class="text-center">{{getCluster(item.project)}}</td>
                                                                 <td class="text-center">
                                                                     <template v-if="checkUserDivision(item.project) || isAdmin">
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id) || isAdmin" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id) || isAdmin" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicator</button><br>
                                                                         <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true) || isAdmin" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                         <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                     </template>
@@ -306,13 +306,15 @@
                         <table class="table table-sm table-bordered">
                             <TableHead :syncing="true" :printmode="true" :year="syncedyear" />
                             <tbody>
-                                <tr><td :rowspan="form.indicators.length + 1">{{form.project_title}}</td></tr>
+                                <tr>
+                                    <td :rowspan="form.indicators.length + 1">{{form.project_title}} test</td>
+                                </tr>
                                 <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
                                     <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
                                         <template v-if="form.status == 'New' || form.status == 'Draft' || isAdmin">
                                             <!-- Program 1: S&T Scholarship Program -->
                                             <template v-if="form.program_id == 1">
-                                                <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}}</p>
+                                                <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}} test</p>
                                                 <template v-else>
                                                     <template v-if="indicator.description != 'Sub-Total'">
                                                         <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = formatNumber(totalIndicator(col))}}</p>
@@ -330,11 +332,14 @@
                                                 <p     class="px-2 py-1 m-0 text-end"       v-else @click="showIndicatorBreakdown(key)" data-bs-toggle="modal" data-bs-target="#detailform" style="cursor: pointer;">{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                             </template>
                                         </template>
-                                        <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{formatNumber(indicator[col])}}</p>
+                                        <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{indicator[col]}}</p>
+                                        <!-- <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{formatNumber(indicator[col])}} test2</p> -->
                                     </td>
                                 </tr>
                                 <template v-for="sub, skey in form.subs" :key="'sub_'+skey">
-                                    <tr><td :rowspan="sub.indicators.length+1">{{sub.title}}</td></tr>      
+                                    <tr>
+                                        <td :rowspan="sub.indicators.length+1">{{sub.title}}</td>
+                                    </tr>      
                                     <tr v-for="indicator, key in sub.indicators" :key="'indicator_'+key">
                                         <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
                                             <template v-if="form.status == 'New' || form.status == 'Draft' || isAdmin">
@@ -358,7 +363,7 @@
                                                     <p     class="px-2 py-1 m-0 text-end"       v-else @click="showIndicatorBreakdown(key, skey)" data-bs-toggle="modal" data-bs-target="#detailform" style="cursor: pointer;">{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col, skey))}}</p>
                                                 </template>
                                             </template>
-                                            <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{formatNumber(indicator[col])}}</p>
+                                            <p v-else class="px-2 py-1 m-0" :class="col != 'description' ? 'text-end' : ''">{{indicator[col]}}</p>
                                         </td>
                                     </tr>
                                 </template>
@@ -369,8 +374,9 @@
                 <h1 class="text-center p-5" v-else> <i class="fas fa-spinner fa-spin"></i> Loading Resources </h1>
             </div>
         </template>
-        <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
+        <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i></h1>
     </div>
+
     <Logs :histories="histories" :title="historyfor"/>
     <!-- Modal -->
     <div class="modal fade" id="detailform" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
@@ -1347,7 +1353,8 @@ export default {
         ...mapGetters('division', ['getDivisions']),
         divisions(){ return this.getDivisions },
         ...mapGetters('annexe', ['getAnnexEs']),
-        annexes(){ return this.getAnnexEs }
+        annexes(){ return this.getAnnexEs },
+        
     },
     created(){
         this.fetchWorkshop(this.$route.params.workshopId).then(res => {

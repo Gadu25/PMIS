@@ -22,7 +22,7 @@ class AnnexF extends Model
     }
 
     public function activities(){
-        return $this->morphMany(AnnexFActivity::class, 'activitable')->orderBy('table_key', 'asc');
+        return $this->morphMany(AnnexFActivity::class, 'activitable');
     }
 
     public function funds(){
