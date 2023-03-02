@@ -1,6 +1,6 @@
 <template>
     <div class="px-3 py-4">
-        <h2 class="text-center">User Management</h2><hr>
+        <h2 class="text-center color-darkBlue">User Management</h2><hr>
         <div class="main-container">
             <div class="card shadow overflow-auto">
                 <div class="card-overlay" v-if="syncing">
@@ -566,6 +566,21 @@ export default {
 }
 .red{
     background-color: #ED553B;
+}
+.color-darkBlue{
+    color: #173F5F
+}
+.color-blue{
+    color: #20639B
+}
+.color-mint{
+    color: #3CAEA3
+}
+.color-yellow{
+    color: #F6D55C
+}
+.color-red{
+    color: #ED553B
 }
 #tooltip {
   position: relative;

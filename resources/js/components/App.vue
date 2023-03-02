@@ -36,7 +36,7 @@
                     <div><button class="btn btn-sm" @click="toggle = !toggle"><i class="fas fa-bars fa-2x" v-bind:style="{'color': '#3CAEA3'}"></i></button></div>
                     <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
                     <div class="p-1 position-relative">
-                        <router-link :to="{ name: 'Profile' }" v-bind:style="{'color': '#3CAEA3'}"><i class="far fa-user-circle fa-2x"></i> </router-link>
+                        <router-link class="text-decoration-none d-flex align-items-center" v-bind:style="{'color': '#F5F5F5'}" :to="{ name: 'Profile' }"><strong>{{ auth.firstname + " " + auth.lastname }}</strong> &nbsp; &nbsp; <i class="far fa-user-circle fa-2x" v-bind:style="{'color': '#3CAEA3'}"></i> </router-link>
                         <span v-if="auth.active_profile.unread > 0" class="red-dot"></span>
                     </div>
                 </div>
@@ -149,6 +149,7 @@ export default {
 }
 .app-container{
     background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);
+    /* background: #ffffff; */
     display: flex;
 }
 .sidebar{

@@ -1,35 +1,37 @@
 <template>
     <template v-if="!childSelected">
         <div class="px-3 py-4" v-if="!loading">
-            <h2 class="text-center">Programs and Projects</h2><hr>
+            <h2 class="text-center color-darkBlue">Programs and Projects</h2><hr>
             <div id="main-container">
                 <template v-if="!manageprojects">
                     <div class="d-flex justify-content-end">
                         <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = true"><i class="far fa-cog"></i> Manage Projects</button>
                     </div>
-                    <div v-for="program in programs" :key="program.id+'_program'">
-                        <h3><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: program.title } }">{{program.title}} </router-link></h3>
-                        <div class="row flex-wrap px-2">
-                            <div class="col-md-6 px-3 pb-3" v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
-                                <div class="card darkBlue shadow">
-                                    <div class="card-body">
-                                        <div v-if="subprogram.clusters.length > 0">
-                                            <h6><router-link v-bind:style="{'color': '#F5F5F5'}" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h6>
-                                            <hr>
-                                            <div  class="ms-3" v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
-                                                <h6><router-link v-bind:style="{'color': '#F5F5F5'}" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: cluster.title } }">- {{cluster.title}}</router-link></h6>
-                                            </div>
+                    <div class="row flex-wrap pt-2">
+                        <div class="col-md-12 px-3 pb-3" v-for="program in programs" :key="program.id+'_program'">
+                            <div class="card shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annual Reports')})">
+                                <div class="card-body">
+                                    <h3 class="mint bg-gradient px-2 py-1 my-1 rounded-pill text-center w-100"><router-link v-bind:style="{'color': '#F5F5F5'}" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: program.title } }">{{program.title}}</router-link></h3>
+                                    <hr v-bind:style="{'color': '#173F5F'}">
+                                    <div class="ms-3" v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
+                                        <h6><router-link class="color-blue" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h6>
+                                        <div class="ms-3" v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
+                                            <h6><router-link class="color-yellow" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: cluster.title } }">- {{cluster.title}}</router-link></h6>
                                         </div>
-                                        <div v-else class="row h-100 justify-content-center align-items-center">
-                                            <h3><router-link v-bind:style="{'color': '#F5F5F5'}" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h3>
-                                        </div>
-                                        
                                     </div>
                                 </div>
                             </div>
-                        </div>    
-                        <hr>
+                        </div>
                     </div>
+                    <!-- <div v-for="program in programs" :key="program.id+'_program'">
+                        <h3><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: program.title } }">{{program.title}}</router-link></h3>
+                        <div class="ms-3" v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
+                            <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h6>
+                            <div class="ms-3" v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
+                                <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: cluster.title } }">{{cluster.title}}</router-link></h6>
+                            </div>
+                        </div><hr>
+                    </div> -->
                 </template>
                 <div v-else>
                     <div class="d-flex justify-content-center">
@@ -104,9 +106,9 @@
                                     <div class="d-flex justify-content-end mb-2" v-if="form.id == ''">
                                         <button tabindex="-1" class="btn btn-sm btn-secondary" @click="addProject()" title="Add"><i class="fas fa-plus"></i> Project</button>
                                     </div>
-                                    <div class="form-group row mb-3">
+                                    <div class="form-group row">
                                         <div :class="form.id ? 'col-sm-12' : 'col-sm-6'" class="mb-3" v-for="project, key in form.projects" :key="key+'_title'">
-                                            <div class="card shadow">
+                                            <div class="card">
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <strong>Project</strong>
@@ -159,7 +161,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="d-flex justify-content-end mt-3">
+                                <div class="d-flex justify-content-end">
                                     <button tabindex="-1" style="min-width: 100px;" class="btn btn-outline-secondary rounded-pill me-2" @click="formshow = false">Cancel</button>
                                     <button style="min-width: 100px;" class="btn rounded-pill" :class="form.id == '' ? 'btn-success' : 'btn-primary'" @click="submitForm()">{{(form.id == '') ? 'Submit' : 'Save Changes'}}</button>
                                 </div>
@@ -167,12 +169,12 @@
                             <div v-else>
                                 <div class="row flex-row-reverse">
                                     <div class="col-sm-3">
-                                        <div class="card shadow mb-3">
+                                        <div class="card p-2 shadow mb-3">
                                             <div class="card-body">
                                                 <div class="form-floating mb-3">
                                                     <select class="form-select" id="DisplayType" v-model="displaytype" @change="displayTypeChange()">
                                                         <option value="division">Division</option>
-                                                        <option value="program">Program</option>
+                                                        <option value="program">Program </option>
                                                     </select>
                                                     <label for="DisplayType">Type</label>
                                                 </div>
@@ -202,11 +204,11 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="d-flex justify-content-between mb-2">
-                                            <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = false"><i class="fas fa-arrow-left"></i></button>
-                                            <button class="btn btn-sm btn-success" @click="resetForm()" title="Add"><i class="fas fa-plus"></i></button>
+                                            <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = false"><i class="fas fa-arrow-left"></i>&nbsp; Back</button>
+                                            <button class="btn btn-sm btn-success" @click="resetForm()" title="Add"><i class="fas fa-plus"></i>&nbsp;Project</button>
                                         </div>
                                         <div class="table-container">
-                                            <table class="table table-sm table-bordered table-hover align-middle rounded">
+                                            <table class="table table-sm table-bordered table-hover align-middle">
                                                 <caption>List of Project Titles</caption>
                                                 <thead class="position-sticky bg-white shadow" style="top: -1px;">
                                                     <tr>
@@ -222,7 +224,7 @@
                                                         </tr>
                                                         <template v-for="second, skey in first" :key="skey+'_second'">
                                                             <tr v-if="skey !=''">
-                                                                <td colspan="3"><div class="ms-2"><strong>{{skey}}</strong></div></td>
+                                                                <td colspan="3" class="blue text-white"><div class="ms-2"><strong>{{skey}}</strong></div></td>
                                                             </tr>
                                                             <template v-for="third, tkey in second" :key="tkey+'_third'">
                                                                 <tr v-if="tkey != ''">
@@ -279,7 +281,7 @@
             </div>
             </div>
         </div>
-        <h1 class="text-center p-5" v-else><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
+        <h1 class="text-center p-5" v-else><i class="fas fa-spinner fa-spin fa-2x"></i></h1>
     </template>
     <router-view @clicked="childSelected = false" v-else></router-view>
 </template>
@@ -616,12 +618,18 @@ h3, h6, h5{
     border-radius: 0.25rem;
     cursor: pointer;
 }
-h3:hover, h6:hover{
+h6:hover{
     background: rgba(0,0,0,0.1);
 }
 h3>a,h6>a{
     text-decoration: none;
     color: black;
+}
+h3:hover{
+    /* transition: 0.3s all ease; */
+    /* background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);; */
+    transform: scale(1.02);
+    cursor: pointer;
 }
 
 .table-container{
@@ -651,14 +659,29 @@ th{
 .red{
     background-color: #ED553B;
 }
+
+.color-darkBlue{
+    color: #173F5F
+}
+.color-blue{
+    color: #20639B
+}
+.color-mint{
+    color: #3CAEA3
+}
+.color-yellow{
+    color: #F6D55C
+}
+.color-red{
+    color: #ED553B
+}
 .card{
     border-radius: 8px;
 }
 .card-body{
     min-height: 150px;
     justify-content: left;
-    padding: 2%;
-    color: whitesmoke;
+    padding: 1%;
 }
 #main-container{
     height: calc(100vh - 135px);

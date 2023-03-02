@@ -1,8 +1,8 @@
 <template>
     <div class="profile-container">
         <div class="gen-info">
-            <button class="btn-settings"><i class="far fa-cog"></i> Settings</button>
-            <h4>{{authuser.firstname+' '+authuser.lastname}}, <small></small></h4>
+            <button class="btn-settings"><i class="far fa-cog"></i>Settings</button>
+            <h4>{{authuser.firstname+' '+authuser.lastname}},</h4>
             <small><i class="far fa-user-circle"></i> {{authuser.active_profile.title.name}}</small><br>
             <small><i class="far fa-building"></i> <strong>{{authuser.division.name}}</strong> <span v-if="authuser.unit_id">, {{authuser.unit.name}}</span> <span v-if="authuser.sybunit_id"> - {{authuser.subunit.name}}</span> </small>
             <br><small><i class="far fa-envelope"></i> <i>{{authuser.email}}</i></small>
@@ -96,7 +96,6 @@ export default {
         border-radius: 0.25em;
         position: absolute;
         right: 0;
-        box-shadow: 2px 2px rgb(107, 107, 107);
         padding: 4px 8px;
     }
     .gen-info>.btn-settings:hover{

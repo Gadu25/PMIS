@@ -1,5 +1,5 @@
 <template>
-    <div class="p-2 workshop" v-if="!childSelected">
+    <div class="px-3 py-4 workshop" v-if="!childSelected">
         <h2 class="text-center">Budget Executive Documents</h2><hr>
         <div class="px-3 py-4" v-if="!loading">
             <form @submit.prevent="submitForm()" class="d-flex justify-content-center border-bottom mb-4" v-if="formshow">
@@ -62,7 +62,7 @@
             </div>
             </template>
         </div>
-        <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
+        <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i></h1>
     </div>
     <div v-else>
         <router-view></router-view>

@@ -322,7 +322,8 @@ class WorkshopController extends Controller
                 $annexe->save();
                 $subject = $subject.'<p class="m-0">Status: '.$prevstatus.' => '.$annexe->status.'</p>';
                 if($initialStatus != 'New' || $status == 'For Review'){
-                    $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id.'?year='.$annexe->year;
+                    $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?year='.$annexe->year;
+                    // $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id.'?year='.$annexe->year;
                     $message = $this->sendNotification($annexe->project, $status, 'Annex E', $link);
                     $subject = $subject.$message;
                 }
@@ -710,7 +711,8 @@ class WorkshopController extends Controller
                 $subject = $subject.'<p class="m-0">Status: '.$initialStatus.' => '.$annexf->status.'</p>';
                 if($initialStatus != 'New' || $status == 'For Review'){
                     // $linkstatus = $status == 'For Review' ? 'For%20Review' : ($status == 'For Approval' ? 'For%20Approval' : ($status == 'Approved' ? 'Approved' : 'Submitted'));
-                    $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?id='.$annexf->id;
+                    $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id;
+                    // $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?id='.$annexf->id;
                     $message = $this->sendNotification($annexf->projects, $status, 'Annex F', $link);
                     $subject = $subject.$message;
                 }

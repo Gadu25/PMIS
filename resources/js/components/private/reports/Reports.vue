@@ -1,6 +1,6 @@
 <template>
     <div class="px-3 py-4" v-if="!childSelected">
-        <h2 class="text-center">Reports</h2><hr>
+        <h2 class="text-center color-darkBlue">Reports</h2><hr>
         <div class="row flex-wrap px-2">
             <!-- <div class="col-sm-6 px-3 pb-3" v-for="report in reports" :key="report">
                 <div class="card border-0 shadow" @click="childSelected = true, $router.push({ name: reportRoute(report)})">
@@ -143,7 +143,21 @@ export default {
 .red{
     background-color: #ED553B;
 }
-
+.color-darkBlue{
+    color: #173F5F
+}
+.color-blue{
+    color: #20639B
+}
+.color-mint{
+    color: #3CAEA3
+}
+.color-yellow{
+    color: #F6D55C
+}
+.color-red{
+    color: #ED553B
+}
 @media only screen and (max-width: 600px) {
     .card-body{
         min-height: 100px;
