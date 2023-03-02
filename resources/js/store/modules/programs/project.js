@@ -78,7 +78,7 @@ const actions = {
             }
             return res.data
         })
-        return response
+       return response
     },
     async fetchLaws({commit}){
         const response = await axios.get('/api/law').then(res => {
@@ -86,6 +86,15 @@ const actions = {
                 commit('setLaws', res.data)
             }
         })
+    },
+    async deleteProject({commit}, id){
+        const response = await axios.delete('/api/project/'+id).then(res => {
+            if(!res.data.errors){
+                commit('deleteProject', res.data.profile)
+            }
+            return res.data
+        })
+        return response
     }
 }
 

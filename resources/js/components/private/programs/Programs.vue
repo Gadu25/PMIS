@@ -1,6 +1,6 @@
 <template>
     <template v-if="!childSelected">
-        <div class="px-2 py-1" v-if="!loading">
+        <div class="px-3 py-4" v-if="!loading">
             <h2 class="text-center">Programs and Projects</h2><hr>
             <div id="main-container">
                 <template v-if="!manageprojects">
@@ -8,13 +8,27 @@
                         <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = true"><i class="far fa-cog"></i> Manage Projects</button>
                     </div>
                     <div v-for="program in programs" :key="program.id+'_program'">
-                        <h3><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: program.title } }">{{program.title}}</router-link></h3>
-                        <div class="ms-3" v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
-                            <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h6>
-                            <div class="ms-3" v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
-                                <h6><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: cluster.title } }">{{cluster.title}}</router-link></h6>
+                        <h3><router-link @click="childSelected = true" :to="{ name: 'Projects', params: { selected: program.title } }">{{program.title}} </router-link></h3>
+                        <div class="row flex-wrap px-2">
+                            <div class="col-md-6 px-3 pb-3" v-for="subprogram in program.subprograms" :key="subprogram.id+'_subprogram'">
+                                <div class="card darkBlue shadow">
+                                    <div class="card-body">
+                                        <div v-if="subprogram.clusters.length > 0">
+                                            <h6><router-link v-bind:style="{'color': '#F5F5F5'}" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h6>
+                                            <hr>
+                                            <div  class="ms-3" v-for="cluster in subprogram.clusters" :key="cluster.id+'_cluster'">
+                                                <h6><router-link v-bind:style="{'color': '#F5F5F5'}" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: cluster.title } }">- {{cluster.title}}</router-link></h6>
+                                            </div>
+                                        </div>
+                                        <div v-else class="row h-100 justify-content-center align-items-center">
+                                            <h3><router-link v-bind:style="{'color': '#F5F5F5'}" @click="childSelected = true" :to="{ name: 'Projects', params: { selected: subprogram.title } }"><strong>{{subprogram.title}}</strong></router-link></h3>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
                             </div>
-                        </div><hr>
+                        </div>    
+                        <hr>
                     </div>
                 </template>
                 <div v-else>
@@ -88,7 +102,7 @@
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-end mb-2" v-if="form.id == ''">
-                                        <button tabindex="-1" class="btn btn-sm btn-secondary" @click="addProject()"><i class="fas fa-plus"></i> Project</button>
+                                        <button tabindex="-1" class="btn btn-sm btn-secondary" @click="addProject()" title="Add"><i class="fas fa-plus"></i> Project</button>
                                     </div>
                                     <div class="form-group row mb-3">
                                         <div :class="form.id ? 'col-sm-12' : 'col-sm-6'" class="mb-3" v-for="project, key in form.projects" :key="key+'_title'">
@@ -97,7 +111,7 @@
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <strong>Project</strong>
                                                         <div>
-                                                            <button tabindex="-1" class="btn btn-sm btn-secondary me-1" @click="addSubproject(key)"><i class="fas fa-plus"></i></button>
+                                                            <button tabindex="-1" class="btn btn-sm btn-secondary me-1" @click="addSubproject(key)" title="Add"><i class="fas fa-plus"></i></button>
                                                             <button tabindex="-1" class="btn btn-sm btn-danger" @click="removeProject(project)" v-if="form.id == ''"><i class="fas fa-trash-alt"></i> </button>
                                                         </div>
                                                     </div>
@@ -189,10 +203,10 @@
                                     <div class="col-sm-9">
                                         <div class="d-flex justify-content-between mb-2">
                                             <button class="btn btn-sm btn-outline-secondary" @click="manageprojects = false"><i class="fas fa-arrow-left"></i></button>
-                                            <button class="btn btn-sm btn-success" @click="resetForm()"><i class="fas fa-plus"></i></button>
+                                            <button class="btn btn-sm btn-success" @click="resetForm()" title="Add"><i class="fas fa-plus"></i></button>
                                         </div>
                                         <div class="table-container">
-                                            <table class="table table-sm table-bordered table-hover align-middle">
+                                            <table class="table table-sm table-bordered table-hover align-middle rounded">
                                                 <caption>List of Project Titles</caption>
                                                 <thead class="position-sticky bg-white shadow" style="top: -1px;">
                                                     <tr>
@@ -204,7 +218,7 @@
                                                 <tbody>
                                                     <template v-for="first, fkey in projects" :key="fkey+'_first'">
                                                         <tr>
-                                                            <td colspan="3" :style="displaytype == 'division' ? 'background: orange' : ''" :class="displaytype == 'program' ? 'bg-success text-white' : ''"><strong>{{fkey}}</strong></td>
+                                                            <td colspan="3" :class="displaytype == 'program' ? 'bg-success text-white' : 'yellow'"><strong>{{fkey}}</strong></td>
                                                         </tr>
                                                         <template v-for="second, skey in first" :key="skey+'_second'">
                                                             <tr v-if="skey !=''">
@@ -220,8 +234,10 @@
                                                                         <td>{{project.project_leader}}
                                                                         </td>
                                                                         <td class="text-center">
-                                                                            <button @click="editForm(project)" class="btn btn-sm btn-primary me-1"><i class="far fa-pencil-alt"></i></button>
-                                                                            <button class="btn btn-sm btn-danger"><i class="far fa-trash-alt"></i></button>
+                                                                            <button @click="editForm(project)" class="btn btn-sm btn-primary me-1" title="Edit"><i class="far fa-pencil-alt"></i></button>
+                                                                            <!-- <button class="btn btn-sm btn-danger" title="Delete"><i class="far fa-trash-alt"></i></button> -->
+                                                                            <button class="btn btn-sm btn-danger me-1 border border-secondary" data-bs-target="#deletePrompt" data-bs-toggle="modal" title="Delete" @click="openDeleteModal(project.id)"><i class="far fa-trash-alt"></i></button>
+
                                                                         </td>
                                                                     </tr>
                                                                     <tr v-for="subproject in project.subprojects" :key="subproject.id+'_subproj'">
@@ -240,6 +256,27 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="modal fade" id="deletePrompt" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Deleting</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body my-3">
+                            <div class="text-center">
+                                <i class="fa fa-exclamation-triangle fa-5x" style="color: #ED553B"></i>
+                                <h5 class="my-4">Are you sure you want to delete this data?</h5>
+                            </div>
+                            <div class="d-flex justify-content-center mt-2">
+                                <button type="button" class="btn rounded-pill min-100 btn-success mx-1 border border-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn rounded-pill min-100 btn-danger mx-1 border border-secondary" data-bs-dismiss="modal" @click="deleteData()">Yes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
         <h1 class="text-center p-5" v-else><i class="fas fa-spinner fa-spin fa-5x"></i></h1>
@@ -256,6 +293,7 @@ export default {
             loading: true,
             manageprojects: false,
             formshow: false,
+            deleteData_id: 0,
             form: {},
             subprograms: [],
             clusters: [],
@@ -268,7 +306,7 @@ export default {
     },
     methods: {
         ...mapActions('program', ['fetchPrograms']),
-        ...mapActions('project', ['fetchProjects', 'saveProject']),
+        ...mapActions('project', ['fetchProjects', 'saveProject', 'deleteProject']),
         ...mapActions('division', ['fetchDivisions']),
         ...mapActions('user', ['fetchUsers']),
         resetForm(){
@@ -341,6 +379,21 @@ export default {
                     })
                     formproject.selectedStaffs.push(encoder.profile_id)
                 }
+            }
+        },
+        openDeleteModal(id){
+            console.log("the id prompted: "+id)
+            this.deleteData_id = id;
+            console.log("deleteUser_id", this.deleteData_id)
+            this.modalmode = 'delete'
+        },
+        deleteData(){
+            if(this.deleteData_id != 0){
+                console.log("DATA DELETE", this.deleteData_id)
+                this.deleteProject(this.deleteData_id).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
+                })
             }
         },
         submitForm(){
@@ -521,7 +574,8 @@ export default {
                 icon: icon,
                 title: msg
             })
-        }
+        },
+        
     },
     computed: {
         ...mapGetters('program', ['getPrograms']),
@@ -557,7 +611,7 @@ export default {
 }
 </script>
 <style scoped>
-h3, h6{
+h3, h6, h5{
     padding: 2px 4px;
     border-radius: 0.25rem;
     cursor: pointer;
@@ -580,6 +634,31 @@ th{
 
 .content{
     overflow-x: hidden;
+}
+
+.darkBlue{
+    background-color: #173F5F;
+}
+.blue{
+    background-color:#20639B; 
+}
+.mint{
+    background-color: #3CAEA3;
+}
+.yellow{
+    background-color: #F6D55C;
+}
+.red{
+    background-color: #ED553B;
+}
+.card{
+    border-radius: 8px;
+}
+.card-body{
+    min-height: 150px;
+    justify-content: left;
+    padding: 2%;
+    color: whitesmoke;
 }
 #main-container{
     height: calc(100vh - 135px);

@@ -127,7 +127,21 @@ class ProjectController extends Controller
     }
 
     public function destroy($id){
+        DB::beginTransaction();
+        try {
+            $project = Project::findOrFail($id);
+            $project->delete();
 
+            $subProjects = Subproject::where("project_id", $id);
+            $subProjects->delete();
+            
+            DB::commit();
+            return ['message' => 'Project deleted!'];
+        }
+        catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage(), 'trace' => $e->getTrace()];
+        }
     }
 
     public function storeMultiple(Request $request){
