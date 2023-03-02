@@ -15,7 +15,7 @@
                                 {{report.description}}
                             </div>
                             <div class="d-flex justify-content-between">
-                                <div class="fw-bold">Annual Report {{report.year}}</div>
+                                <div class="fw-bold" v-bind:style="{'color': '#173F5F'}"><h3>Annual Report {{report.year}}</h3></div>
                                 <div>
                                     <button class="btn btn-primary bg-gradient me-1 border" @click="editForm(report)" data-bs-toggle="modal" data-bs-target="#modal" title="Edit"><i class="far fa-pencil-alt"></i></button>
                                     <button class="btn btn-danger bg-gradient border" @click="deleteForm(report.id)" title="Delete"><i class="far fa-trash-alt"></i></button>

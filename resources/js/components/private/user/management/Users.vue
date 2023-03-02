@@ -29,7 +29,7 @@
                         </div>
                         <div class="table-responsive users">
                             <table class="table table-sm table-bordered shadow" style="min-width: 630px">
-                                <thead class="position-sticky bg-secondary text-white text-center" style="top: -1px">
+                                <thead class="position-sticky darkBlue text-white text-center" style="top: -1px">
                                     <tr>
                                         <th style="width: 30%">Name</th>
                                         <th style="width: 30%">Email</th>
@@ -39,14 +39,14 @@
                                 </thead>
                                 <tbody>
                                     <template v-for="division, divname in users" :key="'division_'+divname">
-                                        <tr><td style="background: orange" colspan="4"><strong>{{divname}}</strong></td></tr>
+                                        <tr><td class="yellow px-3 py-2" colspan="4"><strong>{{divname}}</strong></td></tr>
                                         <template v-for="unit, unitname in division" :key="'unit_'+unitname">
                                             <tr v-if="unitname != ''"> <td colspan="4"><div class="ms-2 fw-bold">{{unitname}}</div></td> </tr>
                                             <tr class="align-middle" v-for="user in unit" :key="'user_'+user.id">
                                                 <td><div class="ms-3">{{user.firstname}} {{user.lastname}}</div></td>
                                                 <td>{{user.email}}</td>
                                                 <td class="d-flex justify-content-center align-items-center">
-                                                    <div class="text-nowrap" :class="profile.active ? 'bg-info bg-gradient px-2 py-1 my-1 rounded-pill text-center w-100' : ''" v-for="profile in user.profiles" :key="'profile_'+profile.id">
+                                                    <div class="text-nowrap" :class="profile.active ? 'mint bg-gradient px-2 py-1 my-1 rounded-pill text-center w-100' : ''" v-for="profile in user.profiles" :key="'profile_'+profile.id">
                                                         <strong class="text-white">{{profile.title.name}} {{profile.isOIC ? ', OIC' : ''}}</strong>
                                                     </div>
                                                 </td>
@@ -63,7 +63,7 @@
                         <!-- <strong class="position-absolute bottom-0">List of Users</strong> -->
                     </template>
                     <template v-else>
-                        <button tabindex="-1" @click="formshow = false" class="btn btn-sm btn-danger float-end"><i class="fas fa-times"></i></button>
+                        <button tabindex="-1" @click="formshow = false" class="btn btn-sm btn-danger float-end" title="Cancel Edit"><i class="fas fa-times"></i></button>
                         <button tabindex="-1" @click="changepassword = !changepassword; form.password = ''" v-if="form.id" class="btn shadow-none btn-sm me-1 float-end" :class="changepassword ? 'btn-secondary' : 'btn-outline-secondary'"><i class="fas fa-key"></i> {{changepassword ? 'Cancel' : ''}} Change Password</button>
                         <h4><strong>Form</strong></h4><hr>
                         <div class="form-container">
@@ -126,7 +126,7 @@
                             <h5 class="text-center">Profile/s</h5><hr>
                             <div class="row">
                                 <div class="col-sm-6 mb-3" v-for="profile, key in form.profiles" :key="'profile_'+key">
-                                    <div class="card bg-gradient" :class="profile.active ? 'bg-warning' : 'bg-light'">
+                                    <div class="card bg-gradient" :class="profile.active ? 'yellow' : 'bg-light'">
                                         <div class="card-body">
                                             <div class="d-flex justify-content-end" v-if="!profile.active">
                                                 <button class="btn btn-sm btn-danger position-absolute top-0 end-0" @click="removeProfile(profile)"><i class="far fa-user-times"></i></button>
@@ -250,7 +250,7 @@
                     </div>
                     <div class="modal-body my-3">
                         <div class="text-center">
-                            <i class="fa fa-exclamation-triangle fa-5x" style="color: #ef4444"></i>
+                            <i class="fa fa-exclamation-triangle fa-5x" style="color: #ED553B"></i>
                             <h5 class="my-4">Are you sure you want to delete this user?</h5>
                         </div>
                         <div class="d-flex justify-content-center mt-2">
@@ -551,6 +551,21 @@ export default {
     overflow-x: hidden !important;
     padding: 0.5em;
     margin-bottom: 0.5em;
+}
+.darkBlue{
+    background-color: #173F5F;
+}
+.blue{
+    background-color:#20639B; 
+}
+.mint{
+    background-color: #3CAEA3;
+}
+.yellow{
+    background-color: #F6D55C;
+}
+.red{
+    background-color: #ED553B;
 }
 #tooltip {
   position: relative;

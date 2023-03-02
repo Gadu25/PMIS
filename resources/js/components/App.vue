@@ -7,17 +7,17 @@
             <div class="sidebar" :class="toggle ? 'hide' : ''">
                 <div class="sidebar-header">
                     <router-link :to="{ name: 'Dashboard' }" class="sidebar-link">
-                        <div class="d-flex justify-content-between align-items-center px-2">
+                        <div class="d-flex flex-col">
                             <div>
-                                <img :src="'/images/Logo.png'" alt="logo" width="40">
+                            <img :src="'/images/Logo.png'" alt="logo" width="50">
                             </div>
-                            <div class="w-100 text-start ms-3">
+                            <div class="w-100 text-center ms-3">
                                 <span style="" id="pmis">PMIS</span>
                             </div>
-                            <!-- <span>Project Management Info System</span> -->
                         </div>
+                        
                     </router-link>
-                    <button id="toggleBtn" @click="toggle = !toggle" class="btn btn-sm btn-primary"><i class="fas fa-bars"></i></button>
+                    <!-- <button id="toggleBtn" @click="toggle = !toggle" ><i class="fas fa-bars"></i></button> -->
                 </div>
                 <div class="sidebar-body">
                     <router-link active-class="active glow" class="px-4 py-3" :to="{ name: 'Dashboard' }"><i class="far fa-home"></i>&nbsp;&nbsp;Dashboard</router-link>
@@ -33,10 +33,10 @@
             </div>
             <div class="body" :style="!toggle ? 'width: calc(100vw - 280px)' : 'width: 100vw'">
                 <div class="topbar">
-                    <div><button class="btn btn-sm btn-outline-primary" @click="toggle = !toggle"><i class="fas fa-bars"></i></button></div>
+                    <div><button class="btn btn-sm" @click="toggle = !toggle"><i class="fas fa-bars fa-2x" v-bind:style="{'color': '#3CAEA3'}"></i></button></div>
                     <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div>
                     <div class="p-1 position-relative">
-                        <router-link class="text-white" :to="{ name: 'Profile' }"><i class="far fa-user-circle fa-2x"></i> </router-link>
+                        <router-link :to="{ name: 'Profile' }" v-bind:style="{'color': '#3CAEA3'}"><i class="far fa-user-circle fa-2x"></i> </router-link>
                         <span v-if="auth.active_profile.unread > 0" class="red-dot"></span>
                     </div>
                 </div>
@@ -154,7 +154,7 @@ export default {
 .sidebar{
     height: 100vh;
     width: 280px;
-    background: rgba(0, 0, 0, 0.6);
+    background: #20639B;
     color: white;
     position: relative;
     left: 0;
@@ -167,17 +167,19 @@ export default {
 }
 .sidebar-header{
     width: 100%;
-    height: 60px;
-    background: rgba(0, 0, 0, 0.8);
+    height: 130px;
+    background: #173F5F;
     padding-left: 14px;
     padding-right: 14px;
-    align-items: center;
-    text-align: center;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .sidebar-header>#toggleBtn{
     position: fixed;
     top: -200px;
+    background-color: #F6D55C;
 }
 .sidebar-link{
     text-decoration: none;
@@ -195,12 +197,12 @@ export default {
     text-decoration: none;
     position: relative;
     display: block;
-    color: rgb(211, 211, 211);
+    color: white;
     background-image: linear-gradient(rgba(0, 0, 0, 0.3) , rgba(0, 0, 0, 0.3));
     background-position: 50% 50%;
     background-repeat: no-repeat;
     background-size: 0% 100%;
-    transition: background-size .3s, color .3s;
+    /* transition: background-size .3s, color .3s; */
 }
 /* .sidebar-body>a.active {
     background: linear-gradient(to left, #3399ff -19%, #66ffcc 114%);
@@ -223,10 +225,10 @@ export default {
     text-align: center;
 }
 .topbar{
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
     height: 60px;
-    background: rgba(0, 0, 0, 0.8);
+    background: #173F5F;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -320,6 +322,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #pmis{
     font-size: 40px;
     font-weight: bold;
-    text-shadow: 1px 1px 2px black, 0 0 25px blue, 0 0 5px darkblue;
+    color: #F6D55C;
 }
 </style>

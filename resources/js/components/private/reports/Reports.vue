@@ -10,7 +10,7 @@
                 </div>
             </div> -->
             <div class="col-md-6 px-3 pb-3">
-                <div class="card bg-primary shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annual Reports')})">
+                <div class="card blue shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annual Reports')})">
                     <div class="card-body">
                         <i class="far fa-file-chart-pie fa-4x me-3"></i>
                         <h3 class="text-left">Annual Reports</h3>
@@ -18,7 +18,7 @@
                 </div>
             </div>
             <div class="col-md-6 px-3 pb-3">
-                <div class="card bg-success shadow" @click="childSelected = true, $router.push({ name: reportRoute('BAR')})">
+                <div class="card darkBlue shadow" @click="childSelected = true, $router.push({ name: reportRoute('BAR')})">
                     <div class="card-body">
                         <i class="far fa-chart-bar fa-4x me-3"></i>    
                         <h3 class="text-left">BAR</h3>
@@ -26,7 +26,7 @@
                 </div>
             </div>
             <div class="col-md-6 px-3 pb-3">
-                <div class="card bg-danger shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annex E')})">
+                <div class="card mint shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annex E')})">
                     <div class="card-body">
                         <i class="far fa-chart-area fa-4x me-3"></i>    
                         <h3 class="text-left">Annex E</h3>
@@ -34,7 +34,7 @@
                 </div>
             </div>
             <div class="col-md-6 px-3 pb-3">
-                <div class="card bg-warning shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annex F')})">
+                <div class="card yellow shadow" @click="childSelected = true, $router.push({ name: reportRoute('Annex F')})">
                     <div class="card-body">
                         <i class="far fa-chart-area fa-4x me-3"></i>    
                         <h3 class="text-left">Annex F</h3>
@@ -42,7 +42,7 @@
                 </div>
             </div>
             <div class="col-md-6 px-3 pb-3">
-                <div class="card bg-success shadow" @click="childSelected = true, $router.push({ name: reportRoute('Monthly Accomplishment Reports')})">
+                <div class="card red shadow" @click="childSelected = true, $router.push({ name: reportRoute('Monthly Accomplishment Reports')})">
                     <div class="card-body">
                         <i class="far fa-calendar fa-4x me-3"></i>   
                         <h3 class="text-left">Monthly Accomplishment Reports</h3>
@@ -127,6 +127,21 @@ export default {
     /* background: linear-gradient(to bottom right, hsl(215, 100%, 60%) 0%, hsl(215, 100%, 80%) 100%);; */
     transform: scale(1.02);
     cursor: pointer;
+}
+.darkBlue{
+    background-color: #173F5F;
+}
+.blue{
+    background-color:#20639B; 
+}
+.mint{
+    background-color: #3CAEA3;
+}
+.yellow{
+    background-color: #F6D55C;
+}
+.red{
+    background-color: #ED553B;
 }
 
 @media only screen and (max-width: 600px) {
