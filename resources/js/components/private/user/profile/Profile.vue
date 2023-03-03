@@ -5,7 +5,7 @@
             <h4>{{authuser.firstname+' '+authuser.lastname}},</h4>
             <small><i class="far fa-user-circle"></i> {{authuser.active_profile.title.name}}</small><br>
             <small><i class="far fa-building"></i> <strong>{{authuser.division.name}}</strong> <span v-if="authuser.unit_id">, {{authuser.unit.name}}</span> <span v-if="authuser.sybunit_id"> - {{authuser.subunit.name}}</span> </small>
-            <br><small><i class="far fa-envelope"></i> <i>{{authuser.email}}</i></small>
+            <br><small><i class="far fa-envelope"></i> <i>{{authuser.email}}</i> <button class="btn btn-sm" title="Edit email"><i class="far fa-pen edit-email"/></button></small>
         </div>
         <div class="details">
             <div class="main-container">
@@ -78,6 +78,12 @@ export default {
 }
 </script>
 <style>
+    .edit-email{
+        color: #20639B
+    }
+    .edit-email:hover{
+        transform: scale(1.3);
+    }
     .profile-container{
         padding: 10px 20px;
         height: calc(100vh - 45px);

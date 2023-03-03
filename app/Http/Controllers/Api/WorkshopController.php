@@ -38,6 +38,10 @@ use App\Models\History;
 use App\Models\Notification;
 use App\Models\Profile;
 
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ProjectUpdate;
+use App\Models\User;
+
 use Auth;
 use DB;
 
@@ -1890,6 +1894,21 @@ class WorkshopController extends Controller
         $notification->body = $body;
         $notification->link = $link;
         $notification->save();
+
+        $messageString = $body;
+        $profile = Profile::where("id", $recipientId)->first();
+        $emailReceiver = User::where("id", $profile->user_id)->first();
+
+
+        $userName = $sender->firstname . " " . $sender->lastname;
+
+        if($this->isOnline()){
+            Mail::to($emailReceiver->email)->send(new ProjectUpdate($title, $messageString, $userName));
+            return view('welcome');
+        }else{
+            return "No Internet Connection";
+        }
+
     }
 
     private function setMessage($project, $status, $type, $length){
@@ -1921,6 +1940,14 @@ class WorkshopController extends Controller
         $history->profile_id = $user->activeProfile->id;
 
         $item->histories()->save($history);
+    }
+
+    public function isOnline($site = "https://youtube.com/"){
+        if(@fopen($site, "r")){
+            return true;
+        }else{
+            return false;
+        }
     }
     
     // Annex E & F Item Setter

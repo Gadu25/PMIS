@@ -1336,7 +1336,7 @@ export default {
             return user.firstname + ' ' + user.lastname
         },
         getCluster(project){
-            return project.cluster_id ? project.cluster.title : project.subprogram.title_short
+            return project.cluster_id ? project.cluster.title : project?.subprogram.title_short
         },
     },
     computed: {

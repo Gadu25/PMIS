@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\PublicationController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\ComplianceController;
+use App\Http\Controllers\Api\MailController;
 
 Route::controller(AuthController::class)->group(function(){
     Route::post('login', 'login');
@@ -41,6 +42,11 @@ Route::prefix('/user')->group(function(){
     Route::prefix('/staff')->group(function(){
         Route::middleware('auth:sanctum')->get('/', [UserController::class, 'getStaffs']);
     });
+});
+
+Route::prefix('/mail')->group(function(){
+    // Route::middleware('auth:sanctum')->get('/', [MailController::class, 'sendMail']);
+    Route::get('/', [MailController::class, 'sendMail']);
 });
 
 Route::prefix('/division')->group(function(){
