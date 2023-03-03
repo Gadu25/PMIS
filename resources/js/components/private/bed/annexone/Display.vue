@@ -27,7 +27,7 @@
                 <thead class="align-middle" :class="!printmode ? 'position-sticky top-0 bg-secondary text-white' : ''">
                     <tr>
                         <th rowspan="2" style="width: 30%">Programs/ Projects/ Activities</th>
-                        <th colspan="7">Budgetary Requirements</th>
+                        <th colspan="7">Budgetary Requirements test</th>
                     </tr>
                     <tr>
                         <th v-for="col, key in columns" :key="col+'_th'">{{setYear(this.workshop.year, key)}}</th>

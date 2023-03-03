@@ -33,7 +33,7 @@
                                                     <button v-if="inUserRoles('annex_one_edit') || isAdmin || isChief || isProjectHead(annexone.project)" 
                                                         style="width: 110px;" class="btn btn-sm shadow-none mb-1" 
                                                         :class="(isChief || (isProjectHead(annexone.project)) && !userMatchProject(annexone.project)) ? 'btn-outline-primary' : 'btn-primary'" 
-                                                        @click="editFormTable(annexone)">{{(isChief || (isProjectHead(annexone.project)) && !userMatchProject(annexone.project)) ? 'View' : 'Edit'}} Table</button><br>
+                                                        @click="editFormTable(annexone)">{{(isChief || (isProjectHead(annexone.project)) && !userMatchProject(annexone.project)) ? 'View' : 'Edit'}} Table test</button><br>
                                                     <template v-if="userMatchProject(annexone.project) || isAdmin">
                                                         <button v-if="inUserRoles('annex_one_edit')" 
                                                             style="width: 110px;" 
@@ -75,7 +75,7 @@
                     <tr>
                         <td>{{form2.title}}</td>
                         <td v-for="fund, fkey in form2.funds" :key="fkey" class="text-end" :style="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || isAdmin ? 'padding: 0; height: 1px' : ''">
-                            <input type="text" id="fund" class="form-control h-100 text-end border-0 shadow-none rounded-0" v-if="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || (isAdmin && form2.subs.length == 0)" v-model="fund.amount" v-money="money">
+                            <input type="text" id="fund" v-bind:class="[hasAmountError && amountErrors.includes(fund.amount) ? 'form-control h-100 text-end border border-danger shadow-none rounded-0' : 'form-control h-100 text-end border-0 shadow-none rounded-0']" v-if="(isForInput(fund.type, form2.subs) && userMatchProject(form2.project)) || (isAdmin && form2.subs.length == 0)" v-model="fund.amount" v-money="money">
                             <span class="me-2" v-else>{{getTotal(fkey, form2.subs, fund.amount) == 0 ? '' : formatAmount(fund.amount = getTotal(fkey, form2.subs, fund.amount))}}</span>
                         </td>
                     </tr>
@@ -186,6 +186,7 @@ import { mapActions, mapGetters } from 'vuex'
 import { dragscroll } from 'vue-dragscroll'
 import { VMoney } from 'v-money'
 import TableHead from './TableHead.vue'
+import { handleError } from 'vue'
 export default {
     name: 'Form',
     emits: ['clicked'],
@@ -201,6 +202,8 @@ export default {
         return {
             editmode: false,
             formshow: false,
+            hasAmountError: false,
+            amountErrors: [],
             form: {
                 id: '',
                 projects: [],
@@ -220,7 +223,21 @@ export default {
             form2:{
                 id: '',
                 title: '',
-                funds: [],
+                funds: [
+                    {id: '', type: 'GAA',      amount: 0, year: 0},
+                    {id: '', type: 'Proposed', amount: 0, year: 0},
+                    {id: '', type: 'NEP',      amount: 0, year: 0},
+                    {id: '', type: 'Revised',  amount: 0, year: 0},
+                    {id: '', type: 'Proposed', amount: 0, year: 0},
+                    {id: '', type: 'Revised',  amount: 0, year: 0},
+                    {id: '', type: 'Proposed', amount: 0, year: 0},
+                    {id: '', type: 'Revised',  amount: 0, year: 0},
+                    {id: '', type: 'Proposed', amount: 0, year: 0},
+                    {id: '', type: 'Revised',  amount: 0, year: 0},
+                    {id: '', type: 'Proposed', amount: 0, year: 0},
+                    {id: '', type: 'Revised',  amount: 0, year: 0},
+                    {id: '', type: 'Last',     amount: 0, year: 0},
+                ],
                 subs: [],
                 project: {}
             },
@@ -232,6 +249,27 @@ export default {
                 precision: 0,
                 masked: false /* doesn't work with directive */
             },
+        }
+    },
+    watch: {
+        form2: {
+            handler(newValue){
+                var hasError = []
+                newValue.funds.forEach(element => {
+                    if(element.amount.length > 11){
+                        this.toastMsg("error", "Invalid amount")
+                        hasError.push(element.amount)
+                    }
+                })
+                if(hasError.length > 0){
+                    this.hasAmountError = true
+                    this.amountErrors = hasError
+                }else{
+                    this.hasAmountError = false
+                }
+            },
+            deep: true,
+            immediate: true
         }
     },
     methods: {
@@ -434,13 +472,25 @@ export default {
             }
         },
         submitForm2(){
-            this.updateAnnexOne(this.form2).then(res => {
-                var icon = res.errors ? 'error' : 'success'
-                this.toastMsg(icon, res.message)
-                if(!res.errors){
-                    this.hideForm()
+            var hasError = []
+            this.form2.funds.forEach(element => {
+                if(element.amount.length > 11){
+                    this.toastMsg("error", "Invalid amount")
+                    hasError.push(element.amount)
                 }
             })
+            if(hasError.length > 0){
+                this.toastMsg('error', 'Invalid amount')
+            }else{
+                this.updateAnnexOne(this.form2).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
+                    if(!res.errors){
+                        this.hideForm()
+                    }
+                })
+            }
+            
         },
         hideForm(){
             this.formshow = false

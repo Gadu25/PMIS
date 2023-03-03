@@ -146,7 +146,7 @@
             </div>
             <div class="d-flex justify-content-end">
                 <button style="min-width: 100px;" class="btn rounded-pill btn-outline-secondary me-1" @click="formshow = false" tabindex="-1">Cancel</button>
-                <button style="min-width: 100px;" class="btn rounded-pill" :class="form.id ? 'btn-primary' : 'btn-success'" @click="submitForm()">{{form.id ? 'Save Changes' :'Submit'}}</button>
+                <button style="min-width: 100px;" class="btn rounded-pill" :class="form.id ? 'btn-primary' : 'btn-success'" @click="submitForm()">{{form.id ? 'Save Changes' :'Submit'}} test</button>
             </div>
         </div>
         <template v-else>

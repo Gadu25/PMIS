@@ -15,7 +15,7 @@
                     </template>
                     <span v-else><small v-if="printmode"> if export excel missing, resync records</small></span>
                 </div>
-                <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
+                <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode test</button>
             </div>
             <div class="row flex-row-reverse" v-if="!formshow && !detailshow">
                 <div class="col-sm-3" v-if="filtershow">
@@ -307,7 +307,7 @@
                             <TableHead :syncing="true" :printmode="true" :year="syncedyear" />
                             <tbody>
                                 <tr>
-                                    <td :rowspan="form.indicators.length + 1">{{form.project_title}} test</td>
+                                    <td :rowspan="form.indicators.length + 1">{{form.project_title}}</td>
                                 </tr>
                                 <tr v-for="indicator, key in form.indicators" :key="'indicator_'+key">
                                     <td style="height: 1px" class="p-0 align-middle" v-for="col in indcols" :key="col">
@@ -328,7 +328,7 @@
                                             <!-- Program 2: S&T Educational Development Program -->
                                             <template v-else>
                                                 <p     class="px-2 py-1 m-0"                v-if="col == 'description'">{{indicator[col]}}</p>
-                                                <input class="form-control indicator-input" v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money">
+                                                <input class="form-control indicator-input" v-else-if="col == 'actual' || col == 'estimate'" type="text" v-model="indicator[col]" v-money="money" >
                                                 <p     class="px-2 py-1 m-0 text-end"       v-else @click="showIndicatorBreakdown(key)" data-bs-toggle="modal" data-bs-target="#detailform" style="cursor: pointer;">{{indicator[col] = formatNumber(totalIndicatorBreakdown(key, col))}}</p>
                                             </template>
                                         </template>
@@ -654,6 +654,8 @@ export default {
             displaysyncstatus: 'Draft',
             year: 0,
             syncedyear: 0,
+            hasAmountError: false,
+            AmountErrors: [],
             disProg: {
                 program_id: 0,
                 subprogram_id: 0,
@@ -677,16 +679,16 @@ export default {
             detailshow: false,
             detailsyncing: false,
             form: {
-                id: '',
+                id: 0,
                 program_id: 0,
-                project_id: '',
+                project_id: 0,
                 project_title: '',
                 indicators: [],
                 subs: [],
                 formtype: '',
                 status: 'Draft',
                 comment: '',
-                leaderId: '',
+                leaderId: 0,
                 encoders: []
             },
             // outcome & output form
@@ -724,6 +726,21 @@ export default {
             histories: [],
             historyfor: '',
             exportlink: ''
+        }
+    },
+    watch: {
+        form: {
+            handler(newValue, oldValue){
+                console.log("form is: ", newValue, oldValue)
+                console.log()
+            },
+            // deep: true,
+            immediate: true
+        },
+        filtershow: {
+            handler(newValue){
+                console.log("testing",newValue)
+            }
         }
     },
     methods: {
@@ -814,45 +831,58 @@ export default {
         },
         // Form
         submitForm(status){
-            console.log(status)
-            this.saving = true
-            var validate = true
-            this.prevstatus = this.form.status
-            var stat = this.form.status
-            if(status != 'approve' || status != 'reject'){
-                validate = status != 'Draft' ? this.formValidated() : true
-                if(!validate){
-                    status = this.prevstatus
-                    this.saving = false
+            var hasError = []
+            console.log(this.form)
+            this.form.indicators.forEach(element => {
+                if(element.actual.length > 6){
+                    hasError.push(element.amount)
                 }
-            }
-            if(status == 'approve'){
-                status = (stat == 'For Review') ? 'For Approval' : (stat == 'For Approval') ? 'Approved' : 'Submitted'
-            }
-            if(status == 'reject'){
-                if(this.form.comment == ''){
-                    this.toastMsg('warning', 'Comment required')
-                    return false
+                if(element.estimate.length > 6){
+                    hasError.push(element.estimate)
                 }
-                status = 'Draft'
-            }
-            if(status == 'For Review'){
-                status = this.authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'
-            }
-            
-            if(validate){
-                this.form.status = status
-                this.saveAnnexE(this.form).then(res => {
-                    var icon = res.errors ? 'error' : 'success'
-                    this.toastMsg(icon, res.message)
-                    if(!res.errors){
-                        this.syncRecords(res.status)
-                        this.$refs.closebtn.click()
-                        this.detailshow = false
-                        this.formshow = false
+            })
+            if(hasError.length > 0){
+                this.toastMsg('error', 'Invalid amount')
+            }else{
+                this.saving = true
+                var validate = true
+                this.prevstatus = this.form.status
+                var stat = this.form.status
+                if(status != 'approve' || status != 'reject'){
+                    validate = status != 'Draft' ? this.formValidated() : true
+                    if(!validate){
+                        status = this.prevstatus
+                        this.saving = false
                     }
-                    this.saving = false
-                })
+                }
+                if(status == 'approve'){
+                    status = (stat == 'For Review') ? 'For Approval' : (stat == 'For Approval') ? 'Approved' : 'Submitted'
+                }
+                if(status == 'reject'){
+                    if(this.form.comment == ''){
+                        this.toastMsg('warning', 'Comment required')
+                        return false
+                    }
+                    status = 'Draft'
+                }
+                if(status == 'For Review'){
+                    status = this.authuser.active_profile.title.name == 'Unit Head' ? 'For Approval' : 'For Review'
+                }
+                
+                if(validate){
+                    this.form.status = status
+                    this.saveAnnexE(this.form).then(res => {
+                        var icon = res.errors ? 'error' : 'success'
+                        this.toastMsg(icon, res.message)
+                        if(!res.errors){
+                            this.syncRecords(res.status)
+                            this.$refs.closebtn.click()
+                            this.detailshow = false
+                            this.formshow = false
+                        }
+                        this.saving = false
+                    })
+                }
             }
         },
         formValidated(){

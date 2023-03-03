@@ -1,11 +1,11 @@
 <template>
     <div class="profile-container">
         <div class="gen-info">
-            <button class="btn-settings"><i class="far fa-cog"></i>Settings</button>
+            <button class="btn-settings" data-bs-target="#settingModal" data-bs-toggle="modal"><i class="far fa-cog"></i>Settings</button>
             <h4>{{authuser.firstname+' '+authuser.lastname}},</h4>
             <small><i class="far fa-user-circle"></i> {{authuser.active_profile.title.name}}</small><br>
             <small><i class="far fa-building"></i> <strong>{{authuser.division.name}}</strong> <span v-if="authuser.unit_id">, {{authuser.unit.name}}</span> <span v-if="authuser.sybunit_id"> - {{authuser.subunit.name}}</span> </small>
-            <br><small><i class="far fa-envelope"></i> <i>{{authuser.email}}</i> <button class="btn btn-sm" title="Edit email"><i class="far fa-pen edit-email"/></button></small>
+            <br><small><i class="far fa-envelope"></i> <i>{{authuser.email}}</i></small>
         </div>
         <div class="details">
             <div class="main-container">
@@ -50,6 +50,67 @@
             </div>
         </div>
     </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">User Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body my-1">
+                    <div class="form-group px-4">
+                        <div class="email mb-4 pb-2">
+                            <div v-if="changeEmail == true">
+                                <p><strong>Email address:</strong></p>
+                                <input class="form-control" id="userEmail" type="text" placeholder="Enter your new email address" v-model="inputedEmail"/>
+                                <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                                <br>
+                                <div class="mt-2" v-if="otpSentEmail == true">
+                                    <p>One time pin:</p>
+                                    <div class="input-group mb-3">
+                                        <input class="form-control" id="otp" type="text" placeholder="Enter the otp you received" aria-describedby="basic-addon2" v-model="inputedOtpEmail">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-success" type="button" @click="verifyEmail">Verify</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary btn-sm mt-2 me-2" @click="changeEmail = !changeEmail" title="Cancel">Cancel</button>
+                                <button v-if="otpSentEmail == true" class="btn btn-primary disabled btn-sm mt-2">Resend OTP after {{ timerCountEmail }}</button>
+                                <button v-else class="btn btn-primary btn-sm mt-2" title="Send OTP to your inputed email" @click="countDownEmail(30)">Send OTP</button>
+                            </div>
+                            <div v-else>
+                                <p>Email address:&nbsp;<strong class="me-2">{{ authuser.email }}</strong><button class="btn btn-primary btn-sm" @click="changeEmail = !changeEmail"><i class="fa fa-pencil"></i></button></p>
+                            </div>
+                        </div>
+                        <div v-if="changePassword == false">
+                            <p>Password <button class="btn btn-primary btn-sm" @click="changePassword = !changePassword"><i class="fa fa-pencil"></i></button></p>
+                        </div>
+                        <div v-else>
+                            <p><strong>Password:</strong></p>
+                            <input class="form-control" id="userEmail" type="password" placeholder="Enter your new password" v-model="inputedPassword"/>
+                            <small id="emailHelp" class="form-text text-muted">We'll never share your password with anyone else.</small>
+                            <br>
+                            <div class="mt-2" v-if="otpSentPassword == true">
+                                <p>One time pin:</p>
+                                <div class="input-group mb-3">
+                                    <input class="form-control" id="otp" type="text" placeholder="Enter the otp you received" aria-describedby="basic-addon2" v-model="inputedOtpPassword">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-success" type="button" @click="verifyPassword">Verify</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-secondary btn-sm mt-2 me-2" @click="changePassword = !changePassword" title="Cancel">Cancel</button>
+                            <button v-if="otpSentPassword == true" class="btn btn-primary disabled btn-sm mt-2">Resend OTP after {{ timerCountPassword }}</button>
+                            <button v-else class="btn btn-primary btn-sm mt-2" title="Send OTP to your inputed email" @click="countDownPassword(30)">Send OTP</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 <script>
 import { mapActions, mapGetters } from 'vuex';
@@ -58,18 +119,114 @@ export default {
     data(){
         return {
             shownotification: false,
-            tab: 'projects'
+            tab: 'projects',
+            changeEmail: false,
+            changePassword: false,
+            otpSentEmail: false,
+            otpSentPassword: false,
+            timerCountEmail: 0,
+            timerCountPassword: 0,
+            inputedOtpEmail: "",
+            otpEmail: "",
+            inputedOtpPassword: "",
+            otpPassword: "",
+            inputedPassword: "",
+            inputedEmail: ""
+        }
+    },
+    watch:{
+        timerCountEmail:{
+            handler(value){
+                if (value > 0) {
+                    setTimeout(() => {
+                        this.timerCountEmail--;
+                    }, 1000);
+                }else{
+                    this.otpSentEmail = false
+                }
+            }
+        },
+        timerCountPassword:{
+            handler(value){
+                if (value > 0) {
+                    setTimeout(() => {
+                        this.timerCountPassword--;
+                    }, 1000);
+                }else{
+                    this.otpSentPassword = false
+                }
+            }
         }
     },
     methods: {
-        ...mapActions('user', ['fetchAuthUser', 'updateNotification']),
+        ...mapActions('user', ['fetchAuthUser', 'updateNotification', 'changeEmailFinal', 'changePasswordFinal']),
         gotoNotificationLink(notification){
             this.updateNotification(notification.id).then(res => {
                 this.fetchAuthUser().then(res => {
                     this.$router.push(notification.link)
                 })
             })
-        }
+        },
+        countDownPassword($seconds){
+            var otp = ((Math.random())*1000000).toFixed(0);
+            console.log("testing", otp)
+            this.otpPassword = otp;
+            this.timerCountPassword = $seconds;
+            this.otpSentPassword = true;
+        },
+        countDownEmail($seconds){
+            var otp = ((Math.random())*1000000).toFixed(0);
+            console.log("testing", otp)
+            this.otpEmail = otp
+            this.timerCountEmail = $seconds
+            this.otpSentEmail = true
+        },
+        verifyEmail(){
+            if(this.otpEmail == this.inputedOtpEmail){
+                this.changeEmailFinal({ id: this.authuser.id, email: this.inputedEmail }).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
+                })
+
+                this.changeEmail = false
+                this.otpSentEmail = false
+                this.timerCountEmail = false
+                this.inputedOtpEmail = ""
+                this.otpEmail = ""
+                this.inputedEmail = ""
+            }else{
+                this.toastMsg('error', 'Wrong OTP')
+            }
+        },
+        verifyPassword(){
+            if(this.otpPassword == this.inputedOtpPassword){
+                if(this.inputedPassword.length < 6){
+                    this.toastMsg('error', 'Password is too short')
+                    console.log("password is too short")
+                } else {
+                    this.changePasswordFinal({ id: this.authuser.id, password: this.inputedPassword }).then(res => {
+                    var icon = res.errors ? 'error' : 'success'
+                    this.toastMsg(icon, res.message)
+
+                    this.changePassword = false
+                    this.otpSentPassword = false
+                    this.timerCountPassword = false
+                    this.inputedOtpPassword = ""
+                    this.otpPassword = ""
+                    this.inputedPassword = ""
+                })
+                }
+                
+            }else{
+                this.toastMsg('error', 'Wrong OTP')
+            }
+        },
+        toastMsg(icon, msg){
+            toast.fire({
+                icon: icon,
+                title: msg
+            })
+        },
     },
     computed: {
         ...mapGetters('user', ['getAuthUser']),
@@ -215,6 +372,10 @@ export default {
     .projects-container>div{
         /* padding: 0 0; */
         cursor: pointer;
+    }
+    .email{
+        border-bottom-style: dashed;
+        border-color: #3CAEA3;
     }
 
     @media only screen and (max-width: 600px) {

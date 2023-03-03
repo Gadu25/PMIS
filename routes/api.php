@@ -28,6 +28,9 @@ Route::prefix('/user')->group(function(){
     Route::middleware('auth:sanctum')->get('/division/{id}', [UserController::class, 'getByDivision']);
     Route::middleware('auth:sanctum')->delete('/delete/{id}', [UserController::class, 'deleteUser']);
 
+    Route::middleware('auth:sanctum')->post('/change-email/{id}', [UserController::class, 'changeEmail']);
+    Route::middleware('auth:sanctum')->post('/change-password/{id}', [UserController::class, 'changePassword']);
+
     Route::prefix('/notification')->group(function(){
         Route::middleware('auth:sanctum')->put('/{id}', [UserController::class, 'updateNotification']);
     });

@@ -75,6 +75,37 @@ class UserController extends Controller
         }
     }
 
+    public function changeEmail(Request $request, $id){
+        DB::beginTransaction();
+        try{
+            $user = user::findOrFail($id);
+            $user->email = $request['email'];
+            $user->save();
+
+            DB::commit();
+            return ['message' => 'Email saved!', 'users' => $this->getUsers($id)];
+        }catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
+    public function changePassword(Request $request, $id){
+        DB::beginTransaction();
+        try{
+            $user = user::findOrFail($id);
+            $newpassword = bcrypt($request['password']);
+            $user->password = $newpassword;
+            $user->save();
+
+            DB::commit();
+            return ['message' => 'Password saved!', 'users' => $this->getUsers($id)];
+        }catch (\Exception $e){
+            DB::rollback();
+            return ['message' => 'Something went wrong', 'errors' => $e->getMessage()];
+        }
+    }
+
     public function update(Request $request, $id){
         DB::beginTransaction();
         try {

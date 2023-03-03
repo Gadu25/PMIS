@@ -408,7 +408,6 @@ export default {
                         this.syncedstatus = this.filter.status
                         this.syncedyear = this.filter.year
                         this.setExportLink(this.filter)
-                        console.log("response", res)
                         return res
                     })
                     var end = new Date().getTime();
@@ -720,7 +719,6 @@ export default {
     computed: {
         ...mapGetters('annexf', ['getAnnexFs']),
         annexfs(){ 
-            console.log("thisGetAnnexFs", this.getAnnexFs)
             return this.getAnnexFs },
         ...mapGetters('workshop', ['getWorkshop']),
         workshop(){ return this.getWorkshop },

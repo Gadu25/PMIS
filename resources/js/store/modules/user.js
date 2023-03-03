@@ -61,6 +61,18 @@ const actions = {
         return response
     },
 
+    async changeEmailFinal({commit}, form){
+        const response = await axios.post('/api/user/change-email/'+form.id, form).then(res => {
+            return res.data
+        })
+        return response
+    },
+    async changePasswordFinal({commit}, form){
+        const response = await axios.post('/api/user/change-password/'+form.id, form).then(res => {
+            return res.data
+        })
+        return response
+    },
     // Auth functions
     async fetchAuthUser({commit}){
         const response = await axios.get('/api/user/auth').then(res => {
