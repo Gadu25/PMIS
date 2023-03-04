@@ -35,8 +35,12 @@
                 <div class="topbar">
                     <div><button class="btn btn-sm" @click="toggle = !toggle"><i v-bind:class="[toggle ? 'fas fa-bars fa-2x' : 'fas fa-arrow-left fa-2x']" v-bind:style="{'color': '#3CAEA3'}"></i></button></div>
                     <!-- <div style="min-width: 50vw; padding: 0px 20px"><input type="search" class="form-control form-control-sm" placeholder="Search"></div> -->
+                   
                     <div class="p-1 position-relative">
-                        <router-link class="text-decoration-none d-flex align-items-center" v-bind:style="{'color': '#F5F5F5'}" :to="{ name: 'Profile' }"><strong>{{ auth.firstname + " " + auth.lastname }}</strong> &nbsp; &nbsp; <i class="far fa-user-circle fa-2x" v-bind:style="{'color': '#3CAEA3'}"></i> </router-link>
+                        <router-link class="text-decoration-none d-flex align-items-center" v-bind:style="{'color': '#F5F5F5'}" :to="{ name: 'Profile' }"> 
+                            <strong>{{ auth.firstname + " " + auth.lastname }}</strong> &nbsp; &nbsp; 
+                            <i class="far fa-user-circle fa-2x" v-bind:style="{'color': '#3CAEA3'}"></i> 
+                        </router-link>
                         <span v-if="auth.active_profile.unread > 0" class="red-dot"></span>
                     </div>
                 </div>
@@ -279,6 +283,10 @@ export default {
         background-color: rgba(0, 0, 0, 0.8);
         color: #fff;
     }
+
+    /* test */
+    
+    
 }
 </style>
 <style>

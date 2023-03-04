@@ -203,7 +203,7 @@
                                                                             <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) || isEncoder(item.project) : true) || isAdmin " @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
                                                                             <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                         </template>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item, subprogram)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs test</button>
                                                                     </td>
                                                                 </tr>
                                                                 <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -377,7 +377,7 @@
         <h1 v-else class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i></h1>
     </div>
 
-    <Logs :histories="histories" :title="historyfor"/>
+    <Logs :histories="histories" :title="historyfor" :projectCreated="projectCreated"/>
     <!-- Modal -->
     <div class="modal fade" id="detailform" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" :class="!breakdownform ? 'modal-lg' : ''">
@@ -725,6 +725,7 @@ export default {
             // logs
             histories: [],
             historyfor: '',
+            projectCreated: '',
             exportlink: ''
         }
     },
@@ -748,6 +749,10 @@ export default {
         ...mapActions('annexe', ['fetchAnnexEs', 'fetchAnnexE', 'saveAnnexE', 'updateAnnexEOther']),
         ...mapActions('program', ['fetchPrograms']),
         ...mapActions('division', ['fetchDivisions']),
+        myFunctionOnLoad(){
+            console.log("TEEEST")
+            console.log("param test:", this.$route.query.id)
+        },
         displaytypeChange(){
             this.disProg.program_id = 0
             this.disProg.subprogram_id = 0
@@ -1341,9 +1346,13 @@ export default {
             return status != 'Draft' && status != 'New'
         },
         // history
-        setHistory(item){
+        setHistory(item, subprogram){
+
+            console.log("subprogram", subprogram)
+
             this.histories = item.histories
             this.historyfor = item.project.title
+            this.projectCreated = item.project.created_at
         },
         // Watcher
         checkQueryStr(){
@@ -1401,6 +1410,7 @@ export default {
         if(!this.$route.query.id){
             this.checkStatus()
         }
+        this.myFunctionOnLoad()
     },
     watch: {
         $route: {

@@ -73,6 +73,12 @@ const actions = {
         })
         return response
     },
+    async sendOtpCode ({commit}, form){
+        const response = await axios.post('/api/mail/sendOtp', form).then(res => {
+            return res.data
+        })
+        return response
+    },
     // Auth functions
     async fetchAuthUser({commit}){
         const response = await axios.get('/api/user/auth').then(res => {

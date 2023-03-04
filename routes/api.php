@@ -50,6 +50,7 @@ Route::prefix('/user')->group(function(){
 Route::prefix('/mail')->group(function(){
     // Route::middleware('auth:sanctum')->get('/', [MailController::class, 'sendMail']);
     Route::get('/', [MailController::class, 'sendMail']);
+    Route::middleware('auth:sanctum')->post('/sendOtp', [MailController::class, 'sendOtp']);
 });
 
 Route::prefix('/division')->group(function(){

@@ -204,13 +204,13 @@
                                                 </td>
                                             </tr>
                                             <tr class="funding">
-                                                <td class="text-center"><small>Funding</small></td>
+                                                <td class="text-center"><small>Funding </small></td>
                                                 <td></td>
                                                 <td :class="statusNewDraft(form.status) || isAdmin ? 'p-0' : 'text-end'" v-for="fund, key in form.funds" :key="key+'month-form-fund'">
                                                     <input v-if="statusNewDraft(form.status) || isAdmin" type="text" class="form-control fund-input" @change="numChange(fund.amount, key)" v-model="fund.amount" v-money="money">
                                                     <span  v-else>{{fund.amount}}</span>
                                                 </td>
-                                                <td class="text-end"> {{formatAmount(getTotalAmount())}} <input type="text" class="d-none" v-money="money" @change="numChange(0, 15)"></td>
+                                                <td id="test" class="text-end"> {{formatAmount(getTotalAmount())}} <input type="text" class="d-none" v-money="money" @change="numChange(0, 15)"></td>
                                                 <td></td>
                                             </tr>
                                             <template v-for="sub, key in form.subs" :key="key+'_form-sub'">

@@ -18,9 +18,9 @@ class History extends Model
 
     protected function serializeDate(\DateTimeInterface $dates)
     {
-        return Carbon::createFromFormat('Y-m-d H:i:s', $dates)->diffForHumans();
+        // return Carbon::createFromFormat('Y-m-d H:i:s', $dates)->diffForHumans();
         // OR
-        //return Carbon::createFromFormat('Y-m-d H:i:s', $dates)->format('Y-m-d');
+        return Carbon::createFromFormat('Y-m-d H:i:s', $dates)->format('Y-m-d H:i:s');
     }
 
     public function profile(){

@@ -78,7 +78,7 @@
                                 </div>
                                 <button class="btn btn-secondary btn-sm mt-2 me-2" @click="changeEmail = !changeEmail" title="Cancel">Cancel</button>
                                 <button v-if="otpSentEmail == true" class="btn btn-primary disabled btn-sm mt-2">Resend OTP after {{ timerCountEmail }}</button>
-                                <button v-else class="btn btn-primary btn-sm mt-2" title="Send OTP to your inputed email" @click="countDownEmail(30)">Send OTP</button>
+                                <button v-if="otpSentEmail == false && this.isEmailValid == true" class="btn btn-primary btn-sm mt-2" title="Send OTP to your inputed email" @click="countDownEmail(60)">Send OTP</button>
                             </div>
                             <div v-else>
                                 <p>Email address:&nbsp;<strong class="me-2">{{ authuser.email }}</strong><button class="btn btn-primary btn-sm" @click="changeEmail = !changeEmail"><i class="fa fa-pencil"></i></button></p>
@@ -104,7 +104,7 @@
                             
                             <button class="btn btn-secondary btn-sm mt-2 me-2" @click="changePassword = !changePassword" title="Cancel">Cancel</button>
                             <button v-if="otpSentPassword == true" class="btn btn-primary disabled btn-sm mt-2">Resend OTP after {{ timerCountPassword }}</button>
-                            <button v-else class="btn btn-primary btn-sm mt-2" title="Send OTP to your inputed email" @click="countDownPassword(30)">Send OTP</button>
+                            <button v-else class="btn btn-primary btn-sm mt-2" title="Send OTP to your inputed email" @click="countDownPassword(60)">Send OTP</button>
                         </div>
                     </div>
                 </div>
@@ -121,6 +121,7 @@ export default {
             shownotification: false,
             tab: 'projects',
             changeEmail: false,
+            isEmailValid: false,
             changePassword: false,
             otpSentEmail: false,
             otpSentPassword: false,
@@ -156,10 +157,27 @@ export default {
                     this.otpSentPassword = false
                 }
             }
+        },
+        inputedEmail:{
+            handler(value){
+                console.log(value)
+
+                var mailformat = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+                if(value.match(mailformat))
+                {
+                    console.log("valid")
+                    this.isEmailValid = true;
+                }
+                else
+                {
+                    console.log("not valid")
+                    this.isEmailValid = false;
+                }
+            }
         }
     },
     methods: {
-        ...mapActions('user', ['fetchAuthUser', 'updateNotification', 'changeEmailFinal', 'changePasswordFinal']),
+        ...mapActions('user', ['fetchAuthUser', 'updateNotification', 'changeEmailFinal', 'changePasswordFinal', 'sendOtpCode']),
         gotoNotificationLink(notification){
             this.updateNotification(notification.id).then(res => {
                 this.fetchAuthUser().then(res => {
@@ -171,6 +189,12 @@ export default {
             var otp = ((Math.random())*1000000).toFixed(0);
             console.log("testing", otp)
             this.otpPassword = otp;
+
+            this.sendOtpCode({ otp: otp, to: this.authuser.email }).then(res => {
+                var icon = res.errors ? 'error' : 'success'
+                this.toastMsg(icon, res.message)
+            })
+
             this.timerCountPassword = $seconds;
             this.otpSentPassword = true;
         },
@@ -178,6 +202,12 @@ export default {
             var otp = ((Math.random())*1000000).toFixed(0);
             console.log("testing", otp)
             this.otpEmail = otp
+
+            this.sendOtpCode({ otp: otp, to: this.inputedEmail }).then(res => {
+                var icon = res.errors ? 'error' : 'success'
+                this.toastMsg(icon, res.message)
+            })
+
             this.timerCountEmail = $seconds
             this.otpSentEmail = true
         },
