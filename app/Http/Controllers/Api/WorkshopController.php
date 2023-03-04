@@ -326,8 +326,8 @@ class WorkshopController extends Controller
                 $annexe->save();
                 $subject = $subject.'<p class="m-0">Status: '.$prevstatus.' => '.$annexe->status.'</p>';
                 if($initialStatus != 'New' || $status == 'For Review'){
-                    $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?year='.$annexe->year;
-                    // $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id.'?year='.$annexe->year;
+                    // $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?year='.$annexe->year;
+                    $link = '/budget-executive-documents/annex-e/'.$annexe->workshop_id.'?id='.$annexe->id.'&year='.$annexe->year;
                     $message = $this->sendNotification($annexe->project, $status, 'Annex E', $link);
                     $subject = $subject.$message;
                 }
@@ -359,7 +359,7 @@ class WorkshopController extends Controller
         $annexe = AnnexE::with(
             ['project.leader', 'histories.profile.user', 'subs.subproject', 
             'indicators.details', 'indicators.tags', 'indicators.breakdowns', 
-            'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns'])->where('id', $id)->first();
+            'subs.indicators.details', 'subs.indicators.tags', 'subs.indicators.breakdowns', 'project.encoders'])->where('id', $id)->first();
         return $annexe;
     }
 
@@ -715,8 +715,8 @@ class WorkshopController extends Controller
                 $subject = $subject.'<p class="m-0">Status: '.$initialStatus.' => '.$annexf->status.'</p>';
                 if($initialStatus != 'New' || $status == 'For Review'){
                     // $linkstatus = $status == 'For Review' ? 'For%20Review' : ($status == 'For Approval' ? 'For%20Approval' : ($status == 'Approved' ? 'Approved' : 'Submitted'));
-                    $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id;
-                    // $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?id='.$annexf->id;
+                    // $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id;
+                    $link = '/budget-executive-documents/annex-f/'.$annexf->workshop_id.'?id='.$annexf->id.'&year='.$annexe->year;
                     $message = $this->sendNotification($annexf->projects, $status, 'Annex F', $link);
                     $subject = $subject.$message;
                 }
@@ -741,7 +741,7 @@ class WorkshopController extends Controller
     public function showAnnexF($id){
         $annexf = AnnexF::with(['projects.subprogram', 'projects.leader', 'histories.profile.user',
         'funds', 'activities', 'subs.activities', 
-        'subs.funds', 'subs.subproject'])->where('id', $id)->first();
+        'subs.funds', 'subs.subproject', 'project.encoders'])->where('id', $id)->first();
         return $annexf;
     }
 
@@ -1349,6 +1349,9 @@ class WorkshopController extends Controller
                     $annexf->save();
                     $annexf->projects()->sync($case['projectIds']);
                     foreach($case['projectIds'] as $id){
+                        $project = Project::findOrFail($id);
+                        $project->is_published = true;
+                        $project->save();
                         array_push($ids, $id);
                     }
                 }

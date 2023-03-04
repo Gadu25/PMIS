@@ -112,8 +112,8 @@
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <strong>Project</strong>
-                                                        <div>
-                                                            <button tabindex="-1" class="btn btn-sm btn-secondary me-1" @click="addSubproject(key)" title="Add"><i class="fas fa-plus"></i></button>
+                                                        <div v-if="isProjectPublished == true">
+                                                            <button v-if="project.is_published != true" tabindex="-1" class="btn btn-sm btn-secondary me-1" @click="addSubproject(key)" title="Add"><i class="fas fa-plus"></i>is published:  {{ project.is_published  }}</button>
                                                             <button tabindex="-1" class="btn btn-sm btn-danger" @click="removeProject(project)" v-if="form.id == ''"><i class="fas fa-trash-alt"></i> </button>
                                                         </div>
                                                     </div>
@@ -303,7 +303,8 @@ export default {
             subunits: [],
             // Display
             displaytype: 'program',
-            projects: []
+            projects: [],
+            isProjectPublished: false
         }
     },
     methods: {
@@ -337,6 +338,13 @@ export default {
         },
         editForm(project){
             this.resetForm()
+
+            if(project.is_published == true){
+                this.isProjectPublished = true
+            } else {
+                this.isProjectPublished = false
+            }
+
             var form = this.form
             form.id = project.id
 

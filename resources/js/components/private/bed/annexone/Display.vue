@@ -14,7 +14,7 @@
                 <button v-if="printmode" v-print="'#printMe'" class="btn btn-sm btn-outline-secondary ms-3"><i class="far fa-print"></i> Print</button>
             </div>
             <template v-if="inUserRole('annex_one_publish_projects')">
-                <button class="btn btn-sm btn-success shadow-none" v-if="loading || workshop.published" disabled><i v-if="loading" class="fas fa-spinner fa-spin"></i> {{workshop.published ? 'Projects Published' : 'Publish Projects'}} </button>
+                <button class="btn btn-sm btn-success shadow-none" v-if="loading || workshop.published" disabled><i v-if="loading" class="fas fa-spinner fa-spin"></i> {{workshop.published ? 'Projects Published' : 'Publish Projects'}}</button>
                 <button class="btn btn-sm btn-success shadow-none" v-if="!loading && !workshop.published" data-bs-target="#publishable" data-bs-toggle="modal">Publish Projects</button>
             </template>
         </div>
@@ -27,7 +27,7 @@
                 <thead class="align-middle" :class="!printmode ? 'position-sticky top-0 bg-secondary text-white' : ''">
                     <tr>
                         <th rowspan="2" style="width: 30%">Programs/ Projects/ Activities</th>
-                        <th colspan="7">Budgetary Requirements test</th>
+                        <th colspan="7">Budgetary Requirements</th>
                     </tr>
                     <tr>
                         <th v-for="col, key in columns" :key="col+'_th'">{{setYear(this.workshop.year, key)}}</th>

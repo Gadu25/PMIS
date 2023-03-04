@@ -189,7 +189,7 @@
                     <!-- <div class="modal-footer" v-if="workshop.published"> -->
                     <div class="modal-footer">
                         <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
-                        <button type="button" class="btn btn-success bg-gradient" @click="publish()">Publish Projects</button>
+                        <button type="button" class="btn btn-success bg-gradient" @click="publish()">Publish Projects test</button>
                     </div>
                 </div>
             </div>

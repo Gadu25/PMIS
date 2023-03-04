@@ -15,7 +15,7 @@
                     </template>
                     <span v-else><small v-if="printmode"> if export excel missing, resync records</small></span>
                 </div>
-                <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode test</button>
+                <button v-if="annexes.length > 0 && !detailshow" class="btn shadow-none btn-sm" :class="!editmode ? 'btn-success' : 'btn-primary'" @click="editmode = !editmode">{{editmode ? 'View' : 'Edit'}} Mode</button>
             </div>
             <div class="row flex-row-reverse" v-if="!formshow && !detailshow">
                 <div class="col-sm-3" v-if="filtershow">
@@ -200,10 +200,10 @@
                                                                     <td class="text-center">
                                                                         <template v-if="checkUserDivision(item.project)  || isEncoder(item.project) || isAdmin || isHead">
                                                                             <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id) || isEncoder(item.project) || isAdmin " @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                            <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) || isEncoder(item.project) : true) || isAdmin " @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                            <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) || isEncoder(item.project) : true) || isAdmin " @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}} </button><br>
                                                                             <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                         </template>
-                                                                        <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item, subprogram)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs test</button>
+                                                                        <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item, subprogram)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs </button>
                                                                     </td>
                                                                 </tr>
                                                                 <tr v-for="sub in item.subs" :key="'sub_'+sub.id">
@@ -243,7 +243,7 @@
                                                                         <td class="text-center">
                                                                             <template v-if="checkUserDivision(item.project) || isAdmin">
                                                                                 <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_indicators') && !isForReview(item.status) && isUserProjectLeader(item.project.leader.profile_id) || isAdmin" @click="editForm(item, 'indicator')" data-bs-toggle="modal" data-bs-target="#form"><i class="far fa-pencil-alt"></i> Indicators</button><br>
-                                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true) || isAdmin" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}}</button><br>
+                                                                                <button class="min-100 shadow-none btn btn-sm btn-primary bg-gradient me-1 mb-1" v-if="inUserRole('annex_e_edit_details') && (!isForReview(item.status) ? isUserProjectLeader(item.project.leader.profile_id) : true) || isAdmin" @click="editForm(item, 'details')"><i class="far" :class="!isForReview(item.status) ? 'fa-pencil-alt' : 'fa-search'"></i> {{!isForReview(item.status) ? 'Details' : 'View'}} </button><br>
                                                                                 <!-- <button class="min-100 shadow-none btn btn-sm btn-danger me-1 mb-1" v-if="!isForReview(item.status)"><i class="far fa-trash-alt"></i> Remove</button> -->
                                                                             </template>
                                                                             <button class="min-100 shadow-none btn btn-sm btn-warning bg-gradient me-1 mb-1" v-if="item.histories.length > 0" @click="setHistory(item)" data-bs-toggle="modal" data-bs-target="#history"><i class="far fa-clipboard-list"></i> Logs</button>
@@ -314,7 +314,7 @@
                                         <template v-if="form.status == 'New' || form.status == 'Draft' || isAdmin">
                                             <!-- Program 1: S&T Scholarship Program -->
                                             <template v-if="form.program_id == 1">
-                                                <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}} test</p>
+                                                <p :class="indicator.id == totalSelectedId ? 'fw-bold' : ''" class="px-2 py-1 m-0" v-if="col == 'description'">{{indicator[col]}} </p>
                                                 <template v-else>
                                                     <template v-if="indicator.description != 'Sub-Total'">
                                                         <p v-if="indicator.id == totalSelectedId" class="px-2 py-1 m-0 text-end fw-bold">{{indicator[col] = formatNumber(totalIndicator(col))}}</p>
@@ -729,30 +729,11 @@ export default {
             exportlink: ''
         }
     },
-    watch: {
-        form: {
-            handler(newValue, oldValue){
-                console.log("form is: ", newValue, oldValue)
-                console.log()
-            },
-            // deep: true,
-            immediate: true
-        },
-        filtershow: {
-            handler(newValue){
-                console.log("testing",newValue)
-            }
-        }
-    },
     methods: {
         ...mapActions('workshop', ['fetchWorkshop']),
         ...mapActions('annexe', ['fetchAnnexEs', 'fetchAnnexE', 'saveAnnexE', 'updateAnnexEOther']),
         ...mapActions('program', ['fetchPrograms']),
         ...mapActions('division', ['fetchDivisions']),
-        myFunctionOnLoad(){
-            console.log("TEEEST")
-            console.log("param test:", this.$route.query.id)
-        },
         displaytypeChange(){
             this.disProg.program_id = 0
             this.disProg.subprogram_id = 0
@@ -837,7 +818,6 @@ export default {
         // Form
         submitForm(status){
             var hasError = []
-            console.log(this.form)
             this.form.indicators.forEach(element => {
                 if(element.actual.length > 6){
                     hasError.push(element.amount)
@@ -963,6 +943,7 @@ export default {
             for(let encoder of item.project.encoders){
                 this.form.encoders.push(encoder.profile_id)
             }
+
             for(let i = 0; i < item.subs.length; i++){
                 var sub = item.subs[i]
                 var tempSub = {
@@ -1282,7 +1263,6 @@ export default {
         },
         inFormEncoder(){
             var profileId = this.authuser.active_profile.id
-            console.log(this.form.encoders)
             return this.form.encoders.includes(profileId)
         },
         // Toast
@@ -1348,8 +1328,6 @@ export default {
         // history
         setHistory(item, subprogram){
 
-            console.log("subprogram", subprogram)
-
             this.histories = item.histories
             this.historyfor = item.project.title
             this.projectCreated = item.project.created_at
@@ -1410,7 +1388,6 @@ export default {
         if(!this.$route.query.id){
             this.checkStatus()
         }
-        this.myFunctionOnLoad()
     },
     watch: {
         $route: {
